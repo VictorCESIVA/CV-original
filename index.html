@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Victor NOEL</title>
+    <style>
+        /* --- STYLE RETRO CRT --- */
+        body {
+            background-color: #0d1117;
+            color: #00ff41; /* Vert Hacker */
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+            overflow-x: hidden;
+            /* Effet de lueur (Glow) sur le texte */
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5); 
+        }
+
+        #terminal-container {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            min-height: 90vh;
+        }
+
+        /* Liens */
+        a { color: #fff; text-decoration: underline; text-shadow: none; }
+        a:hover { color: #00ff41; background: #333; }
+
+        /* Animation de scintillement (Flicker) */
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            5% { opacity: 0.95; }
+            10% { opacity: 0.9; }
+            15% { opacity: 0.95; }
+            20% { opacity: 0.99; }
+            50% { opacity: 0.95; }
+            80% { opacity: 0.9; }
+            100% { opacity: 0.97; }
+        }
+
+        /* Appliquer le scintillement au conteneur */
+        .crt-effect {
+            animation: flicker 0.15s infinite;
+        }
+
+        /* Scanline (Ligne qui descend) */
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 10;
+            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0, 255, 65, 0.1) 50%, rgba(0,0,0,0) 100%);
+            opacity: 0.1;
+            position: fixed; /* Fixé à l'écran */
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            animation: scanline 4s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { top: -100px; }
+            100% { top: 100%; }
+        }
+
+        /* Zone d'input */
+        .input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            opacity: 1;
+            transition: opacity 0.2s;
+        }
+
+        /* Classe pour cacher l'input pendant l'écriture */
+        .hidden-input {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .prompt {
+            color: #bd53ed;
+            margin-right: 10px;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(189, 83, 237, 0.5);
+        }
+
+        input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            flex-grow: 1;
+            outline: none;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .command-output { margin-bottom: 15px; white-space: pre-wrap; }
+        .keyword { color: #fff; font-weight: bold; }
+        .error { color: #ff5555; text-shadow: 0 0 5px rgba(255, 85, 85, 0.5); }
+        
+        /* ASCII ART */
+        .ascii-art {
+            font-size: 10px;
+            white-space: pre;
+            color: #fff;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            body { font-size: 14px; padding: 10px; }
+            .ascii-art { font-size: 6px; }
+        }
+    </style>
+</head>
+<body class="crt-effect">
+
+<div class="scanline"></div>
+
+<div id="terminal-container">
+    <div id="output"></div>
+
+    <div class="input-line" id="inputLine">
+        <span class="prompt">recruteur@cesi:~$</span>
+        <input type="text" id="commandInput" autocomplete="off" autofocus>
+    </div>
+</div>
+
+<script>
+    // --- DONNÉES DU CV ---
+    const cvData = {
+        'intro': `
+ __      __  _        _                  _   _    ___   _____  _ 
+ \\ \\    / / (_)      | |                | \\ | |  / _ \\ |  ___|| |
+  \\ \\  / /   _   ___ | |_  ___   _ __   |  \\| | | | | || |__  | |
+   \\ \\/ /   | | / __|| __|/ _ \\ | '__|  | . \` | | | | ||  __| | |
+    \\  /    | || (__ | |_| (_) || |     | |\\  | | |_| || |___ | |____
+     \\/     |_| \\___| \\__|\\___/ |_|     |_| \\_|  \\___/ |_____||______|
+
+Bienvenue sur le CV interactif de <strong>Victor NOEL</strong> [v2.0.26]
+Élève Ingénieur CESI - Recherche de stage (Avril-Juin 2026).
+
+Tapez <span class="keyword">'help'</span> pour commencer.
+        `,
+        'about': `
+--- 👤 PROFIL ---
+Étudiant informatique rigoureux, motivé et créatif.
+Je voue une passion pour le développement informatique et l'analyse de données.
+
+Objectif : Stage de 3 mois (Avril - Juin 2026) pour appliquer mes compétences en programmation.
+Localisation : Villeneuve d'Ascq (59650) - Permis B & Véhiculé.
+        `,
+        
+        'skills': `
+--- 💻 COMPÉTENCES TECHNIQUES ---
+> Langages : Python, C/C++, JavaScript, PHP, SQL, Sagemath
+> Web : HTML, CSS, PHP (Front & Back)
+> Outils : GitHub, VS Code, Cursor (IA), Arduino
+> Langues : Anglais (TOEIC 870 - B2+), Français (Maternelle)
+
+--- 🧠 SOFT SKILLS ---
+Esprit d'équipe | Polyvalent | Curieux | Gestion de projet | Créativité
+        `,
+
+        'education': `
+--- 🎓 FORMATIONS ---
+[2023 - Aujourd'hui] CESI Lille
+> 2ème année Cycle Préparatoire Grande École, option informatique.
+
+[2023 - 2025] ISEN Lille
+> 1ère année Cycle Préparatoire Grande École, option informatique.
+
+[2022] Lycée Institut d'Anchin
+> Baccalauréat Scientifique (Maths/Physique) - Mention BIEN.
+        `,
+
+        'projects': `
+--- 🚀 PROJETS ÉTUDIANTS ---
+1. Station Météo & Jeu Vidéo (2025 - CESI)
+   > Tech: C/C++, Arduino. Projet individuel.
+
+2. Application Web (2025 - ISEN)
+   > Développement Front & Back, Authentification, Gestion BDD (10+ requêtes SQL).
+   > Tech: HTML, CSS, JS, PHP, MySQL. Projet de groupe.
+
+3. Modélisation Mathématique 2D/3D (2024 - ISEN)
+   > Tech: Algorithmes Python, Sagemath. Projet individuel.
+        `,
+
+        'xp': `
+--- 💼 EXPÉRIENCES ---
+[Jobs Été 2024 & 2025] Chronopost (Courcelles-lès-Lens)
+> Agent de conditionnement (Juillet).
+
+[Stage 2023] Fizzy (Sars-et-Rosières)
+> Stage ouvrier : Découverte du monde de l'entreprise.
+        `,
+
+        'contact': `
+--- 📞 CONTACT ---
+Email : <a href="mailto:Victor_noel2004@icloud.com">Victor_noel2004@icloud.com</a>
+Tél : 07 88 62 65 21
+LinkedIn : <a href="https://www.linkedin.com/in/vic-noel" target="_blank">linkedin.com/in/vic-noel</a>
+        `,
+        
+        'hobbies': `
+--- 🎮 LOISIRS ---
+Jeux Vidéo | Musculation | Réseaux Sociaux | Actualité Informatique
+        `,
+
+        'help': `
+COMMANDES DISPONIBLES :
+  - <span class="keyword">about</span>    : Qui suis-je ?
+  - <span class="keyword">skills</span>   : Mes langages & compétences
+  - <span class="keyword">projects</span> : Mes projets
+  - <span class="keyword">education</span>: Mon parcours
+  - <span class="keyword">xp</span>       : Expériences pro
+  - <span class="keyword">contact</span>  : Me joindre
+  - <span class="keyword">theme [red/blue/green]</span>  : changer le thème de couleur
+  - <span class="keyword">pdf</span>  : Télécharger mon CV au format PDF
+  - <span class="keyword">clear</span>    : Effacer l'écran
+  - <span class="keyword">all</span>      : Afficher TOUT le CV
+        `
+    };
+
+    const input = document.getElementById('commandInput');
+    const output = document.getElementById('output');
+    const inputLine = document.getElementById('inputLine');
+    let isTyping = false; // Verrou pour empêcher de taper pendant l'écriture
+
+    // --- FONCTION MACHINE A ECRIRE ---
+    function typeWriter(element, text, speed = 10, callback) {
+        let i = 0;
+        isTyping = true;
+        inputLine.classList.add('hidden-input'); // Cache l'input pendant l'écriture
+
+        function type() {
+            if (i < text.length) {
+                // Si on rencontre une balise HTML (<), on l'ajoute d'un coup
+                if (text.charAt(i) === '<') {
+                    let tagEnd = text.indexOf('>', i);
+                    if (tagEnd !== -1) {
+                        element.innerHTML += text.substring(i, tagEnd + 1);
+                        i = tagEnd + 1;
+                    }
+                } else {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                }
+                
+                // Scroller vers le bas automatiquement
+                window.scrollTo(0, document.body.scrollHeight);
+                
+                // Vitesse variable pour effet "humain" (entre speed et speed*2)
+                let randomSpeed = speed + Math.random() * 20;
+                setTimeout(type, randomSpeed);
+            } else {
+                isTyping = false;
+                inputLine.classList.remove('hidden-input');
+                input.focus();
+                if (callback) callback();
+            }
+        }
+        type();
+    }
+
+    // Démarrage : On écrit le message d'intro
+    window.onload = function() {
+        const div = document.createElement('div');
+        div.className = 'ascii-art'; // Style spécial pour l'intro
+        output.appendChild(div);
+        
+        // On tape l'intro doucement (speed 5)
+        typeWriter(div, cvData.intro, 5);
+    };
+
+    // Gestion du focus
+    document.body.addEventListener('click', () => {
+        if (!isTyping) input.focus();
+    });
+
+    // Gestion de la touche Entrée
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !isTyping) {
+            const command = input.value.trim().toLowerCase();
+            
+            // Afficher la commande tapée (sans effet typewriter, instantané)
+            const cmdDiv = document.createElement('div');
+            cmdDiv.className = 'command-output';
+            cmdDiv.innerHTML = `<span class="prompt">recruteur@cesi:~$</span> ${input.value}`;
+            output.appendChild(cmdDiv);
+
+            input.value = ''; // Vider le champ
+
+            // Traiter la réponse
+            processCommand(command);
+        }
+    });
+
+    function processCommand(cmd) {
+        // Créer l'élément de réponse
+        const responseDiv = document.createElement('div');
+        responseDiv.className = 'command-output';
+        output.appendChild(responseDiv);
+
+        let content = '';
+        
+        // Logique des commandes
+        switch(cmd) {
+            case 'help': content = cvData.help; break;
+            case 'about': content = cvData.about; break;
+            case 'skills': content = cvData.skills; break;
+            case 'education': case 'formation': content = cvData.education; break;
+            case 'projects': case 'projets': content = cvData.projects; break;
+            case 'xp': case 'experience': content = cvData.xp; break;
+            case 'contact': content = cvData.contact; break;
+            case 'hobbies': case 'loisirs': content = cvData.hobbies; break;
+            case 'ls': content = 'cv_victor.pdf  skills.txt  projects_folder/  secret_plans.txt'; break;
+            case 'sudo': content = '<span class="error">Permission denied: Vous devez me recruter pour avoir les droits admin !</span>'; break;
+            case 'clear': 
+                output.innerHTML = ''; 
+                isTyping = false; // Force le déverrouillage si clear
+                inputLine.classList.remove('hidden-input');
+                return; // On arrête là
+            case 'all':
+                // Concaténer tout
+                content = cvData.about + "\n" + cvData.skills + "\n" + cvData.education + "\n" + cvData.projects + "\n" + cvData.xp + "\n" + cvData.contact;
+                break;
+            case '': return; // Rien faire
+            default:
+                content = `<span class="error">Commande introuvable: ${cmd}</span>. Tapez 'help'.`; 
+            case 'download':
+            case 'pdf':
+    content = 'Téléchargement du CV au format PDF...';
+    // Remplace le lien par le vrai chemin de ton fichier
+    window.open('CV_Victor_NOEL.pdf', '_blank'); 
+    break;
+             case 'theme red':
+    document.body.style.color = '#ff5555'; // Rouge Sith
+    document.body.style.textShadow = '0 0 5px rgba(255, 85, 85, 0.5)';
+    content = 'Thème changé : ALERT RED.';
+    break;
+case 'theme blue':
+    document.body.style.color = '#4db4ff'; // Bleu Futuriste
+    document.body.style.textShadow = '0 0 5px rgba(77, 180, 255, 0.5)';
+    content = 'Thème changé : CYBER BLUE.';
+    break;
+case 'theme green':
+    document.body.style.color = '#00ff41'; // Vert Matrix
+    document.body.style.textShadow = '0 0 5px rgba(0, 255, 65, 0.5)';
+    content = 'Thème changé : CLASSIC MATRIX.';
+    break;
+        }
+        
+
+        // Lancer l'effet typewriter sur la réponse (plus rapide : speed 2)
+        typeWriter(responseDiv, content.trim(), 2);
+    }
+</script>
+
+</body>
+</html>
