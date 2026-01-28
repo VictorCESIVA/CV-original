@@ -15,7 +15,6 @@
             font-size: 16px;
             line-height: 1.5;
             overflow-x: hidden;
-            /* Effet de lueur (Glow) sur le texte */
             text-shadow: 0 0 5px rgba(0, 255, 65, 0.5); 
         }
 
@@ -24,97 +23,44 @@
             margin: 0 auto;
             position: relative;
             min-height: 90vh;
+            padding-bottom: 50px;
         }
 
-        /* Liens */
-        a { color: #fff; text-decoration: underline; text-shadow: none; }
+        a { color: #fff; text-decoration: underline; text-shadow: none; cursor: pointer; }
         a:hover { color: #00ff41; background: #333; }
 
-        /* Animation de scintillement (Flicker) */
+        /* Animation CRT Flicker */
         @keyframes flicker {
-            0% { opacity: 0.97; }
-            5% { opacity: 0.95; }
-            10% { opacity: 0.9; }
-            15% { opacity: 0.95; }
-            20% { opacity: 0.99; }
-            50% { opacity: 0.95; }
-            80% { opacity: 0.9; }
-            100% { opacity: 0.97; }
+            0% { opacity: 0.97; } 5% { opacity: 0.95; } 10% { opacity: 0.9; }
+            50% { opacity: 0.95; } 80% { opacity: 0.9; } 100% { opacity: 0.97; }
         }
+        .crt-effect { animation: flicker 0.15s infinite; }
 
-        /* Appliquer le scintillement au conteneur */
-        .crt-effect {
-            animation: flicker 0.15s infinite;
-        }
-
-        /* Scanline (Ligne qui descend) */
+        /* Scanline */
         .scanline {
-            width: 100%;
-            height: 100px;
-            z-index: 10;
+            width: 100%; height: 100px; z-index: 10;
             background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0, 255, 65, 0.1) 50%, rgba(0,0,0,0) 100%);
-            opacity: 0.1;
-            position: fixed; /* Fixé à l'écran */
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            animation: scanline 4s linear infinite;
+            opacity: 0.1; position: fixed; top: 0; left: 0; pointer-events: none;
+            animation: scanline 8s linear infinite;
         }
+        @keyframes scanline { 0% { top: -100px; } 100% { top: 100%; } }
 
-        @keyframes scanline {
-            0% { top: -100px; }
-            100% { top: 100%; }
-        }
+        /* Input Zone */
+        .input-line { display: flex; align-items: center; margin-top: 10px; opacity: 1; transition: opacity 0.2s; }
+        .hidden-input { opacity: 0; pointer-events: none; }
 
-        /* Zone d'input */
-        .input-line {
-            display: flex;
-            align-items: center;
-            margin-top: 10px;
-            opacity: 1;
-            transition: opacity 0.2s;
-        }
-
-        /* Classe pour cacher l'input pendant l'écriture */
-        .hidden-input {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .prompt {
-            color: #bd53ed;
-            margin-right: 10px;
-            font-weight: bold;
-            text-shadow: 0 0 5px rgba(189, 83, 237, 0.5);
-        }
-
-        input {
-            background: transparent;
-            border: none;
-            color: #fff;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 16px;
-            flex-grow: 1;
-            outline: none;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-        }
+        .prompt { color: #bd53ed; margin-right: 10px; font-weight: bold; text-shadow: 0 0 5px rgba(189, 83, 237, 0.5); }
+        input { background: transparent; border: none; color: #fff; font-family: 'Courier New', Courier, monospace; font-size: 16px; flex-grow: 1; outline: none; text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
 
         .command-output { margin-bottom: 15px; white-space: pre-wrap; }
         .keyword { color: #fff; font-weight: bold; }
         .error { color: #ff5555; text-shadow: 0 0 5px rgba(255, 85, 85, 0.5); }
         
-        /* ASCII ART */
-        .ascii-art {
-            font-size: 10px;
-            white-space: pre;
-            color: #fff;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
+        .ascii-art { font-size: 10px; white-space: pre; color: #fff; margin-bottom: 20px; font-weight: bold; }
 
         @media (max-width: 600px) {
             body { font-size: 14px; padding: 10px; }
-            .ascii-art { font-size: 6px; }
+            .ascii-art { font-size: 5px; line-height: 6px; }
         }
     </style>
 </head>
@@ -134,6 +80,7 @@
 <script>
     // --- DONNÉES DU CV ---
     const cvData = {
+        // L'art ASCII est séparé pour être affiché instantanément
         'ascii': `
  __      __  _        _                  _   _    ___   _____  _ 
  \\ \\    / / (_)      | |                | \\ | |  / _ \\ |  ___|| |
@@ -141,8 +88,9 @@
    \\ \\/ /   | | / __|| __|/ _ \\ | '__|  | . \` | | | | ||  __| | |
     \\  /    | || (__ | |_| (_) || |     | |\\  | | |_| || |___ | |____
      \\/     |_| \\___| \\__|\\___/ |_|     |_| \\_|  \\___/ |_____||______|
-
-Bienvenue sur le CV interactif de <strong>Victor NOEL</strong> [v2.0.26]
+        `,
+        'intro': `
+Bienvenue sur le CV interactif de <strong>Victor NOEL</strong> [v3.0]
 Élève Ingénieur CESI - Recherche de stage (Avril-Juin 2026).
 
 Tapez <span class="keyword">'help'</span> pour commencer.
@@ -150,101 +98,67 @@ Tapez <span class="keyword">'help'</span> pour commencer.
         'about': `
 --- 👤 PROFIL ---
 Étudiant informatique rigoureux, motivé et créatif.
-Je voue une passion pour le développement informatique et l'analyse de données.
+Passionné par le développement et l'analyse de données.
 
-Objectif : Stage de 3 mois (Avril - Juin 2026) pour appliquer mes compétences en programmation.
+Objectif : Stage de 3 mois (Avril - Juin 2026).
 Localisation : Villeneuve d'Ascq (59650) - Permis B & Véhiculé.
         `,
-        
         'skills': `
---- 💻 COMPÉTENCES TECHNIQUES ---
-> Langages : Python, C/C++, JavaScript, PHP, SQL, Sagemath
+--- 💻 COMPÉTENCES ---
+> Langages : Python, C/C++, JavaScript, PHP, SQL
 > Web : HTML, CSS, PHP (Front & Back)
-> Outils : GitHub, VS Code, Cursor (IA), Arduino 
+> Outils : GitHub, VS Code, Cursor (IA), Arduino
 > Langues : Anglais (TOEIC 870 - B2+), Français (Maternelle)
-
---- 🧠 SOFT SKILLS ---
-Esprit d'équipe | Polyvalent | Curieux | Gestion de projet | Créativité
         `,
-
         'education': `
 --- 🎓 FORMATIONS ---
-[2025 - Aujourd'hui] CESI Lille
-> 2ème année Cycle Préparatoire Grande École, option informatique.
-
-[2023 - 2025] ISEN Lille
-> 1ère année Cycle Préparatoire Grande École, option informatique.
-
-[2029 - 2022] Lycée Institut d'Anchin
-> Baccalauréat Scientifique (Maths/Physique) - Mention BIEN.
+[2023 - Aujourd'hui] CESI Lille (2ème année Prépa Ingénieur Info)
+[2023 - 2025] ISEN Lille (1ère année Prépa)
+[2022] Baccalauréat Scientifique (Mention BIEN)
         `,
-
         'projects': `
---- 🚀 PROJETS ÉTUDIANTS ---
-1. Station Météo & Jeu Vidéo (2025 - CESI)
-   > Tech: C/C++, Arduino.
-
-2. Administration réseau (2025 - CESI)
-   > Tech: CISCO , VLAN , NAT , IPV4/V6 , DHCP
-
-3. Application Web (2024 - ISEN)
-   > Développement Front & Back, Authentification, Gestion BDD (10+ requêtes SQL).
-   > Tech: HTML, CSS, JS, PHP, MySQL. Projet de groupe.
-
-4. Modélisation Mathématique 2D/3D (2024 - ISEN)
-   > Tech: Algorithmes Python, Sagemath. Projet individuel.
+--- 🚀 PROJETS ---
+1. Station Météo & Jeu Vidéo (C++/Arduino)
+2. App Web PHP/MySQL (Auth, BDD, Front/Back)
+3. Modélisation Math 2D/3D (Python)
         `,
-
         'xp': `
 --- 💼 EXPÉRIENCES ---
-[Jobs Été 2024 & 2025] Chronopost (Courcelles-lès-Lens)
-> Agent de conditionnement (Juillet).
-
-[Stage 2023] Fizzy (Sars-et-Rosières)
-> Stage ouvrier : Découverte du monde de l'entreprise.
+[2024 & 2025] Chronopost : Agent de conditionnement.
+[2023] Fizzy : Stage ouvrier.
         `,
-
         'contact': `
 --- 📞 CONTACT ---
 Email : <a href="mailto:Victor_noel2004@icloud.com">Victor_noel2004@icloud.com</a>
-Tél : 07 88 62 65 21
 LinkedIn : <a href="https://www.linkedin.com/in/vic-noel" target="_blank">linkedin.com/in/vic-noel</a>
         `,
-        
-        'hobbies': `
---- 🎮 LOISIRS ---
-Jeux Vidéo | Musculation | Réseaux Sociaux | Actualité Informatique
-        `,
-
         'help': `
-COMMANDES DISPONIBLES :
-  - <span class="keyword">about</span>    : Qui suis-je ?
-  - <span class="keyword">skills</span>   : Mes langages & compétences
-  - <span class="keyword">projects</span> : Mes projets
-  - <span class="keyword">education</span>: Mon parcours
-  - <span class="keyword">xp</span>       : Expériences pro
-  - <span class="keyword">contact</span>  : Me joindre
-  - <span class="keyword">theme [red/blue/green]</span>  : changer le thème de couleur
-  - <span class="keyword">pdf</span>      : Télécharger mon CV au format PDF
-  - <span class="keyword">clear</span>    : Effacer l'écran
-  - <span class="keyword">all</span>      : Afficher TOUT le CV
+COMMANDES :
+  - <span class="keyword">about</span>, <span class="keyword">skills</span>, <span class="keyword">projects</span>, <span class="keyword">education</span>, <span class="keyword">xp</span>
+  - <span class="keyword">contact</span> : Me joindre
+  - <span class="keyword">download</span> : Télécharger le CV PDF
+  - <span class="keyword">github</span>   : Voir mes stats GitHub en live
+  - <span class="keyword">game</span>     : Mini-jeu
+  - <span class="keyword">theme</span>    : Changer la couleur (ex: theme red)
+  - <span class="keyword">all</span>      : Tout afficher
         `
     };
 
     const input = document.getElementById('commandInput');
     const output = document.getElementById('output');
     const inputLine = document.getElementById('inputLine');
-    let isTyping = false; // Verrou pour empêcher de taper pendant l'écriture
+    let isTyping = false;
+    let gameActive = false;
+    let targetNumber = 0;
 
     // --- FONCTION MACHINE A ECRIRE ---
-    function typeWriter(element, text, speed = 10, callback) {
+    function typeWriter(element, text, speed = 5, callback) {
         let i = 0;
         isTyping = true;
-        inputLine.classList.add('hidden-input'); // Cache l'input pendant l'écriture
+        inputLine.classList.add('hidden-input');
 
         function type() {
             if (i < text.length) {
-                // Si on rencontre une balise HTML (<), on l'ajoute d'un coup
                 if (text.charAt(i) === '<') {
                     let tagEnd = text.indexOf('>', i);
                     if (tagEnd !== -1) {
@@ -255,13 +169,9 @@ COMMANDES DISPONIBLES :
                     element.innerHTML += text.charAt(i);
                     i++;
                 }
-                
-                // Scroller vers le bas automatiquement
                 window.scrollTo(0, document.body.scrollHeight);
-                
-                // Vitesse variable pour effet "humain" (entre speed et speed*2)
-                let randomSpeed = speed + Math.random() * 20;
-                setTimeout(type, randomSpeed);
+                // Vitesse beaucoup plus rapide (entre 1ms et speed+5ms)
+                setTimeout(type, Math.random() * speed);
             } else {
                 isTyping = false;
                 inputLine.classList.remove('hidden-input');
@@ -272,48 +182,88 @@ COMMANDES DISPONIBLES :
         type();
     }
 
-    // Démarrage : On écrit le message d'intro
+    // --- DEMARRAGE ---
     window.onload = function() {
-        const div = document.createElement('div');
-        div.className = 'ascii-art'; // Style spécial pour l'intro
-        output.appendChild(div);
+        // 1. Affichage INSTANTANÉ du logo ASCII
+        const asciiDiv = document.createElement('div');
+        asciiDiv.className = 'ascii-art';
+        asciiDiv.innerHTML = cvData.ascii;
+        output.appendChild(asciiDiv);
         
-        // On tape l'intro doucement (speed 5)
-        typeWriter(div, cvData.intro, 2);
+        // 2. Écriture rapide du texte de bienvenue
+        const introDiv = document.createElement('div');
+        introDiv.className = 'command-output';
+        output.appendChild(introDiv);
+        
+        typeWriter(introDiv, cvData.intro.trim(), 5); // Vitesse rapide
     };
 
-    // Gestion du focus
-    document.body.addEventListener('click', () => {
-        if (!isTyping) input.focus();
-    });
+    document.body.addEventListener('click', () => { if (!isTyping) input.focus(); });
 
-    // Gestion de la touche Entrée
     input.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !isTyping) {
-            const command = input.value.trim().toLowerCase();
             
-            // Afficher la commande tapée (sans effet typewriter, instantané)
-            const cmdDiv = document.createElement('div');
-            cmdDiv.className = 'command-output';
-            cmdDiv.innerHTML = `<span class="prompt">recruteur@cesi:~$</span> ${input.value}`;
-            output.appendChild(cmdDiv);
+            // --- LOGIQUE JEU ---
+            if (gameActive) {
+                const guess = parseInt(input.value);
+                addLine(`> ${input.value}`, 'prompt'); // Affiche ce que le user tape
+                input.value = '';
 
-            input.value = ''; // Vider le champ
+                if (isNaN(guess)) {
+                    addLine("Ce n'est pas un nombre.", 'error');
+                } else if (guess < targetNumber) {
+                    addLine(`C'est plus que ${guess} !`);
+                } else if (guess > targetNumber) {
+                    addLine(`C'est moins que ${guess} !`);
+                } else {
+                    addLine(`BRAVO ! Le nombre était ${targetNumber}.`, 'keyword');
+                    gameActive = false;
+                    addLine("Retour au terminal.", 'keyword');
+                }
+                window.scrollTo(0, document.body.scrollHeight);
+                return;
+            }
 
-            // Traiter la réponse
+            const command = input.value.trim().toLowerCase();
+            addLine(`<span class="prompt">recruteur@cesi:~$</span> ${input.value}`);
+            input.value = '';
             processCommand(command);
         }
     });
 
-    function processCommand(cmd) {
-        // Créer l'élément de réponse
+    function addLine(html, type = '') {
+        const div = document.createElement('div');
+        div.className = 'command-output ' + type;
+        div.innerHTML = html;
+        output.appendChild(div);
+    }
+
+    async function processCommand(cmd) {
         const responseDiv = document.createElement('div');
         responseDiv.className = 'command-output';
         output.appendChild(responseDiv);
 
         let content = '';
-        
-        // Logique des commandes
+
+        if (cmd.startsWith('theme')) {
+            const color = cmd.split(' ')[1];
+            if (color === 'red') {
+                document.body.style.color = '#ff5555';
+                document.body.style.textShadow = '0 0 5px rgba(255, 85, 85, 0.5)';
+                content = 'Thème changé : RED ALERT.';
+            } else if (color === 'blue') {
+                document.body.style.color = '#4db4ff';
+                document.body.style.textShadow = '0 0 5px rgba(77, 180, 255, 0.5)';
+                content = 'Thème changé : CYBER BLUE.';
+            } else {
+                document.body.style.color = '#00ff41';
+                document.body.style.textShadow = '0 0 5px rgba(0, 255, 65, 0.5)';
+                content = 'Thème changé : MATRIX GREEN.';
+            }
+            typeWriter(responseDiv, content, 5);
+            return;
+        }
+
         switch(cmd) {
             case 'help': content = cvData.help; break;
             case 'about': content = cvData.about; break;
@@ -322,55 +272,54 @@ COMMANDES DISPONIBLES :
             case 'projects': case 'projets': content = cvData.projects; break;
             case 'xp': case 'experience': content = cvData.xp; break;
             case 'contact': content = cvData.contact; break;
-            case 'hobbies': case 'loisirs': content = cvData.hobbies; break;
-            case 'ls': content = 'cv_victor.pdf  skills.txt  projects_folder/  secret_plans.txt'; break;
-            case 'sudo': content = '<span class="error">Permission denied: Vous devez me recruter pour avoir les droits admin !</span>'; break;
+            
+            case 'download': case 'pdf':
+                content = "Lancement du téléchargement...";
+                // Pense à mettre ton vrai fichier PDF dans le dossier
+                setTimeout(() => { window.open('CV_Victor_NOEL.pdf', '_blank'); }, 1000);
+                break;
+
+            case 'game':
+                targetNumber = Math.floor(Math.random() * 100) + 1;
+                gameActive = true;
+                content = "--- JEU DU NOMBRE ---\nJe pense à un nombre entre 1 et 100.\nÀ toi de jouer !";
+                break;
+
+            case 'github':
+                responseDiv.innerHTML = "Connexion à GitHub...";
+                try {
+                    const res = await fetch('https://api.github.com/users/vic-noel');
+                    if (!res.ok) throw new Error();
+                    const data = await res.json();
+                    content = `--- GITHUB @${data.login} ---\nRepos: ${data.public_repos} | Followers: ${data.followers}\nBio: ${data.bio || 'Aucune'}\nURL: <a href="${data.html_url}" target="_blank">${data.html_url}</a>`;
+                    responseDiv.innerHTML = ""; // Efface le message de chargement
+                } catch (e) {
+                    content = "<span class='error'>Erreur: Impossible de joindre l'API GitHub.</span>";
+                    responseDiv.innerHTML = "";
+                }
+                break;
+
             case 'clear': 
                 output.innerHTML = ''; 
-                isTyping = false; // Force le déverrouillage si clear
+                // On remet le logo quand on clear pour le style
+                const asciiDiv = document.createElement('div');
+                asciiDiv.className = 'ascii-art';
+                asciiDiv.innerHTML = cvData.ascii;
+                output.appendChild(asciiDiv);
+                isTyping = false;
                 inputLine.classList.remove('hidden-input');
-                return; // On arrête là
-            case 'all':
-                // Concaténer tout
-                content = cvData.about + "\n" + cvData.skills + "\n" + cvData.education + "\n" + cvData.projects + "\n" + cvData.xp + "\n" + cvData.contact;
-                break;
-            case '': return; // Rien faire
-            default:
-                content = `<span class="error">Commande introuvable: ${cmd}</span>. Tapez 'help'.`; 
-            case 'download':
-            case 'pdf':
-    content = 'Téléchargement du CV au format PDF...';
-    // Remplace le lien par le vrai chemin de ton fichier
-    window.open('CV_Victor_NOEL.pdf', '_blank'); 
-    break;
-             case 'theme red':
-    document.body.style.color = '#ff5555'; // Rouge Sith
-    document.body.style.textShadow = '0 0 5px rgba(255, 85, 85, 0.5)';
-    content = 'Thème changé : ALERT RED.';
-    break;
-case 'theme blue':
-    document.body.style.color = '#4db4ff'; // Bleu Futuriste
-    document.body.style.textShadow = '0 0 5px rgba(77, 180, 255, 0.5)';
-    content = 'Thème changé : CYBER BLUE.';
-    break;
-case 'theme green':
-    document.body.style.color = '#00ff41'; // Vert Matrix
-    document.body.style.textShadow = '0 0 5px rgba(0, 255, 65, 0.5)';
-    content = 'Thème changé : CLASSIC MATRIX.';
-    break;
-        }
-        
+                return;
 
-        // Lancer l'effet typewriter sur la réponse (plus rapide : speed 2)
-        typeWriter(responseDiv, content.trim(), 2);
+            case 'all':
+                content = [cvData.about, cvData.skills, cvData.education, cvData.projects, cvData.xp, cvData.contact].join('\n');
+                break;
+            case '': return;
+            default: content = `<span class="error">Commande inconnue: ${cmd}</span>. Tapez 'help'.`;
+        }
+
+        typeWriter(responseDiv, content.trim(), 2); // Vitesse très rapide (2ms)
     }
 </script>
 
 </body>
-
 </html>
-
-
-
-
-
