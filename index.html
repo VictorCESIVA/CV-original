@@ -4,324 +4,852 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminal Victor NOEL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     <style>
-        /* --- STYLE RETRO CRT --- */
+        :root {
+            --green:  #00ff88;
+            --cyan:   #00e5ff;
+            --pink:   #ff2d78;
+            --orange: #ff9500;
+            --purple: #bd53ed;
+            --yellow: #ffe600;
+            --bg:     #080c14;
+            --bg2:    #0d1421;
+            --text:   #cdd6f4;
+            --dim:    #6b7fa3;
+            --border: #1e2d45;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            background-color: #0d1117;
-            color: #00ff41; /* Vert Hacker */
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 20px;
-            font-size: 16px;
-            line-height: 1.5;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            line-height: 1.6;
             overflow-x: hidden;
-            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5); 
+            cursor: none;
         }
 
-        #terminal-container {
-            max-width: 900px;
-            margin: 0 auto;
-            position: relative;
-            min-height: 90vh;
-            padding-bottom: 50px;
+        /* === CUSTOM CURSOR === */
+        #cursor {
+            width: 12px; height: 12px;
+            border: 2px solid var(--cyan);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s, background 0.1s;
+            mix-blend-mode: difference;
+        }
+        #cursor-trail {
+            width: 30px; height: 30px;
+            border: 1px solid rgba(0,229,255,0.3);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transition: left 0.12s ease, top 0.12s ease;
         }
 
-        a { color: #fff; text-decoration: underline; text-shadow: none; cursor: pointer; }
-        a:hover { color: #00ff41; background: #333; }
-
-        /* Animation CRT Flicker */
-        @keyframes flicker {
-            0% { opacity: 0.97; } 5% { opacity: 0.95; } 10% { opacity: 0.9; }
-            50% { opacity: 0.95; } 80% { opacity: 0.9; } 100% { opacity: 0.97; }
+        /* === BACKGROUND GRID === */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
         }
-        .crt-effect { animation: flicker 0.15s infinite; }
 
-        /* Scanline */
+        /* === ANIMATED GRADIENT GLOW === */
+        body::after {
+            content: '';
+            position: fixed;
+            width: 600px; height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,229,255,0.04) 0%, transparent 70%);
+            top: -200px; left: -200px;
+            animation: glowMove 15s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes glowMove {
+            0%   { transform: translate(0, 0); }
+            33%  { transform: translate(60vw, 30vh); background: radial-gradient(circle, rgba(255,45,120,0.05) 0%, transparent 70%); }
+            66%  { transform: translate(20vw, 70vh); background: radial-gradient(circle, rgba(189,83,237,0.05) 0%, transparent 70%); }
+            100% { transform: translate(80vw, 10vh); background: radial-gradient(circle, rgba(0,255,136,0.04) 0%, transparent 70%); }
+        }
+
+        /* === SCANLINE === */
         .scanline {
-            width: 100%; height: 100px; z-index: 10;
-            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0, 255, 65, 0.1) 50%, rgba(0,0,0,0) 100%);
-            opacity: 0.1; position: fixed; top: 0; left: 0; pointer-events: none;
-            animation: scanline 8s linear infinite;
+            position: fixed; inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+            pointer-events: none; z-index: 5;
         }
-        @keyframes scanline { 0% { top: -100px; } 100% { top: 100%; } }
+        .scanline-sweep {
+            position: fixed; left: 0; right: 0; height: 120px;
+            background: linear-gradient(transparent, rgba(0,229,255,0.04), transparent);
+            animation: sweep 10s linear infinite;
+            pointer-events: none; z-index: 6;
+        }
+        @keyframes sweep { from { top: -120px; } to { top: 100vh; } }
 
-        /* Input Zone */
-        .input-line { display: flex; align-items: center; margin-top: 10px; opacity: 1; transition: opacity 0.2s; }
-        .hidden-input { opacity: 0; pointer-events: none; }
+        /* === TERMINAL WINDOW === */
+        #terminal-wrap {
+            position: relative; z-index: 10;
+            max-width: 960px;
+            margin: 30px auto;
+            padding: 0 20px 60px;
+        }
 
-        .prompt { color: #bd53ed; margin-right: 10px; font-weight: bold; text-shadow: 0 0 5px rgba(189, 83, 237, 0.5); }
-        input { background: transparent; border: none; color: #fff; font-family: 'Courier New', Courier, monospace; font-size: 16px; flex-grow: 1; outline: none; text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+        /* Top bar */
+        #topbar {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .dot { width: 13px; height: 13px; border-radius: 50%; }
+        .dot-red   { background: #ff5f57; }
+        .dot-yellow{ background: #febc2e; }
+        .dot-green { background: #28c840; }
+        #topbar-title {
+            margin-left: auto; margin-right: auto;
+            color: var(--dim);
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
 
-        .command-output { margin-bottom: 15px; white-space: pre-wrap; }
-        .keyword { color: #fff; font-weight: bold; }
-        .error { color: #ff5555; text-shadow: 0 0 5px rgba(255, 85, 85, 0.5); }
-        
-        .ascii-art { font-size: 10px; white-space: pre; color: #fff; margin-bottom: 20px; font-weight: bold; }
+        /* Main terminal body */
+        #terminal-body {
+            background: rgba(8, 12, 20, 0.95);
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            padding: 30px;
+            min-height: 75vh;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 60px rgba(0,229,255,0.05), 0 0 120px rgba(0,0,0,0.8);
+        }
+
+        /* === ASCII HEADER === */
+        .ascii-art {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            line-height: 1.15;
+            white-space: pre;
+            background: linear-gradient(90deg, var(--cyan), var(--green), var(--purple), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 24px;
+            animation: gradShift 4s ease infinite;
+            background-size: 200% 200%;
+        }
+        @keyframes gradShift {
+            0%, 100% { background-position: 0% 50%; }
+            50%       { background-position: 100% 50%; }
+        }
 
         @media (max-width: 600px) {
-            body { font-size: 14px; padding: 10px; }
-            .ascii-art { font-size: 5px; line-height: 6px; }
+            .ascii-art { font-size: 4.5px; line-height: 1.1; }
+        }
+
+        /* === OUTPUT LINES === */
+        .command-output {
+            margin-bottom: 16px;
+            white-space: pre-wrap;
+            animation: fadeSlide 0.2s ease;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* === INPUT LINE === */
+        .input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 8px;
+            gap: 10px;
+        }
+        .hidden-input { opacity: 0; pointer-events: none; }
+
+        .prompt {
+            color: var(--purple);
+            font-weight: 700;
+            text-shadow: 0 0 8px rgba(189,83,237,0.6);
+            white-space: nowrap;
+        }
+        .prompt-at  { color: var(--dim); }
+        .prompt-dir { color: var(--cyan); }
+
+        input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            flex-grow: 1;
+            outline: none;
+            caret-color: var(--cyan);
+        }
+
+        /* === SECTION HEADERS === */
+        .section-title {
+            color: var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0,229,255,0.4);
+        }
+
+        /* === COLORED TEXT HELPERS === */
+        .c-green  { color: var(--green);  text-shadow: 0 0 6px rgba(0,255,136,0.4); }
+        .c-cyan   { color: var(--cyan);   text-shadow: 0 0 6px rgba(0,229,255,0.4); }
+        .c-pink   { color: var(--pink);   text-shadow: 0 0 6px rgba(255,45,120,0.4); }
+        .c-orange { color: var(--orange); text-shadow: 0 0 6px rgba(255,149,0,0.4); }
+        .c-purple { color: var(--purple); text-shadow: 0 0 6px rgba(189,83,237,0.4); }
+        .c-yellow { color: var(--yellow); text-shadow: 0 0 6px rgba(255,230,0,0.4); }
+        .c-dim    { color: var(--dim); }
+        .c-white  { color: #fff; font-weight: 600; }
+        .error    { color: var(--pink); text-shadow: 0 0 6px rgba(255,45,120,0.5); }
+
+        /* === TAGS / BADGES === */
+        .tag {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin: 2px 3px 2px 0;
+        }
+        .tag-green  { background: rgba(0,255,136,0.12); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+        .tag-cyan   { background: rgba(0,229,255,0.12); color: var(--cyan); border: 1px solid rgba(0,229,255,0.3); }
+        .tag-pink   { background: rgba(255,45,120,0.12); color: var(--pink); border: 1px solid rgba(255,45,120,0.3); }
+        .tag-orange { background: rgba(255,149,0,0.12); color: var(--orange); border: 1px solid rgba(255,149,0,0.3); }
+        .tag-purple { background: rgba(189,83,237,0.12); color: var(--purple); border: 1px solid rgba(189,83,237,0.3); }
+
+        /* === PROGRESS BAR === */
+        .skill-row { display: flex; align-items: center; gap: 12px; margin: 5px 0; }
+        .skill-name { min-width: 110px; color: var(--text); font-size: 13px; }
+        .skill-bar  { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+        .skill-fill {
+            height: 100%;
+            border-radius: 3px;
+            animation: fillBar 1s ease forwards;
+            transform-origin: left;
+        }
+        @keyframes fillBar { from { width: 0 !important; } }
+        .skill-pct  { min-width: 36px; font-size: 12px; color: var(--dim); text-align: right; }
+
+        /* === CARD-STYLE PROJECT === */
+        .project-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin: 10px 0;
+            background: rgba(13,20,33,0.7);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .project-card:hover {
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px rgba(0,229,255,0.08);
+        }
+        .project-title { color: var(--cyan); font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+        .project-desc  { color: var(--dim); font-size: 13px; margin-bottom: 8px; }
+
+        /* === CERT BADGE === */
+        .cert-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: linear-gradient(135deg, rgba(255,230,0,0.1), rgba(255,149,0,0.1));
+            border: 1px solid rgba(255,230,0,0.3);
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin: 6px 0;
+        }
+        .cert-score { font-size: 22px; font-weight: 900; color: var(--yellow); font-family: 'Orbitron', sans-serif; }
+        .cert-info  { font-size: 12px; color: var(--dim); }
+        .cert-name  { color: #fff; font-weight: 600; }
+
+        /* === AVATAR AREA === */
+        .avatar-section {
+            display: flex; align-items: flex-start; gap: 24px;
+            padding: 16px 0;
+        }
+        .avatar-box {
+            width: 80px; height: 80px; border-radius: 12px;
+            border: 2px solid var(--cyan);
+            background: linear-gradient(135deg, rgba(0,229,255,0.2), rgba(189,83,237,0.2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px;
+            box-shadow: 0 0 20px rgba(0,229,255,0.2);
+            flex-shrink: 0;
+        }
+        .avatar-info { flex: 1; }
+        .avatar-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px; font-weight: 900;
+            background: linear-gradient(90deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .avatar-role { color: var(--green); font-size: 13px; margin: 4px 0; }
+        .avatar-links { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+        .social-link {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 20px; font-size: 12px;
+            text-decoration: none; font-weight: 600; transition: all 0.2s;
+        }
+        .social-link:hover { transform: translateY(-2px); filter: brightness(1.2); }
+        .sl-github   { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+        .sl-linkedin { background: rgba(0,119,181,0.2); color: #4db8ff; border: 1px solid rgba(0,119,181,0.4); }
+        .sl-cv       { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+
+        a { color: var(--cyan); text-decoration: none; }
+        a:hover { color: var(--green); text-decoration: underline; }
+
+        /* === INTERESTS === */
+        .interest-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .interest-item {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            border-radius: 20px; padding: 4px 12px; font-size: 13px; color: var(--text);
+            transition: all 0.2s;
+        }
+        .interest-item:hover { border-color: var(--purple); color: var(--purple); }
+
+        /* === SOFT SKILLS === */
+        .softskill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+        /* === TIMELINE === */
+        .timeline-item { display: flex; gap: 16px; margin: 10px 0; }
+        .timeline-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            margin-top: 6px; flex-shrink: 0;
+            box-shadow: 0 0 8px currentColor;
+        }
+        .timeline-date { color: var(--dim); font-size: 12px; white-space: nowrap; }
+        .timeline-content { flex: 1; }
+
+        /* === HELP TABLE === */
+        .help-grid { display: grid; grid-template-columns: 120px 1fr; gap: 4px 16px; margin-top: 6px; }
+        .help-cmd  { color: var(--cyan); font-weight: 700; }
+        .help-desc { color: var(--dim); font-size: 13px; }
+
+        /* === BOOT ANIMATION === */
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .blink { animation: blink 1s step-end infinite; }
+
+        /* === MATRIX RAIN (easter egg) === */
+        #matrix-canvas {
+            position: fixed; inset: 0; z-index: 100;
+            display: none; pointer-events: none;
+        }
+
+        /* === GLITCH === */
+        @keyframes glitch {
+            0%   { clip-path: inset(0 0 95% 0); transform: translate(-3px, 0); }
+            20%  { clip-path: inset(50% 0 30% 0); transform: translate(3px, 0); }
+            40%  { clip-path: inset(20% 0 60% 0); transform: translate(-2px, 0); }
+            60%  { clip-path: inset(80% 0 5% 0); transform: translate(2px, 0); }
+            80%  { clip-path: inset(5% 0 80% 0); transform: translate(-1px, 0); }
+            100% { clip-path: inset(0 0 95% 0); transform: translate(0, 0); }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            #terminal-body { padding: 18px; }
+            .avatar-section { flex-direction: column; }
+            .help-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-<body class="crt-effect">
+<body>
 
+<canvas id="matrix-canvas"></canvas>
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
 <div class="scanline"></div>
+<div class="scanline-sweep"></div>
 
-<div id="terminal-container">
-    <div id="output"></div>
-
-    <div class="input-line" id="inputLine">
-        <span class="prompt">recruteur@cesi:~$</span>
-        <input type="text" id="commandInput" autocomplete="off" autofocus>
+<div id="terminal-wrap">
+    <div id="topbar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span id="topbar-title">victor-noel — terminal v4.0</span>
+    </div>
+    <div id="terminal-body">
+        <div id="output"></div>
+        <div class="input-line" id="inputLine">
+            <span class="prompt">
+                <span style="color:var(--green)">victor</span><span class="c-dim">@</span><span style="color:var(--cyan)">cesi</span><span class="c-dim">:</span><span style="color:var(--purple)">~</span><span class="c-dim">$</span>
+            </span>
+            <input type="text" id="commandInput" autocomplete="off" spellcheck="false" autofocus placeholder="tapez 'help'...">
+        </div>
     </div>
 </div>
 
 <script>
-    // --- DONNÉES DU CV ---
-    const cvData = {
-        // L'art ASCII est séparé pour être affiché instantanément
-        'ascii': `
- __      __  _        _                  _   _    ___   _____  _ 
- \\ \\    / / (_)      | |                | \\ | |  / _ \\ |  ___|| |
-  \\ \\  / /   _   ___ | |_  ___   _ __   |  \\| | | | | || |__  | |
-   \\ \\/ /   | | / __|| __|/ _ \\ | '__|  | . \` | | | | ||  __| | |
-    \\  /    | || (__ | |_| (_) || |     | |\\  | | |_| || |___ | |____
-     \\/     |_| \\___| \\__|\\___/ |_|     |_| \\_|  \\___/ |_____||______|
-        `,
-        'intro': `
-Bienvenue sur le CV interactif de <strong>Victor NOEL</strong> [v3.0]
-Élève Ingénieur CESI - Recherche de stage (Avril-Juin 2026).
+// =============================================
+//  CV DATA
+// =============================================
+const cv = {
+    ascii: `
+ ██╗   ██╗██╗ ██████╗████████╗ ██████╗ ██████╗     ███╗   ██╗ ██████╗ ███████╗██╗     
+ ██║   ██║██║██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗    ████╗  ██║██╔═══██╗██╔════╝██║     
+ ██║   ██║██║██║        ██║   ██║   ██║██████╔╝    ██╔██╗ ██║██║   ██║█████╗  ██║     
+ ╚██╗ ██╔╝██║██║        ██║   ██║   ██║██╔══██╗    ██║╚██╗██║██║   ██║██╔══╝  ██║     
+  ╚████╔╝ ██║╚██████╗   ██║   ╚██████╔╝██║  ██║    ██║ ╚████║╚██████╔╝███████╗███████╗
+   ╚═══╝  ╚═╝ ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═══╝ ╚═════╝ ╚══════╝╚══════╝`,
 
-Tapez <span class="keyword">'help'</span> pour commencer.
-        `,
-        'about': `
---- 👤 PROFIL ---
-Étudiant informatique rigoureux, motivé et créatif.
-Passionné par le développement, l'analyse de données, et l'IA.
+    intro: `<span class="c-dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  Bienvenue sur le CV interactif de <span class="c-white">Victor NOEL</span> <span class="tag tag-green">v4.0</span>
+  Élève Ingénieur CESI Lille — Recherche stage <span class="c-orange">Avril → Juin 2026</span>
+<span class="c-dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+  Tapez <span class="c-cyan">help</span> pour voir les commandes disponibles.`,
 
-Objectif : Stage de 3 mois (Avril - Juin 2026).
-Localisation : Villeneuve d'Ascq (59650) - Permis B & Véhiculé.
-        `,
-        'skills': `
---- 💻 COMPÉTENCES ---
-> Langages : Python, C/C++, JavaScript, PHP, SQL
-> Web : HTML, CSS, PHP, JS, Supabase, Vercel  (Front & Back)
-> Outils : GitHub, VS Code, Cursor (IA), Arduino, Firebase, 
-> Langues : Anglais (TOEIC 870 - B2+), Français (Maternelle)
-        `,
-        'education': `
---- 🎓 FORMATIONS ---
-[2025 - Aujourd'hui] CESI Lille (2ème année Prépa Ingénieur Info)
-[2023 - 2025] ISEN Lille (1ère année Prépa)
-[2022] Baccalauréat Scientifique (Mention BIEN)
-        `,
-        'projects': `
---- 🚀 PROJETS ---
-1. Station Météo & Jeu Vidéo (C++/Arduino)
-2. Mise en place d'un réseau d'entreprise (VLAN , NAT , protocoles réseaux)
-3. App Web PHP/MySQL (Auth, BDD, Front/Back)
-4. Modélisation Math 2D/3D (Python, sagemath)
-        `,
-        'xp': `
---- 💼 EXPÉRIENCES ---
-[2024 & 2025] Chronopost : Agent de conditionnement.
-[2023] Fizzy : Stage ouvrier.
-        `,
-        'contact': `
---- 📞 CONTACT ---
-Email : <a href="mailto:victor_noel2004@icloud.com">Victor_noel2004@icloud.com</a>
-LinkedIn : <a href="https://www.linkedin.com/in/vic-noel" target="_blank">linkedin.com/in/vic-noel</a>
-        `,
-        'help': `
-COMMANDES :
-  - <span class="keyword">about</span>, <span class="keyword">skills</span>, <span class="keyword">projects</span>, <span class="keyword">education</span>, <span class="keyword">xp</span>
-  - <span class="keyword">contact</span> : Me joindre
-  - <span class="keyword">download</span> : Télécharger le CV PDF
-  - <span class="keyword">github</span>   : Voir mes stats GitHub en live
-  - <span class="keyword">game</span>     : Mini-jeu
-  - <span class="keyword">theme</span>    : Changer la couleur (ex: theme red)
-  - <span class="keyword">all</span>      : Tout afficher
-        `
-    };
+    about: `<div class="avatar-section">
+  <div class="avatar-box">🧑‍💻</div>
+  <div class="avatar-info">
+    <div class="avatar-name">Victor NOEL</div>
+    <div class="avatar-role">▸ Élève Ingénieur Informatique — CESI Lille</div>
+    <div style="font-size:13px;color:var(--dim);margin-top:4px">
+      📍 Villeneuve d'Ascq (59650) · Permis B &amp; Véhiculé
+      <br>🎯 Passionné par le dev logiciel, l'analyse de données et l'IA
+      <br>🔍 Open to: <span class="c-green">Stage 3 mois — Avril / Juin 2026</span>
+    </div>
+    <div class="avatar-links">
+      <a class="social-link sl-github" href="https://github.com/VictorCESIVA" target="_blank">⌥ GitHub</a>
+      <a class="social-link sl-linkedin" href="https://www.linkedin.com/in/vic-noel" target="_blank">in LinkedIn</a>
+      <a class="social-link sl-cv" href="https://victorcesiva.github.io/CV-original/" target="_blank">✦ CV Online</a>
+    </div>
+  </div>
+</div>`,
 
-    const input = document.getElementById('commandInput');
-    const output = document.getElementById('output');
-    const inputLine = document.getElementById('inputLine');
-    let isTyping = false;
-    let gameActive = false;
-    let targetNumber = 0;
+    skills: `<div class="section-title">// COMPÉTENCES TECHNIQUES</div>
+<span class="c-dim">Langages</span>
+<div class="skill-row"><span class="skill-name">Python</span><div class="skill-bar"><div class="skill-fill" style="width:82%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div></div><span class="skill-pct c-green">82%</span></div>
+<div class="skill-row"><span class="skill-name">C / C++</span><div class="skill-bar"><div class="skill-fill" style="width:70%;background:linear-gradient(90deg,var(--purple),var(--pink))"></div></div><span class="skill-pct c-purple">70%</span></div>
+<div class="skill-row"><span class="skill-name">C#</span><div class="skill-bar"><div class="skill-fill" style="width:72%;background:linear-gradient(90deg,var(--purple),var(--cyan))"></div></div><span class="skill-pct c-cyan">72%</span></div>
+<div class="skill-row"><span class="skill-name">JavaScript</span><div class="skill-bar"><div class="skill-fill" style="width:68%;background:linear-gradient(90deg,var(--yellow),var(--orange))"></div></div><span class="skill-pct c-yellow">68%</span></div>
+<div class="skill-row"><span class="skill-name">PHP / SQL</span><div class="skill-bar"><div class="skill-fill" style="width:65%;background:linear-gradient(90deg,var(--pink),var(--purple))"></div></div><span class="skill-pct c-pink">65%</span></div>
+<div class="skill-row"><span class="skill-name">HTML / CSS</span><div class="skill-bar"><div class="skill-fill" style="width:78%;background:linear-gradient(90deg,var(--orange),var(--pink))"></div></div><span class="skill-pct c-orange">78%</span></div>
 
-    // --- FONCTION MACHINE A ECRIRE ---
-    function typeWriter(element, text, speed = 5, callback) {
-        let i = 0;
-        isTyping = true;
-        inputLine.classList.add('hidden-input');
+<br><span class="c-dim">Outils &amp; Environnements</span>
+<div style="margin-top:8px">
+  <span class="tag tag-cyan">GitHub</span><span class="tag tag-cyan">VS Code</span><span class="tag tag-cyan">Cursor AI</span>
+  <span class="tag tag-green">Arduino</span><span class="tag tag-green">Firebase</span><span class="tag tag-green">Supabase</span>
+  <span class="tag tag-purple">Vercel</span><span class="tag tag-purple">Linux</span><span class="tag tag-orange">Visual Studio</span>
+</div>`,
 
-        function type() {
-            if (i < text.length) {
-                if (text.charAt(i) === '<') {
-                    let tagEnd = text.indexOf('>', i);
-                    if (tagEnd !== -1) {
-                        element.innerHTML += text.substring(i, tagEnd + 1);
-                        i = tagEnd + 1;
-                    }
-                } else {
-                    element.innerHTML += text.charAt(i);
-                    i++;
-                }
-                window.scrollTo(0, document.body.scrollHeight);
-                // Vitesse beaucoup plus rapide (entre 1ms et speed+5ms)
-                setTimeout(type, Math.random() * speed);
+    softskills: `<div class="section-title">// SOFT SKILLS & CENTRES D'INTÉRÊT</div>
+
+<span class="c-dim">Qualités</span>
+<div class="softskill-row" style="margin-top:8px">
+  <span class="tag tag-green">✓ Rigoureux</span>
+  <span class="tag tag-cyan">✓ Créatif</span>
+  <span class="tag tag-purple">✓ Curieux</span>
+  <span class="tag tag-orange">✓ Autonome</span>
+  <span class="tag tag-pink">✓ Esprit d'équipe</span>
+  <span class="tag tag-green">✓ Force de proposition</span>
+  <span class="tag tag-cyan">✓ Adaptable</span>
+  <span class="tag tag-purple">✓ Problem solver</span>
+</div>
+
+<br><span class="c-dim">Centres d'intérêt</span>
+<div class="interest-grid">
+  <div class="interest-item">⚽ Football</div>
+  <div class="interest-item">🎮 Jeux vidéo</div>
+  <div class="interest-item">🤖 Intelligence Artificielle</div>
+  <div class="interest-item">🛠️ Open Source</div>
+  <div class="interest-item">📊 Data Science</div>
+  <div class="interest-item">🎵 Musique</div>
+  <div class="interest-item">🔬 Sciences</div>
+  <div class="interest-item">💡 Side projects</div>
+</div>`,
+
+    certifications: `<div class="section-title">// CERTIFICATIONS & NIVEAUX</div>
+
+<div class="cert-badge">
+  <div>
+    <div style="font-size:10px;color:var(--dim);letter-spacing:2px">TOEIC SCORE</div>
+    <div class="cert-score">870</div>
+  </div>
+  <div class="cert-info">
+    <div class="cert-name">🇬🇧 Anglais — Niveau B2+</div>
+    <div>Test of English for International Communication</div>
+    <div style="margin-top:4px"><span class="tag tag-green">Professionnel</span></div>
+  </div>
+</div>
+
+<br><span class="c-dim">Langues</span>
+<div class="skill-row" style="margin-top:8px"><span class="skill-name">🇫🇷 Français</span><div class="skill-bar"><div class="skill-fill" style="width:100%;background:linear-gradient(90deg,#002395,#fff,#ed2939)"></div></div><span class="skill-pct c-green">Natif</span></div>
+<div class="skill-row"><span class="skill-name">🇬🇧 Anglais</span><div class="skill-bar"><div class="skill-fill" style="width:78%;background:linear-gradient(90deg,#012169,#C8102E)"></div></div><span class="skill-pct c-cyan">B2+</span></div>`,
+
+    education: `<div class="section-title">// FORMATIONS</div>
+<div class="timeline-item">
+  <div class="timeline-dot" style="color:var(--cyan);background:var(--cyan)"></div>
+  <div class="timeline-content">
+    <div class="timeline-date">2025 → Aujourd'hui</div>
+    <div class="c-white" style="font-weight:700">CESI Lille</div>
+    <div class="c-dim" style="font-size:13px">2ème année Cycle Préparatoire Ingénieur Informatique</div>
+    <div style="margin-top:4px"><span class="tag tag-cyan">Algorithmie</span><span class="tag tag-purple">Réseaux</span><span class="tag tag-green">BDD</span><span class="tag tag-orange">Projet</span></div>
+  </div>
+</div>
+<div class="timeline-item">
+  <div class="timeline-dot" style="color:var(--purple);background:var(--purple)"></div>
+  <div class="timeline-content">
+    <div class="timeline-date">2023 → 2025</div>
+    <div class="c-white" style="font-weight:700">ISEN Yncréa Lille</div>
+    <div class="c-dim" style="font-size:13px">1ère année Cycle Préparatoire Sciences & Informatique</div>
+    <div style="margin-top:4px"><span class="tag tag-purple">Maths</span><span class="tag tag-cyan">Physique</span><span class="tag tag-pink">C/C++</span></div>
+  </div>
+</div>
+<div class="timeline-item">
+  <div class="timeline-dot" style="color:var(--green);background:var(--green)"></div>
+  <div class="timeline-content">
+    <div class="timeline-date">2022</div>
+    <div class="c-white" style="font-weight:700">Baccalauréat Scientifique</div>
+    <div class="c-dim" style="font-size:13px">Spécialités : Maths — Physique-Chimie</div>
+    <div style="margin-top:4px"><span class="tag tag-green">Mention BIEN</span></div>
+  </div>
+</div>`,
+
+    projects: `<div class="section-title">// PROJETS</div>
+<div class="project-card">
+  <div class="project-title">🧹 OpenCleaner</div>
+  <div class="project-desc">Nettoyeur de PC open source et gratuit. Supprime fichiers temporaires, optimise le système. Parce que personne ne devrait payer pour ça.</div>
+  <div><span class="tag tag-cyan">C#</span><span class="tag tag-purple">.NET</span><span class="tag tag-green">Open Source</span></div>
+  <div style="margin-top:8px;font-size:12px"><a href="https://github.com/VictorCESIVA/OpenCleaner" target="_blank" class="c-cyan">⌥ github.com/VictorCESIVA/OpenCleaner</a></div>
+</div>
+<div class="project-card">
+  <div class="project-title">🌦️ Station Météo & Jeu Vidéo</div>
+  <div class="project-desc">Station météo embarquée avec affichage temps réel et mini-jeu intégré. Gestion des capteurs, affichage LCD, logique de jeu en C++ sur Arduino.</div>
+  <div><span class="tag tag-pink">C++</span><span class="tag tag-orange">Arduino</span><span class="tag tag-green">Hardware</span><span class="tag tag-cyan">Capteurs</span></div>
+</div>
+<div class="project-card">
+  <div class="project-title">🌐 Application Web PHP / MySQL</div>
+  <div class="project-desc">Application web full-stack avec authentification, gestion de base de données, interface front responsive. Architecture MVC propre.</div>
+  <div><span class="tag tag-purple">PHP</span><span class="tag tag-cyan">MySQL</span><span class="tag tag-green">HTML/CSS</span><span class="tag tag-orange">JavaScript</span></div>
+</div>
+<div class="project-card">
+  <div class="project-title">🔗 Infrastructure Réseau d'Entreprise</div>
+  <div class="project-desc">Mise en place complète d'un réseau pro : segmentation VLAN, configuration NAT/PAT, routage inter-VLAN, protocoles OSPF et DHCP.</div>
+  <div><span class="tag tag-cyan">Cisco</span><span class="tag tag-pink">VLAN</span><span class="tag tag-orange">NAT</span><span class="tag tag-purple">OSPF</span><span class="tag tag-green">DHCP</span></div>
+</div>
+<div class="project-card">
+  <div class="project-title">📐 Modélisation Mathématique 2D/3D</div>
+  <div class="project-desc">Visualisations interactives de fonctions mathématiques complexes, surfaces 3D et fractales avec Python et SageMath.</div>
+  <div><span class="tag tag-green">Python</span><span class="tag tag-cyan">SageMath</span><span class="tag tag-orange">Matplotlib</span><span class="tag tag-purple">NumPy</span></div>
+</div>`,
+
+    xp: `<div class="section-title">// EXPÉRIENCES PROFESSIONNELLES</div>
+<div class="timeline-item">
+  <div class="timeline-dot" style="color:var(--orange);background:var(--orange)"></div>
+  <div class="timeline-content">
+    <div class="timeline-date">2024 &amp; 2025</div>
+    <div class="c-white" style="font-weight:700">Chronopost — Agent de conditionnement</div>
+    <div class="c-dim" style="font-size:13px">Tri et préparation de colis, travail en équipe sous cadence. Rigueur et organisation.</div>
+    <div style="margin-top:4px"><span class="tag tag-orange">Logistique</span><span class="tag tag-green">Travail d'équipe</span></div>
+  </div>
+</div>
+<div class="timeline-item">
+  <div class="timeline-dot" style="color:var(--pink);background:var(--pink)"></div>
+  <div class="timeline-content">
+    <div class="timeline-date">2023</div>
+    <div class="c-white" style="font-weight:700">Fizzy — Stage ouvrier</div>
+    <div class="c-dim" style="font-size:13px">Découverte du monde professionnel. Production et contrôle qualité.</div>
+    <div style="margin-top:4px"><span class="tag tag-pink">Stage</span><span class="tag tag-cyan">Industrie</span></div>
+  </div>
+</div>`,
+
+    contact: `<div class="section-title">// CONTACT</div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+  <div>📧 <a href="mailto:victor_noel2004@icloud.com">Victor_noel2004@icloud.com</a></div>
+  <div>💼 <a href="https://www.linkedin.com/in/vic-noel" target="_blank">linkedin.com/in/vic-noel</a></div>
+  <div>🐙 <a href="https://github.com/VictorCESIVA" target="_blank">github.com/VictorCESIVA</a></div>
+  <div>🌐 <a href="https://victorcesiva.github.io/CV-original/" target="_blank">victorcesiva.github.io/CV-original</a></div>
+  <div>📍 Villeneuve d'Ascq, 59650 — <span class="c-green">Disponible : Avril → Juin 2026</span></div>
+</div>`,
+
+    help: `<div class="section-title">// COMMANDES DISPONIBLES</div>
+<div class="help-grid">
+  <span class="help-cmd">about</span><span class="help-desc">Profil complet + liens</span>
+  <span class="help-cmd">skills</span><span class="help-desc">Compétences techniques avec barres de progression</span>
+  <span class="help-cmd">softskills</span><span class="help-desc">Qualités &amp; centres d'intérêt</span>
+  <span class="help-cmd">certifications</span><span class="help-desc">TOEIC, niveaux de langue</span>
+  <span class="help-cmd">education</span><span class="help-desc">Parcours scolaire (timeline)</span>
+  <span class="help-cmd">projects</span><span class="help-desc">Projets détaillés avec tech stack</span>
+  <span class="help-cmd">xp</span><span class="help-desc">Expériences professionnelles</span>
+  <span class="help-cmd">contact</span><span class="help-desc">Email, LinkedIn, GitHub</span>
+  <span class="help-cmd">github</span><span class="help-desc">Stats GitHub en live via API</span>
+  <span class="help-cmd">all</span><span class="help-desc">Tout afficher d'un coup</span>
+  <span class="help-cmd">theme [color]</span><span class="help-desc">Changer couleur : green / red / blue / pink / default</span>
+  <span class="help-cmd">game</span><span class="help-desc">Mini-jeu : devine le nombre</span>
+  <span class="help-cmd">matrix</span><span class="help-desc">🐇 Easter egg...</span>
+  <span class="help-cmd">clear</span><span class="help-desc">Nettoyer le terminal</span>
+  <span class="help-cmd">download</span><span class="help-desc">Télécharger le CV PDF</span>
+</div>`
+};
+
+// =============================================
+//  ENGINE
+// =============================================
+const input    = document.getElementById('commandInput');
+const output   = document.getElementById('output');
+const inputLine = document.getElementById('inputLine');
+
+let isTyping  = false;
+let gameActive = false;
+let targetNumber = 0;
+let matrixInterval = null;
+
+// --- Custom cursor ---
+const cur  = document.getElementById('cursor');
+const curT = document.getElementById('cursor-trail');
+document.addEventListener('mousemove', e => {
+    cur.style.left  = (e.clientX - 6) + 'px';
+    cur.style.top   = (e.clientY - 6) + 'px';
+    curT.style.left = (e.clientX - 15) + 'px';
+    curT.style.top  = (e.clientY - 15) + 'px';
+});
+
+// --- Typewriter (fast) ---
+function typeWriter(element, html, speed = 2, callback) {
+    let i = 0;
+    isTyping = true;
+    inputLine.classList.add('hidden-input');
+    element.innerHTML = '';
+
+    function type() {
+        if (i < html.length) {
+            if (html[i] === '<') {
+                const end = html.indexOf('>', i);
+                if (end !== -1) { element.innerHTML += html.slice(i, end + 1); i = end + 1; }
+                else { element.innerHTML += html[i++]; }
             } else {
-                isTyping = false;
-                inputLine.classList.remove('hidden-input');
-                input.focus();
-                if (callback) callback();
+                element.innerHTML += html[i++];
             }
+            window.scrollTo(0, document.body.scrollHeight);
+            setTimeout(type, Math.random() * speed);
+        } else {
+            isTyping = false;
+            inputLine.classList.remove('hidden-input');
+            input.focus();
+            if (callback) callback();
         }
-        type();
+    }
+    type();
+}
+
+// --- Instant render (for HTML-heavy sections) ---
+function renderInstant(element, html) {
+    element.innerHTML = html;
+    isTyping = false;
+    inputLine.classList.remove('hidden-input');
+    input.focus();
+    window.scrollTo(0, document.body.scrollHeight);
+}
+
+// --- Boot ---
+window.onload = () => {
+    const asciiDiv = document.createElement('div');
+    asciiDiv.className = 'ascii-art';
+    asciiDiv.innerHTML = cv.ascii;
+    output.appendChild(asciiDiv);
+
+    const introDiv = document.createElement('div');
+    introDiv.className = 'command-output';
+    output.appendChild(introDiv);
+    typeWriter(introDiv, cv.intro.trim(), 3);
+};
+
+document.body.addEventListener('click', () => { if (!isTyping) input.focus(); });
+
+// --- Key handler ---
+input.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || isTyping) return;
+
+    if (gameActive) {
+        const g = parseInt(input.value);
+        addEcho(input.value);
+        input.value = '';
+        if (isNaN(g))      addLine("<span class='error'>Ce n'est pas un nombre valide.</span>");
+        else if (g < targetNumber) addLine(`<span class="c-cyan">↑ C'est plus que ${g} !</span>`);
+        else if (g > targetNumber) addLine(`<span class="c-orange">↓ C'est moins que ${g} !</span>`);
+        else {
+            addLine(`<span class="c-green">🎉 BRAVO ! Le nombre était bien ${targetNumber} !</span>`);
+            gameActive = false;
+        }
+        window.scrollTo(0, document.body.scrollHeight);
+        return;
     }
 
-    // --- DEMARRAGE ---
-    window.onload = function() {
-        // 1. Affichage INSTANTANÉ du logo ASCII
-        const asciiDiv = document.createElement('div');
-        asciiDiv.className = 'ascii-art';
-        asciiDiv.innerHTML = cvData.ascii;
-        output.appendChild(asciiDiv);
-        
-        // 2. Écriture rapide du texte de bienvenue
-        const introDiv = document.createElement('div');
-        introDiv.className = 'command-output';
-        output.appendChild(introDiv);
-        
-        typeWriter(introDiv, cvData.intro.trim(), 5); // Vitesse rapide
-    };
+    const cmd = input.value.trim().toLowerCase();
+    addEcho(input.value);
+    input.value = '';
+    processCommand(cmd);
+});
 
-    document.body.addEventListener('click', () => { if (!isTyping) input.focus(); });
+function addEcho(val) {
+    const d = document.createElement('div');
+    d.className = 'command-output';
+    d.innerHTML = `<span class="prompt"><span style="color:var(--green)">victor</span><span class="c-dim">@</span><span style="color:var(--cyan)">cesi</span><span class="c-dim">:</span><span style="color:var(--purple)">~</span><span class="c-dim">$</span></span> ${val}`;
+    output.appendChild(d);
+}
 
-    input.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !isTyping) {
-            
-            // --- LOGIQUE JEU ---
-            if (gameActive) {
-                const guess = parseInt(input.value);
-                addLine(`> ${input.value}`, 'prompt'); // Affiche ce que le user tape
-                input.value = '';
+function addLine(html) {
+    const d = document.createElement('div');
+    d.className = 'command-output';
+    d.innerHTML = html;
+    output.appendChild(d);
+}
 
-                if (isNaN(guess)) {
-                    addLine("Ce n'est pas un nombre.", 'error');
-                } else if (guess < targetNumber) {
-                    addLine(`C'est plus que ${guess} !`);
-                } else if (guess > targetNumber) {
-                    addLine(`C'est moins que ${guess} !`);
-                } else {
-                    addLine(`BRAVO ! Le nombre était ${targetNumber}.`, 'keyword');
-                    gameActive = false;
-                    addLine("Retour au terminal.", 'keyword');
-                }
-                window.scrollTo(0, document.body.scrollHeight);
-                return;
-            }
+async function processCommand(cmd) {
+    if (cmd === '') return;
 
-            const command = input.value.trim().toLowerCase();
-            addLine(`<span class="prompt">recruteur@cesi:~$</span> ${input.value}`);
-            input.value = '';
-            processCommand(command);
-        }
-    });
+    const div = document.createElement('div');
+    div.className = 'command-output';
+    output.appendChild(div);
 
-    function addLine(html, type = '') {
-        const div = document.createElement('div');
-        div.className = 'command-output ' + type;
-        div.innerHTML = html;
-        output.appendChild(div);
+    // Theme
+    if (cmd.startsWith('theme')) {
+        const themes = {
+            red:     ['#ff5555', 'rgba(255,85,85,0.5)'],
+            blue:    ['#4db4ff', 'rgba(77,180,255,0.5)'],
+            pink:    ['#ff2d78', 'rgba(255,45,120,0.5)'],
+            green:   ['#00ff88', 'rgba(0,255,136,0.5)'],
+            default: ['#00ff88', 'rgba(0,255,136,0.5)']
+        };
+        const color = cmd.split(' ')[1] || 'default';
+        const t = themes[color] || themes.default;
+        document.documentElement.style.setProperty('--green', t[0]);
+        typeWriter(div, `<span style="color:${t[0]}">Thème changé → ${color.toUpperCase()}</span>`, 3);
+        return;
     }
 
-    async function processCommand(cmd) {
-        const responseDiv = document.createElement('div');
-        responseDiv.className = 'command-output';
-        output.appendChild(responseDiv);
-
-        let content = '';
-
-        if (cmd.startsWith('theme')) {
-            const color = cmd.split(' ')[1];
-            if (color === 'red') {
-                document.body.style.color = '#ff5555';
-                document.body.style.textShadow = '0 0 5px rgba(255, 85, 85, 0.5)';
-                content = 'Thème changé : RED ALERT.';
-            } else if (color === 'blue') {
-                document.body.style.color = '#4db4ff';
-                document.body.style.textShadow = '0 0 5px rgba(77, 180, 255, 0.5)';
-                content = 'Thème changé : CYBER BLUE.';
-            } else {
-                document.body.style.color = '#00ff41';
-                document.body.style.textShadow = '0 0 5px rgba(0, 255, 65, 0.5)';
-                content = 'Thème changé : MATRIX GREEN.';
-            }
-            typeWriter(responseDiv, content, 5);
-            return;
-        }
-
-        switch(cmd) {
-            case 'help': content = cvData.help; break;
-            case 'about': content = cvData.about; break;
-            case 'skills': content = cvData.skills; break;
-            case 'education': case 'formation': content = cvData.education; break;
-            case 'projects': case 'projets': content = cvData.projects; break;
-            case 'xp': case 'experience': content = cvData.xp; break;
-            case 'contact': content = cvData.contact; break;
-            
-            case 'download': case 'pdf':
-                content = "Lancement du téléchargement...";
-                // Pense à mettre ton vrai fichier PDF dans le dossier
-                setTimeout(() => { window.open('CV_Victor_NOEL.pdf', '_blank'); }, 1000);
-                break;
-
-            case 'game':
-                targetNumber = Math.floor(Math.random() * 100) + 1;
-                gameActive = true;
-                content = "--- JEU DU NOMBRE ---\nJe pense à un nombre entre 1 et 100.\nÀ toi de jouer !";
-                break;
-
-            case 'github':
-                responseDiv.innerHTML = "Connexion à GitHub...";
-                try {
-                    const res = await fetch('https://api.github.com/users/vic-noel');
-                    if (!res.ok) throw new Error();
-                    const data = await res.json();
-                    content = `--- GITHUB @${data.login} ---\nRepos: ${data.public_repos} | Followers: ${data.followers}\nBio: ${data.bio || 'Aucune'}\nURL: <a href="${data.html_url}" target="_blank">${data.html_url}</a>`;
-                    responseDiv.innerHTML = ""; // Efface le message de chargement
-                } catch (e) {
-                    content = "<span class='error'>Erreur: Impossible de joindre l'API GitHub.</span>";
-                    responseDiv.innerHTML = "";
-                }
-                break;
-
-            case 'clear': 
-                output.innerHTML = ''; 
-                // On remet le logo quand on clear pour le style
-                const asciiDiv = document.createElement('div');
-                asciiDiv.className = 'ascii-art';
-                asciiDiv.innerHTML = cvData.ascii;
-                output.appendChild(asciiDiv);
-                isTyping = false;
-                inputLine.classList.remove('hidden-input');
-                return;
-
-            case 'all':
-                content = [cvData.about, cvData.skills, cvData.education, cvData.projects, cvData.xp, cvData.contact].join('\n');
-                break;
-            case '': return;
-            default: content = `<span class="error">Commande inconnue: ${cmd}</span>. Tapez 'help'.`;
-        }
-
-        typeWriter(responseDiv, content.trim(), 2); // Vitesse très rapide (2ms)
+    // Matrix easter egg
+    if (cmd === 'matrix') {
+        typeWriter(div, `<span class="c-green">🐇 Bienvenue dans la Matrice...</span>`, 2, startMatrix);
+        return;
     }
+
+    const htmlSections = ['about','skills','softskills','certifications','education','projects','xp','contact','help'];
+
+    switch(cmd) {
+        case 'help':          renderInstant(div, cv.help); break;
+        case 'about':         renderInstant(div, cv.about); break;
+        case 'skills':        renderInstant(div, cv.skills); break;
+        case 'softskills':    renderInstant(div, cv.softskills); break;
+        case 'certifications':case 'toeic': renderInstant(div, cv.certifications); break;
+        case 'education':case 'formation': renderInstant(div, cv.education); break;
+        case 'projects':case 'projets':    renderInstant(div, cv.projects); break;
+        case 'xp':case 'experience':       renderInstant(div, cv.xp); break;
+        case 'contact':       renderInstant(div, cv.contact); break;
+        case 'all': {
+            div.remove();
+            ['about','skills','softskills','certifications','education','projects','xp','contact'].forEach(k => {
+                const d = document.createElement('div');
+                d.className = 'command-output';
+                output.appendChild(d);
+                renderInstant(d, cv[k]);
+            });
+            break;
+        }
+        case 'download':case 'pdf':
+            typeWriter(div, `<span class="c-orange">📥 Lancement du téléchargement...</span>`, 3);
+            setTimeout(() => window.open('CV_Victor_NOEL.pdf', '_blank'), 1000);
+            break;
+        case 'game':
+            targetNumber = Math.floor(Math.random() * 100) + 1;
+            gameActive = true;
+            typeWriter(div, `<span class="c-cyan">🎮 Devine le nombre entre 1 et 100 !</span>`, 3);
+            break;
+        case 'github':
+            div.innerHTML = `<span class="c-dim">Connexion à l'API GitHub...</span>`;
+            try {
+                const res = await fetch('https://api.github.com/users/VictorCESIVA');
+                const d = await res.json();
+                renderInstant(div, `<div class="section-title">// GITHUB @${d.login}</div>
+<div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:8px">
+  <div><span class="c-dim">Repos publics</span><br><span class="c-cyan" style="font-size:22px;font-family:'Orbitron',sans-serif">${d.public_repos}</span></div>
+  <div><span class="c-dim">Followers</span><br><span class="c-green" style="font-size:22px;font-family:'Orbitron',sans-serif">${d.followers}</span></div>
+  <div><span class="c-dim">Following</span><br><span class="c-purple" style="font-size:22px;font-family:'Orbitron',sans-serif">${d.following}</span></div>
+</div>
+<div style="margin-top:12px"><a href="${d.html_url}" target="_blank">${d.html_url}</a></div>`);
+            } catch {
+                renderInstant(div, `<span class="error">Erreur API GitHub. Vérifiez votre connexion.</span>`);
+            }
+            break;
+        case 'clear':
+            output.innerHTML = '';
+            const a = document.createElement('div');
+            a.className = 'ascii-art';
+            a.innerHTML = cv.ascii;
+            output.appendChild(a);
+            div.remove();
+            isTyping = false;
+            inputLine.classList.remove('hidden-input');
+            break;
+        default:
+            typeWriter(div, `<span class="error">Commande inconnue : '${cmd}'</span> — Tapez <span class="c-cyan">help</span> pour la liste.`, 3);
+    }
+}
+
+// =============================================
+//  MATRIX RAIN
+// =============================================
+function startMatrix() {
+    const canvas = document.getElementById('matrix-canvas');
+    canvas.style.display = 'block';
+    canvas.style.opacity = '0.85';
+    const ctx = canvas.getContext('2d');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const cols = Math.floor(canvas.width / 18);
+    const drops = Array(cols).fill(1);
+    const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホABCDEF0123456789@#$%^&*()';
+
+    matrixInterval = setInterval(() => {
+        ctx.fillStyle = 'rgba(8,12,20,0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '14px JetBrains Mono';
+        drops.forEach((y, i) => {
+            const ch = chars[Math.floor(Math.random() * chars.length)];
+            const grad = i / cols;
+            ctx.fillStyle = grad < 0.3 ? '#00ff88' : grad < 0.6 ? '#00e5ff' : '#bd53ed';
+            ctx.fillText(ch, i * 18, y * 18);
+            if (y * 18 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+            drops[i]++;
+        });
+    }, 33);
+
+    setTimeout(() => {
+        clearInterval(matrixInterval);
+        canvas.style.display = 'none';
+        addLine(`<span class="c-green">// Matrix désactivée. Retour au terminal.</span>`);
+    }, 5000);
+}
 </script>
-
 </body>
 </html>
-
