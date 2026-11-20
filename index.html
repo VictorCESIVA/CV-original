@@ -261,7 +261,7 @@
             animation: fillBar 1s ease forwards;
             transform-origin: left;
         }
-        @keyframes fillBar { from { width: 0 !important; } }
+        @keyframes fillBar { from { width: 0; } }
         .skill-pct  { min-width: 36px; font-size: 12px; color: var(--dim); text-align: right; }
 
         /* === CARD-STYLE PROJECT === */
@@ -613,13 +613,11 @@ const cv = {
 </div>`,
 
     contact: `<div class="section-title">// CONTACT</div>
-<div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
-  <div>📧 <a href="mailto:victor_noel2004@icloud.com">Victor_noel2004@icloud.com</a></div>
-  <div>💼 <a href="https://www.linkedin.com/in/vic-noel" target="_blank">linkedin.com/in/vic-noel</a></div>
-  <div>🐙 <a href="https://github.com/VictorCESIVA" target="_blank">github.com/VictorCESIVA</a></div>
-  <div>🌐 <a href="https://victorcesiva.github.io/CV-original/" target="_blank">victorcesiva.github.io/CV-original</a></div>
-  <div>📍 Villeneuve d'Ascq, 59650</div>
-</div>`,
+<div style="margin-top:8px">📧 <a href="mailto:victor_noel2004@icloud.com">Victor_noel2004@icloud.com</a></div>
+<div style="margin-top:10px">💼 <a href="https://www.linkedin.com/in/vic-noel" target="_blank">linkedin.com/in/vic-noel</a></div>
+<div style="margin-top:10px">🐙 <a href="https://github.com/VictorCESIVA" target="_blank">github.com/VictorCESIVA</a></div>
+<div style="margin-top:10px">🌐 <a href="https://victorcesiva.github.io/CV-original/" target="_blank">victorcesiva.github.io/CV-original</a></div>
+<div style="margin-top:10px">📍 Villeneuve d'Ascq, 59650</div>`,
 
     help: `<div class="section-title">// COMMANDES DISPONIBLES</div>
 <div class="help-grid">
@@ -632,7 +630,7 @@ const cv = {
   <span class="help-cmd">xp</span><span class="help-desc">Expériences professionnelles</span>
   <span class="help-cmd">contact</span><span class="help-desc">Email, LinkedIn, GitHub</span>
   <span class="help-cmd">github</span><span class="help-desc">Stats GitHub en live via API</span>
-  <span class="help-cmd">all</span><span class="help-desc">Tout afficher d'un coup</span>
+  <span class="help-cmd">all</span><span class="help-desc">Tout afficher, rubrique par rubrique (Entrée pour accélérer)</span>
   <span class="help-cmd">theme [color]</span><span class="help-desc">Changer couleur : green / red / blue / pink / default</span>
   <span class="help-cmd">game</span><span class="help-desc">Mini-jeu : devine le nombre</span>
   <span class="help-cmd">matrix</span><span class="help-desc">🐇 Easter egg...</span>
@@ -652,6 +650,7 @@ let isTyping  = false;
 let gameActive = false;
 let targetNumber = 0;
 let matrixInterval = null;
+let fastForward = false;
 
 const terminalBody = document.getElementById('terminal-body');
 function scrollTerminal() {
@@ -686,13 +685,93 @@ function typeWriter(element, html, speed = 2, callback) {
     type();
 }
 
-// --- Instant render (for HTML-heavy sections) ---
-function renderInstant(element, html) {
-    element.innerHTML = html;
-    isTyping = false;
-    inputLine.classList.remove('hidden-input');
-    input.focus();
-    scrollTerminal();
+// --- Instant render is gone: rubriques now unfold item by item. ---
+function buildUnits(div) {
+    const units = [];
+    for (const child of div.children) {
+        if (child.tagName === 'BR') continue;
+        if (child.classList.contains('help-grid')) {
+            const cells = [...child.children];
+            for (let i = 0; i < cells.length; i += 2) units.push(cells.slice(i, i + 2));
+        } else units.push([child]);
+    }
+    return units;
+}
+function revealPace(unit) {
+    const el = unit[0];
+    if (el.classList.contains('section-title')) return 120;
+    if (el.tagName === 'SPAN') return 80;
+    if (el.classList.contains('timeline-item')) return 1100;
+    if (el.classList.contains('project-card')) return 950;
+    if (el.classList.contains('cert-badge')) return 800;
+    if (el.classList.contains('skill-row')) return 320;
+    if (el.classList.contains('avatar-section')) return 450;
+    if (el.classList.contains('help-cmd')) return 130;
+    return 420;
+}
+function renderAnimated(div, html, pace = 1, chained = false) {
+    return new Promise(done => {
+        div.innerHTML = html;
+        const units = buildUnits(div);
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches || !units.length
+            || (units.length === 1 && units[0][0].tagName === 'SPAN')) {
+            isTyping = false;
+            inputLine.classList.remove('hidden-input');
+            input.focus();
+            scrollTerminal();
+            done();
+            return;
+        }
+        const flat = units.flat();
+        flat.forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(6px)';
+            el.style.transition = 'opacity .28s ease, transform .28s ease';
+        });
+        isTyping = true;
+        inputLine.classList.add('hidden-input');
+        fastForward = false;
+        const align = () => {
+            const top = div.getBoundingClientRect().top - terminalBody.getBoundingClientRect().top + terminalBody.scrollTop - 10;
+            if (top > terminalBody.scrollTop) terminalBody.scrollTo({ top, behavior: 'smooth' });
+        };
+        const follow = el => {
+            const rect = el.getBoundingClientRect(), body = terminalBody.getBoundingClientRect();
+            const needed = terminalBody.scrollTop + rect.bottom - body.bottom + 26;
+            if (needed > terminalBody.scrollTop) terminalBody.scrollTo({ top: needed, behavior: 'smooth' });
+        };
+        const finish = () => {
+            flat.forEach(el => { el.style.opacity = ''; el.style.transform = ''; el.style.transition = ''; });
+            if (!chained) fastForward = false;
+            isTyping = false;
+            inputLine.classList.remove('hidden-input');
+            input.focus({ preventScroll: true });
+            scrollTerminal();
+            done();
+        };
+        let i = 0, due = 0;
+        const step = () => {
+            if (fastForward) {
+                for (; i < units.length; i++) for (const el of units[i]) { el.style.opacity = '1'; el.style.transform = ''; }
+                finish();
+                return;
+            }
+            if (performance.now() >= due) {
+                if (i >= units.length) { finish(); return; }
+                const group = units[i++];
+                for (const el of group) {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                    for (const bar of el.querySelectorAll('.skill-fill')) { bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = ''; }
+                }
+                follow(group[group.length - 1]);
+                due = performance.now() + revealPace(group) * pace;
+            }
+            setTimeout(step, Math.max(30, Math.min(due - performance.now(), 140)));
+        };
+        align();
+        step();
+    });
 }
 
 // --- Boot ---
@@ -704,7 +783,10 @@ document.addEventListener('DOMContentLoaded', () => {
     addLine('Tapez <strong class="c-cyan">help</strong> pour explorer mon CV.');
 });
 
-terminalBody.addEventListener('click', e => { if (!isTyping && !e.target.closest('a') && !getSelection().toString()) input.focus(); });
+terminalBody.addEventListener('click', e => {
+    if (isTyping) { fastForward = true; return; }
+    if (!e.target.closest('a') && !getSelection().toString()) input.focus();
+});
 
 // --- Key handler ---
 input.addEventListener('keydown', e => {
@@ -712,7 +794,7 @@ input.addEventListener('keydown', e => {
 });
 
 function submitCommand() {
-    if (isTyping) return;
+    if (isTyping) { fastForward = true; return; }
 
     if (gameActive) {
         const g = parseInt(input.value);
@@ -782,23 +864,34 @@ async function processCommand(cmd) {
         return;
     }
 
-    switch(cmd) {        case 'help':          renderInstant(div, cv.help); break;
-        case 'about':         renderInstant(div, cv.about); break;
-        case 'skills':        renderInstant(div, cv.skills); break;
-        case 'softskills':    renderInstant(div, cv.softskills); break;
-        case 'certifications':case 'toeic': renderInstant(div, cv.certifications); break;
-        case 'education':case 'formation': renderInstant(div, cv.education); break;
-        case 'projects':case 'projets':    renderInstant(div, cv.projects); break;
-        case 'xp':case 'experience':       renderInstant(div, cv.xp); break;
-        case 'contact':       renderInstant(div, cv.contact); break;
+    switch(cmd) {
+        case 'help':          renderAnimated(div, cv.help); break;
+        case 'about':         renderAnimated(div, cv.about); break;
+        case 'skills':        renderAnimated(div, cv.skills); break;
+        case 'softskills':    renderAnimated(div, cv.softskills); break;
+        case 'certifications':case 'toeic': renderAnimated(div, cv.certifications); break;
+        case 'education':case 'formation': renderAnimated(div, cv.education); break;
+        case 'projects':case 'projets':    renderAnimated(div, cv.projects); break;
+        case 'xp':case 'experience':       renderAnimated(div, cv.xp); break;
+        case 'contact':       renderAnimated(div, cv.contact); break;
         case 'all': {
             div.remove();
-            ['about','skills','softskills','certifications','education','projects','xp','contact'].forEach(k => {
-                const d = document.createElement('div');
-                d.className = 'command-output';
-                output.appendChild(d);
-                renderInstant(d, cv[k]);
-            });
+            (async () => {
+                for (const k of ['about','skills','softskills','certifications','education','projects','xp','contact']) {
+                    const d = document.createElement('div');
+                    d.className = 'command-output';
+                    output.appendChild(d);
+                    if (fastForward) { d.innerHTML = cv[k]; scrollTerminal(); continue; }
+                    await renderAnimated(d, cv[k], .45, true);
+                }
+                if (fastForward) {
+                    fastForward = false;
+                    isTyping = false;
+                    inputLine.classList.remove('hidden-input');
+                    input.focus({ preventScroll: true });
+                    scrollTerminal();
+                }
+            })();
             break;
         }
         case 'download':case 'pdf':
@@ -815,7 +908,7 @@ async function processCommand(cmd) {
             try {
                 const res = await fetch('https://api.github.com/users/VictorCESIVA');
                 const d = await res.json();
-                renderInstant(div, `<div class="section-title">// GITHUB @${d.login}</div>
+                renderAnimated(div, `<div class="section-title">// GITHUB @${d.login}</div>
 <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:8px">
   <div><span class="c-dim">Repos publics</span><br><span class="c-cyan" style="font-size:22px;font-family:'Orbitron',sans-serif">${d.public_repos}</span></div>
   <div><span class="c-dim">Followers</span><br><span class="c-green" style="font-size:22px;font-family:'Orbitron',sans-serif">${d.followers}</span></div>
@@ -823,7 +916,7 @@ async function processCommand(cmd) {
 </div>
 <div style="margin-top:12px"><a href="${d.html_url}" target="_blank">${d.html_url}</a></div>`);
             } catch {
-                renderInstant(div, `<span class="error">Erreur API GitHub. Vérifiez votre connexion.</span>`);
+                renderAnimated(div, `<span class="error">Erreur API GitHub. Vérifiez votre connexion.</span>`);
             }
             break;
         case 'clear':
