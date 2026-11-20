@@ -23,7 +23,12 @@ for (const row of rows) {
         if (key.length > 1) button.classList.add('wide');
         if (key === ' ') button.classList.add('space');
         if (key === 'Shift') button.setAttribute('aria-pressed','false');
-        button.addEventListener('pointerdown', e => e.preventDefault());
+        button.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            button.setPointerCapture(e.pointerId);
+            button.classList.add('pressed');
+        });
+        button.addEventListener('lostpointercapture', () => button.classList.remove('pressed'));
         button.addEventListener('click', () => typeKey(key));
         keys.set(key, button);
         line.append(button);
@@ -120,9 +125,8 @@ mouse.addEventListener('click', e => {
     if (e.target === mouseButtons[1]) terminalBody.scrollBy(0,terminalBody.clientHeight*.75);
     else if (e.target === mouseButtons[0]) {
         showPointer();
-        const rect = screenFrame.getBoundingClientRect();
-        const hit = document.elementFromPoint(rect.left+screenFrame.clientLeft+x*screenFrame.clientWidth,
-            rect.top+screenFrame.clientTop+y*screenFrame.clientHeight)?.closest('a,button,input');
+        const rect = pointer.getBoundingClientRect();
+        const hit = document.elementFromPoint(rect.left, rect.top)?.closest('a,button,input');
         if (hit && screenFrame.contains(hit)) hit.click();
         if (!hit || hit === input) input.focus({preventScroll:true});
     } else input.focus({preventScroll:true});

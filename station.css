@@ -42,3 +42,39 @@ body::after { display:none; }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; } }
 #commandInput { min-width:0; }
 #mouse .wheel.on { background:#719177; }
+
+/* The terminal and controls sit on the same projected planes as their meshes. */
+.spatial .station { display:block; position:relative; height:100svh; min-height:0; width:100%; overflow:hidden; padding:0; }
+.spatial .station>canvas,.projected-controls { position:absolute; inset:0; }
+.spatial .station>canvas { touch-action:none; cursor:grab; }
+.spatial .station>canvas:active { cursor:grabbing; }
+.projected-controls { pointer-events:none; }
+.spatial .monitor,.spatial .stand,.spatial .peripherals { display:contents; }
+.spatial .chin { display:none; }
+.spatial #terminal-wrap { width:680px; height:413px; border:0; border-radius:14px; box-shadow:inset 0 0 32px #010805; background:radial-gradient(ellipse at 32% 38%,#21382f,#12261e 74%,#0b1a14); }
+.spatial #terminal-wrap::after { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:linear-gradient(120deg,#ddf3d808,transparent 30%); }
+.spatial .welcome h1 { font-size:59px; }
+.spatial .welcome p { font-size:17px; }
+.spatial #terminal-body { padding:20px 24px; }
+.spatial .keyboard { position:absolute; display:flex; flex-direction:column; width:700px; height:210px; gap:5px; padding:0; margin:0; border:0; border-radius:0; background:none; box-shadow:none; transform:none; }
+.spatial .key-row { display:flex; flex:1; gap:5px; margin:0; }
+.spatial .key { margin:0; height:auto; border:0; padding:0; border-radius:3px; background:transparent; box-shadow:none; color:#312e25; font:bold 15px/1 monospace; }
+.spatial .key.on,.spatial .key:active { color:#152b19; background:#6e8b6859; transform:translateY(1px); }
+.spatial .mousepad { display:contents; }
+.spatial #mouse { width:100px; height:143px; transform:none; background:transparent; box-shadow:none; border:0; }
+.spatial #mouse button { border:0; background:transparent; }
+.view-controls { position:fixed; z-index:20; bottom:max(14px,env(safe-area-inset-bottom)); right:18px; align-items:center; gap:3px; padding:4px; border:1px solid #ffffff28; border-radius:6px; background:#19221eed; box-shadow:0 2px 8px #0003; }
+.view-controls:not([hidden]) { display:flex; }
+.view-controls button { background:transparent; color:#eee9da; border:0; font:13px/1.4 system-ui,sans-serif; padding:6px 9px; cursor:pointer; border-radius:3px; }
+.view-controls button:hover,.view-controls button:focus-visible { background:#ffffff20; }
+.view-controls button:last-child { border-left:1px solid #ffffff2c; font-size:17px; line-height:1; }
+@media(max-width:649px) and (orientation:portrait) {
+    .spatial.reading #terminal-wrap { width:min(680px,96vw); height:70svh; }
+    .spatial.reading .projected-controls { z-index:2; }
+    .spatial.reading #terminal-wrap { position:fixed!important; transform:none!important; left:2vw; top:12svh; }
+    .spatial.reading .projected-controls div:has(>#terminal-wrap),.spatial.reading .projected-controls>div { transform:none!important; perspective:none!important; }
+    .spatial.reading #keyboard,.spatial.reading #mouse { visibility:hidden; }
+    .spatial.reading .welcome h1 { font-size:40px; }
+}
+.spatial #terminal-body { user-select:text; }
+#screen-pointer { width:1px; height:1px; overflow:visible; }

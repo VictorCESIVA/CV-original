@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "esbuild desk.js --bundle --minify --loader:.jpg=dataurl --outfile=../desk.bundle.js"
+  },
+  "dependencies": { "three": "0.187.0" },
+  "devDependencies": { "esbuild": "0.28.2" }
+}
