@@ -381,32 +381,41 @@
             .help-grid { grid-template-columns: 1fr; }
         }
     </style>
+    <link rel="stylesheet" href="station.css">
 </head>
 <body>
 
-<canvas id="matrix-canvas"></canvas>
-<div id="cursor"></div>
-<div id="cursor-trail"></div>
-<div class="scanline"></div>
-<div class="scanline-sweep"></div>
-
-<div id="terminal-wrap">
-    <div id="topbar">
-        <div class="dot dot-red"></div>
-        <div class="dot dot-yellow"></div>
-        <div class="dot dot-green"></div>
-        <span id="topbar-title">victor-noel — terminal v5.0</span>
-    </div>
+<main class="station">
+  <section class="monitor" aria-label="Moniteur du CV">
+    <div class="screen" id="terminal-wrap">
+      <canvas id="matrix-canvas"></canvas>
+      <div class="scanline"></div>
+      <div id="topbar"><span>▣ &nbsp; NOËL OS</span><span>TERMINAL / 01</span></div>
     <div id="terminal-body">
         <div id="output"></div>
         <div class="input-line" id="inputLine">
             <span class="prompt">
                 <span style="color:var(--green)">victor</span><span class="c-dim">@</span><span style="color:var(--cyan)">cesi</span><span class="c-dim">:</span><span style="color:var(--purple)">~</span><span class="c-dim">$</span>
             </span>
-            <input type="text" id="commandInput" autocomplete="off" spellcheck="false" autofocus placeholder="tapez 'help'...">
+            <input type="text" id="commandInput" aria-label="Commande du terminal" autocomplete="off" spellcheck="false" autofocus placeholder="tapez 'help'...">
         </div>
     </div>
-</div>
+      <nav class="shortcuts" aria-label="Commandes rapides">
+        <button data-command="help">help</button><button data-command="about">about</button><button data-command="projects">projects</button><button data-command="contact">contact</button>
+      </nav>
+      <span id="screen-pointer" hidden aria-hidden="true">↖</span>
+    </div>
+    <footer class="chin"><b>NOËL <i>Personal Computer</i></b><span class="vents" aria-hidden="true"></span><span class="power" title="Sous tension"></span></footer>
+  </section>
+  <div class="stand" aria-hidden="true"></div>
+  <div class="peripherals">
+    <section class="keyboard" aria-label="Clavier virtuel AZERTY" id="keyboard"></section>
+    <div class="mousepad"><div id="mouse" title="Glisser pour déplacer le pointeur dans l’écran">
+      <button class="left" aria-label="Clic gauche dans le moniteur"></button><button class="right" aria-label="Revenir à la saisie"></button>
+      <button class="wheel" aria-label="Faire défiler le terminal"></button>
+    </div></div>
+  </div>
+</main>
 
 <script>
 // =============================================
@@ -638,15 +647,10 @@ let gameActive = false;
 let targetNumber = 0;
 let matrixInterval = null;
 
-// --- Custom cursor ---
-const cur  = document.getElementById('cursor');
-const curT = document.getElementById('cursor-trail');
-document.addEventListener('mousemove', e => {
-    cur.style.left  = (e.clientX - 6) + 'px';
-    cur.style.top   = (e.clientY - 6) + 'px';
-    curT.style.left = (e.clientX - 15) + 'px';
-    curT.style.top  = (e.clientY - 15) + 'px';
-});
+const terminalBody = document.getElementById('terminal-body');
+function scrollTerminal() {
+    terminalBody.scrollTop = terminalBody.scrollHeight;
+}
 
 // --- Typewriter (fast) ---
 function typeWriter(element, html, speed = 2, callback) {
@@ -664,7 +668,7 @@ function typeWriter(element, html, speed = 2, callback) {
             } else {
                 element.innerHTML += html[i++];
             }
-            window.scrollTo(0, document.body.scrollHeight);
+            scrollTerminal();
             setTimeout(type, Math.random() * speed);
         } else {
             isTyping = false;
@@ -682,27 +686,27 @@ function renderInstant(element, html) {
     isTyping = false;
     inputLine.classList.remove('hidden-input');
     input.focus();
-    window.scrollTo(0, document.body.scrollHeight);
+    scrollTerminal();
 }
 
 // --- Boot ---
-window.onload = () => {
+document.addEventListener('DOMContentLoaded', () => {
     const asciiDiv = document.createElement('div');
-    asciiDiv.className = 'ascii-art';
-    asciiDiv.innerHTML = cv.ascii;
+    asciiDiv.className = 'welcome';
+    asciiDiv.innerHTML = '<h1>Victor Noël<span>.</span></h1><p>Élève ingénieur informatique · CESI Lille<br>Automatisation &amp; intelligence artificielle</p>';
     output.appendChild(asciiDiv);
+    addLine('Tapez <strong class="c-cyan">help</strong> pour explorer mon CV.');
+});
 
-    const introDiv = document.createElement('div');
-    introDiv.className = 'command-output';
-    output.appendChild(introDiv);
-    typeWriter(introDiv, cv.intro.trim(), 3);
-};
-
-document.body.addEventListener('click', () => { if (!isTyping) input.focus(); });
+terminalBody.addEventListener('click', e => { if (!isTyping && !e.target.closest('a') && !getSelection().toString()) input.focus(); });
 
 // --- Key handler ---
 input.addEventListener('keydown', e => {
-    if (e.key !== 'Enter' || isTyping) return;
+    if (e.key === 'Enter' && !e.isComposing) submitCommand();
+});
+
+function submitCommand() {
+    if (isTyping) return;
 
     if (gameActive) {
         const g = parseInt(input.value);
@@ -715,7 +719,7 @@ input.addEventListener('keydown', e => {
             addLine(`<span class="c-green">🎉 BRAVO ! Le nombre était bien ${targetNumber} !</span>`);
             gameActive = false;
         }
-        window.scrollTo(0, document.body.scrollHeight);
+        scrollTerminal();
         return;
     }
 
@@ -723,12 +727,13 @@ input.addEventListener('keydown', e => {
     addEcho(input.value);
     input.value = '';
     processCommand(cmd);
-});
+}
 
 function addEcho(val) {
     const d = document.createElement('div');
     d.className = 'command-output';
-    d.innerHTML = `<span class="prompt"><span style="color:var(--green)">victor</span><span class="c-dim">@</span><span style="color:var(--cyan)">cesi</span><span class="c-dim">:</span><span style="color:var(--purple)">~</span><span class="c-dim">$</span></span> ${val}`;
+    d.innerHTML = `<span class="prompt"><span style="color:var(--green)">victor</span><span class="c-dim">@</span><span style="color:var(--cyan)">cesi</span><span class="c-dim">:</span><span style="color:var(--purple)">~</span><span class="c-dim">$</span></span> `;
+    d.append(val);
     output.appendChild(d);
 }
 
@@ -746,6 +751,9 @@ async function processCommand(cmd) {
     div.className = 'command-output';
     output.appendChild(div);
 
+    const escaped = document.createElement('span');
+    escaped.textContent = cmd;
+
     // Theme
     if (cmd.startsWith('theme')) {
         const themes = {
@@ -756,9 +764,9 @@ async function processCommand(cmd) {
             default: ['#00ff88', 'rgba(0,255,136,0.5)']
         };
         const color = cmd.split(' ')[1] || 'default';
-        const t = themes[color] || themes.default;
+        const t = Object.hasOwn(themes, color) ? themes[color] : themes.default;
         document.documentElement.style.setProperty('--green', t[0]);
-        typeWriter(div, `<span style="color:${t[0]}">Thème changé → ${color.toUpperCase()}</span>`, 3);
+        typeWriter(div, `<span style="color:${t[0]}">Thème changé → ${(Object.hasOwn(themes, color) ? color : 'default').toUpperCase()}</span>`, 3);
         return;
     }
 
@@ -826,7 +834,7 @@ async function processCommand(cmd) {
             inputLine.classList.remove('hidden-input');
             break;
         default:
-            typeWriter(div, `<span class="error">Commande inconnue : '${cmd}'</span> — Tapez <span class="c-cyan">help</span> pour la liste.`, 3);
+            typeWriter(div, `<span class="error">Commande inconnue : '${escaped.innerHTML}'</span> — Tapez <span class="c-cyan">help</span> pour la liste.`, 3);
     }
 }
 
@@ -838,8 +846,8 @@ function startMatrix() {
     canvas.style.display = 'block';
     canvas.style.opacity = '0.85';
     const ctx = canvas.getContext('2d');
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width  = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
 
     const cols = Math.floor(canvas.width / 18);
     const drops = Array(cols).fill(1);
@@ -866,5 +874,6 @@ function startMatrix() {
     }, 5000);
 }
 </script>
+<script src="station.js"></script>
 </body>
 </html>
