@@ -78,3 +78,10 @@ body::after { display:none; }
 }
 .spatial #terminal-body { user-select:text; }
 #screen-pointer { width:1px; height:1px; overflow:visible; }
+.spatial .key-row:nth-child(2) { padding-left:3.4%; padding-right:2%; }
+.spatial .key-row:nth-child(3) { padding-left:5.1%; }
+.spatial .key-row:nth-child(4) { padding-right:3.4%; }
+.spatial .key.wide { color:#f2ead8; font-size:12px; }
+.spatial .key[data-key="Enter"] { color:#292d27; }
+.key[data-upper]::before { content:attr(data-upper); padding-right:.25em; font-size:.73em; opacity:.72; vertical-align:super; }
+.spatial #terminal-wrap::after { background:linear-gradient(126deg,#d9efdc12,transparent 23%,transparent 68%,#93c7a805),radial-gradient(ellipse at 50% 40%,transparent 55%,#0d130d44); }

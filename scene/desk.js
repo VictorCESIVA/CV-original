@@ -6,6 +6,8 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import clawdMark from './assets/clawd-mark.png';
+import huggingFace from './assets/hugging-face.svg';
 import woodPhoto from './assets/wood.jpg';
 
 function buildDesk(renderer) {
@@ -19,7 +21,7 @@ function buildDesk(renderer) {
     document.body.classList.add('spatial');
     stage.prepend(renderer.domElement, css.domElement);
     css.domElement.className = 'projected-controls';
-    renderer.domElement.setAttribute('aria-label','Bureau de Victor en 3D avec un PC rétro, une figurine inspirée de Claude, un casque et un carnet de notes sur l’IA');
+    renderer.domElement.setAttribute('aria-label','Bureau de Victor en 3D avec un PC rétro, la mascotte Clawd, un casque et un carnet de notes sur l’IA');
     const renderSize = () => stage.getBoundingClientRect();
     renderer.setPixelRatio(Math.min(devicePixelRatio,1.65));
     renderer.shadowMap.enabled = true;
@@ -58,7 +60,7 @@ function buildDesk(renderer) {
     const shapes=new Map();
     function box(w,h,d,r,m,x,y,z,parent) {
         const id=[w,h,d,r].join('/');
-        if (!shapes.has(id)) shapes.set(id,r ? new RoundedBoxGeometry(w,h,d,2,r) : new T.BoxGeometry(w,h,d));
+        if (!shapes.has(id)) shapes.set(id,r ? new RoundedBoxGeometry(w,h,d,3,r) : new T.BoxGeometry(w,h,d));
         return mesh(shapes.get(id),m,x,y,z,parent);
     }
     function cyl(top,bottom,h,m,x,y,z,parent) {
@@ -122,25 +124,39 @@ function buildDesk(renderer) {
         s.rotation.x=-Math.PI/2;s.castShadow=false;
     }
     contact(0,-.44,6,3.8);
+    const graphite=mat(0x303e40,.54,.17);
+    const satin=mat(0x89918b,.35,.58);
     // Desktop system unit: front panel, disk drive, eject button and LED.
     box(4.66,.52,2.45,.08,edge,0,.30,-.48);
+    box(4.62,.047,2.39,.018,graphite,0,.49,-.46);
     box(4.60,.43,.10,.03,plastic,0,.30,.74);
     box(1.1,.21,.045,.025,dark,1.24,.32,.804);
     box(.79,.034,.04,.01,mat(0x101412),1.19,.35,.838);
     box(.13,.048,.048,.012,edge,1.61,.26,.838);
-    badge('NOËL  /  PC',.90,.14,-1.61,.31,.802,'#c2b99e','#2b322d');
+    badge('NOËL  /  PC',.76,.14,-1.38,.31,.802,'#c2b99e','#2b322d');
     const led=new T.MeshStandardMaterial({color:0xbbe88a,emissive:0x76b45b,emissiveIntensity:.8});
     box(.045,.032,.02,.008,led,-.96,.29,.815);
     box(2.5,.14,1.65,.065,dark,0,.61,-.52);
     // Deep CRT cabinet. Separate rear shell, front moulding and recessed glass.
     box(4.12,2.85,1.88,.20,edge,0,2.04,-.94);
     box(4.52,3.07,.75,.16,plastic,0,2.17,-.025);
-    box(4.10,2.60,.15,.12,edge,0,2.24,.33);
+    box(4.34,2.95,.095,.12,graphite,0,2.16,.32);
+    box(4.10,2.60,.15,.12,metal,0,2.24,.33);
     box(3.97,2.46,.12,.09,dark,0,2.24,.395);
-    badge('V I C T O R   /   N O Ë L',1.03,.105,-1.38,.86,.355,'#cfc2a4','#414438');
-    for(let i=0;i<15;i++)box(.022,.090,.015,.008,dark,1.11+i*.045,.86,.355);
-    box(.08,.08,.025,.018,led,1.91,.86,.356);
+    badge('V I C T O R   /   N O Ë L',1.12,.11,-1.40,.84,.373,'#293635','#f2dfb7');
+    for(let i=0;i<15;i++)box(.022,.090,.015,.008,dark,1.11+i*.045,.86,.379);
+    box(.08,.08,.025,.018,led,1.91,.86,.379);
     for(let i=0;i<15;i++)box(.022,.18,.036,.008,dark,2.057,2.95,-1.62+i*.078);
+    const dialMaterial=mat(0x65716e,.45,.34);
+    for(const x of [.51,.79]){
+        const dial=cyl(.071,.077,.065,dialMaterial,x,.86,.393);
+        dial.rotation.x=Math.PI/2;
+        box(.011,.044,.007,.002,paper,x,.884,.429);
+    }
+    box(.29,.15,.052,.026,dark,-1.98,.30,.816);
+    box(.22,.105,.055,.016,orange,-1.98,.30,.843);
+    box(.020,.055,.005,.001,dark,-1.98,.308,.874);
+    for(let i=0;i<14;i++)box(.42,.014,.038,.006,dark,1.68,3.15,-1.67+i*.082);
     function surface(el,parent,x,y,z,rotation,scale) {
         const o=new CSS3DObject(el); o.position.set(x,y,z);o.rotation.x=rotation;o.scale.setScalar(scale);parent.add(o);return o;
     }
@@ -148,14 +164,16 @@ function buildDesk(renderer) {
     const keyRig=group(-.29,.115,1.91);
     keyRig.rotation.set(.075,-.035,0,'YXZ');
     const flat = -Math.PI/2;
-    box(4.58,.185,1.57,.083,plastic,0,0,0,keyRig);
+    box(4.73,.155,1.63,.052,graphite,0,-.034,0,keyRig);
+    box(4.68,.096,1.60,.044,satin,0,.037,0,keyRig);
+    box(4.64,.088,1.56,.041,graphite,0,.079,0,keyRig);
     box(4.32,.028,1.33,.032,dark,0,.10,0,keyRig);
     const boardRig=group(0,0,0,overlays); boardRig.position.copy(keyRig.position);boardRig.rotation.copy(keyRig.rotation);
     const unit=4.28/700;
     surface(board,boardRig,0,.229,0,flat,unit);
     const caps=[];
     // Measure unprojected CSS coordinates before CSS3DRenderer reparents the controls.
-    const keyMat=mat(0xe0d7be), modifier=mat(0xb4aa91);
+    const keyMat=mat(0xe1dccf), modifier=mat(0x495d61);
     board.querySelectorAll('.key').forEach(button=>{
         const w=button.offsetWidth*unit, d=button.offsetHeight*unit;
         const x=(button.offsetLeft+button.offsetWidth/2-board.offsetWidth/2)*unit;
@@ -167,7 +185,10 @@ function buildDesk(renderer) {
             for(let i=0;i<positions.count;i++){
                 const level=T.MathUtils.clamp(positions.getY(i)/.13+.5,0,1);
                 positions.setX(i,positions.getX(i)*(1-.065*level));
-                positions.setZ(i,positions.getZ(i)*(1-.14*level));
+                positions.setZ(i,positions.getZ(i)*(1-.17*level));
+                const u=2*positions.getX(i)/w;
+                const v=2*positions.getZ(i)/d;
+                positions.setY(i,positions.getY(i)-.016*level*Math.max(0,1-u*u)*Math.max(0,1-v*v));
             }
             cap.geometry.computeVertexNormals();cap.geometry.userData.sculpted=true;
         }
@@ -180,10 +201,57 @@ function buildDesk(renderer) {
     const egg=(w,h,d,m,x,y,z,g)=>{
         const o=mesh(new T.SphereGeometry(1,40,24),m,x,y,z,g);o.scale.set(w,h,d);return o;
     };
-    egg(.307,.215,.486,plastic,0,.06,0,mouseRig);
-    const left=egg(.144,.095,.225,edge,-.125,.165,-.17,mouseRig);
-    const right=egg(.144,.095,.225,edge,.125,.165,-.17,mouseRig);
-    const wheel=egg(.038,.044,.098,dark,0,.248,-.13,mouseRig);
+    // Cross-sections of a single moulded shell, split into hinged front buttons and palm rest.
+    const mouseShell=mat(0xbfc9bd,.43);
+    function shellPatch(z0,z1,u0,u1,material) {
+        const positions=[],indices=[];
+        const steps=24;
+        for(let j=0;j<=steps;j++){
+            const z=z0+(z1-z0)*j/steps;
+            const width=.327*Math.pow(Math.max(.025,1-(z/.505)**2),.32)*(1+.09*z);
+            const crown=.258*Math.pow(Math.max(.004,1-(z/.49)**2),.39)*(1+.11*z);
+            for(let i=0;i<=steps;i++){
+                const u=u0+(u1-u0)*i/steps;
+                positions.push(width*u,.060+crown*Math.sqrt(Math.max(0,1-u*u)),z);
+                if(i<steps && j<steps){
+                    const n=j*(steps+1)+i;
+                    indices.push(n,n+steps+1,n+1,n+1,n+steps+1,n+steps+2);
+                }
+            }
+        }
+        // Return the outer lips toward the base; leave the narrow switch gaps open.
+        const rim=[];
+        const stride=steps+1;
+        for(let t=0;t<steps;t++){
+            if(u0<-.98)rim.push([t*stride,(t+1)*stride]);
+            if(u1>.98)rim.push([(t+1)*stride+steps,t*stride+steps]);
+            if(z0<-.47)rim.push([t+1,t]);
+            if(z1>.47)rim.push([steps*stride+t,steps*stride+t+1]);
+        }
+        for(const [a,b] of rim){
+            const v=positions.length/3;
+            for(const n of [a,b])positions.push(positions[3*n]*.985,.047,positions[3*n+2]*.99);
+            indices.push(a,v,b,b,v,v+1);
+        }
+        const geometry=new T.BufferGeometry();
+        geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));
+        geometry.setIndex(indices);geometry.computeVertexNormals();
+        return mesh(geometry,material,0,0,0,mouseRig);
+    }
+    // A continuous dark chassis closes both end faces and follows the cap outline.
+    egg(.32,.134,.508,graphite,0,.12,0,mouseRig);
+    shellPatch(-.49,.49,-1,1,graphite);
+    const left=shellPatch(-.478,-.018,-.992,-.024,mouseShell);
+    const right=shellPatch(-.478,-.018,.024,.992,mouseShell);
+    const palm=shellPatch(-.003,.49,-.996,.996,mat(0x92a59e,.49));palm.position.y=.012;
+    box(.125,.04,.194,.018,dark,0,.285,-.178,mouseRig);
+    const wheel=cyl(.098,.098,.074,graphite,0,.298,-.181,mouseRig);wheel.rotation.z=Math.PI/2;
+    for(let i=0;i<14;i++){
+        const a=i*Math.PI*2/14;
+        const tread=box(.068,.015,.012,.003,dark,0,.298+.096*Math.cos(a),-.181+.096*Math.sin(a),mouseRig);
+        tread.rotation.x=a;
+    }
+    box(.09,.018,.031,.006,orange,0,.326,.107,mouseRig);
     const mouseSurface=surface(mouse,overlays,2.87,.32,1.85,flat,.0064);
     mouseSurface.rotation.order='YXZ';mouseSurface.rotation.y=-.14;
     path([[2.88,.14,1.45],[2.94,.054,1.10],[3.12,.025,.44],[3.43,.025,-.21],[2.94,.023,-1.10],[1.98,.22,-1.48]],.022,dark);
@@ -247,34 +315,31 @@ function buildDesk(renderer) {
     box(.045,.01,2.01,.002,dark,.57,.17,0,book);
     const pencil=group(-.16,.217,.02,book);pencil.rotation.set(Math.PI/2,.05,.20,'ZXY');
     cyl(.029,.029,1.48,orange,0,0,0,pencil);cyl(.029,0,.09,paper,0,-.785,0,pencil);
-    // A small resin sunburst on the desk, with sneakers and a moulded face.
-    const mascot=group(2.77,0,.46);
-    mascot.rotation.y=.26;
-    const terracotta=mat(0xe16b46,.52), sole=mat(0xf1e3c4,.7);
-    const ink=mat(0x382421,.35);
-    for(const side of [-1,1]){
-        box(.113,.19,.10,.036,terracotta,side*.108,.18,0,mascot);
-        box(.19,.12,.26,.045,sole,side*.13,.062,.047,mascot);
-        box(.166,.088,.21,.039,mat(0x495b55),side*.13,.103,.034,mascot);
+    // Trace the opaque outline of claude.dev's 693 × 527 mark in its native coordinates.
+    const mascot=group(2.79,.004,.49);
+    mascot.rotation.y=.15;
+    const pixel=.00131;
+    const outline=[[115,68],[580,68],[580,184],[693,184],[693,301],[580,301],
+        [580,527],[522,527],[522,417],[464,417],[464,527],[405,527],[405,417],
+        [289,417],[289,527],[231,527],[231,417],[173,417],[173,527],[115,527],
+        [115,301],[0,301],[0,184],[115,184]];
+    const silhouette=new T.Shape(outline.map(([x,y])=>new T.Vector2((x-346.5)*pixel,(527-y)*pixel)));
+    const depth=.25;
+    mesh(new T.ExtrudeGeometry(silhouette,{depth,bevelEnabled:false}),mat(0xd97757,.63),0,0,-depth/2,mascot);
+    function decal(source,w,h,x,y,z,parent) {
+        const map=new T.TextureLoader().load(source,invalidate);
+        map.colorSpace=T.SRGBColorSpace;
+        map.anisotropy=grain.anisotropy;
+        const face=mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({
+            map,alphaTest:.40,roughness:.70
+        }),x,y,z,parent);
+        face.castShadow=false;
+        return face;
     }
-    const face=group(0,.56,0,mascot);
-    face.rotation.z=-.09;
-    const burst=new T.Shape();
-    const lengths=[.37,.33,.40,.345,.385,.32,.37,.34,.40,.33,.36,.34];
-    lengths.forEach((radius,i)=>{
-        const angle=i*Math.PI/6;
-        const points=[[.218,-.24],[radius,-.083],[radius+.006,.056],[.218,.19]];
-        points.forEach(([r,offset],j)=>{
-            const x=r*Math.cos(angle+offset), y=r*Math.sin(angle+offset);
-            if(i===0 && j===0)burst.moveTo(x,y);
-            else burst.lineTo(x,y);
-        });
-    });
-    burst.closePath();
-    mesh(new T.ExtrudeGeometry(burst,{depth:.104,bevelEnabled:true,bevelSize:.012,bevelThickness:.015,bevelSegments:3}),terracotta,0,0,-.065,face);
-    for(const side of [-1,1])egg(.021,.031,.017,ink,side*.075,.026,.065,face);
-    path([[-.042,-.047,.067],[0,-.066,.071],[.041,-.045,.067]],.009,ink,face);
-    contact(2.77,.46,.82,.52);
+    decal(clawdMark,693*pixel,527*pixel,0,527*pixel/2,depth/2+.001,mascot);
+    contact(2.79,.49,.98,.54);
+    const hug=decal(huggingFace,.27,.25,-.65,.85,.368,world);
+    hug.rotation.z=-.16;
 
     // The grid sheet is tucked under the notebook elastic, beside the pencil.
     const notes=canvasTexture(640,700,c=>{
@@ -359,6 +424,24 @@ function buildDesk(renderer) {
         const strip=box(.30,.084,.005,.002,tape,side*.47,.798,.012,poster);
         strip.rotation.z=side*.18;
     }
+    // Reading notes for the original Transformer paper, pinned by the desk lamp.
+    const transformerNotes=canvasTexture(620,750,c=>{
+        c.fillStyle='#ede6d1';c.fillRect(0,0,620,750);
+        c.fillStyle='#283831';c.fillRect(42,49,536,6);
+        c.font='bold 63px Georgia';c.fillText('Attention Is All',40,145);c.fillText('You Need',40,219);
+        c.font='24px monospace';c.fillText('Vaswani et al.  /  2017',43,279);
+        c.strokeStyle='#52746d';c.lineWidth=4;c.font='bold 34px monospace';
+        for(let i=0;i<3;i++){
+            const x=105+i*193;c.strokeRect(x-37,349,74,61);c.fillText(['Q','K','V'][i],x-12,390);
+            c.beginPath();c.moveTo(x,415);c.lineTo(x,456);c.lineTo(297,501);c.stroke();
+        }
+        c.fillStyle='#c97550';c.fillRect(93,510,423,70);
+        c.fillStyle='#27382f';c.font='31px Georgia';c.fillText('Scaled dot-product attention',117,554);
+        c.font='italic 28px Georgia';c.fillText('relire avant le prochain test',58,683);
+    });
+    const reading=group(-6.03,2.64,-3.97);reading.rotation.z=.075;
+    mesh(new T.PlaneGeometry(1.37,1.66),new T.MeshStandardMaterial({map:transformerNotes}),0,0,0,reading);
+    box(.39,.10,.007,.002,tape,0,.814,.009,reading);
     // Wooden shelf and a few bound volumes behind the work surface.
     box(5.2,.13,.77,.024,walnut,4.7,3.75,-3.53);
     const spines=[0x856546,0xa4906c,0x394b46,0x976749,0xaca28a,0x40514c];
@@ -388,8 +471,8 @@ function buildDesk(renderer) {
         camera.position.copy(aim).add(new T.Vector3(Math.sin(a)*Math.cos(p),Math.sin(p),Math.cos(a)*Math.cos(p)).multiplyScalar(distance));
         camera.lookAt(aim);camera.updateMatrixWorld();
         caps.forEach(([cap,b])=>{cap.position.y=b.matches('.on,.pressed')?.129:.166;});
-        left.position.y=mouse.querySelector('.left.on')?.143:.165;
-        right.position.y=mouse.querySelector('.right.on')?.143:.165;
+        left.position.y=mouse.querySelector('.left.on')?-.005:.014;
+        right.position.y=mouse.querySelector('.right.on')?-.005:.014;
         wheel.material=mouse.querySelector('.wheel.on')?orange:dark;
         mouseSurface.position.x=mouseRig.position.x;mouseSurface.position.z=mouseRig.position.z;
         composer.render();css.render(overlays,camera);

@@ -2,14 +2,16 @@
 const keyboard = document.querySelector('#keyboard');
 const keys = new Map();
 let shift = false;
+const digitBase = ['à','&','é','"',"'",'(','-','è','_','ç'];
+const symbolBase = { ',':'?', ';':'.', ':':'/', '!':'§', 'ù':'%', ')':'°', '=':'+', '^':'¨', '$':'£' };
 const rows = [
-    [...'1234567890', 'Backspace'],
-    [...'azertyuiop', '-'],
-    [...'qsdfghjklm', 'Enter'],
-    ['Shift', ...'wxcvbn', ',', '.', '/'],
-    ['ArrowLeft', ' ', 'ArrowRight']
+    ['Escape', ...'1234567890', ')', '=', 'Backspace'],
+    [...'azertyuiop', '^', '$'],
+    [...'qsdfghjklm', 'ù', 'Enter'],
+    ['Shift', ...'wxcvbn', ',', ';', ':', '!'],
+    ['Home', 'End', ' ', 'ArrowLeft', 'ArrowRight', 'Delete']
 ];
-const labels = { Backspace:'⌫', Enter:'Entrée', Shift:'Maj', ArrowLeft:'←', ArrowRight:'→', ' ':'Espace' };
+const labels = { Escape:'Échap', Home:'Début', End:'Fin', Delete:'Suppr', Backspace:'⌫', Enter:'Entrée', Shift:'Maj', ArrowLeft:'←', ArrowRight:'→', ' ':'Espace' };
 const names = { Backspace:'Effacer', ArrowLeft:'Curseur à gauche', ArrowRight:'Curseur à droite' };
 for (const row of rows) {
     const line = document.createElement('div');
@@ -18,7 +20,9 @@ for (const row of rows) {
         const button = document.createElement('button');
         button.className = 'key';
         button.dataset.key = key;
-        button.textContent = labels[key] || key.toUpperCase();
+        const digit=/^[0-9]$/.test(key);
+        button.textContent = digit ? digitBase[Number(key)] : labels[key] || key.toUpperCase();
+        if (digit || symbolBase[key]) button.dataset.upper = digit ? key : symbolBase[key];
         button.setAttribute('aria-label', names[key] || button.textContent);
         if (key.length > 1) button.classList.add('wide');
         if (key === ' ') button.classList.add('space');
@@ -41,7 +45,14 @@ function typeKey(key) {
     input.focus({preventScroll:true});
     let start = input.selectionStart;
     const end = input.selectionEnd;
-    if (key === 'Shift') {
+    if (key === 'Escape') {
+        input.value = '';
+    } else if (key === 'Home' || key === 'End') {
+        const pos = key === 'Home' ? 0 : input.value.length;
+        input.setSelectionRange(pos,pos);
+    } else if (key === 'Delete') {
+        input.setRangeText('',start,start === end ? Math.min(end+1,input.value.length) : end,'end');
+    } else if (key === 'Shift') {
         shift = !shift;
         keys.get(key).setAttribute('aria-pressed', String(shift));
         keys.get(key).classList.toggle('on', shift);
@@ -53,14 +64,19 @@ function typeKey(key) {
         input.setSelectionRange(pos,pos);
     } else {
         if (key === 'Backspace' && start === end) start = Math.max(0,start-1);
-        input.setRangeText(key === 'Backspace' ? '' : shift ? key.toUpperCase() : key, start,end,'end');
+        let typed = key;
+        if (/^[0-9]$/.test(key)) typed = shift ? key : digitBase[Number(key)];
+        else if (shift) typed = symbolBase[key] || key.toUpperCase();
+        input.setRangeText(key === 'Backspace' ? '' : typed, start,end,'end');
         if (shift) typeKey('Shift');
     }
 }
 const down = new Map();
 function matchingKey(e) {
+    if (/^Digit[0-9]$/.test(e.code)) return keys.get(e.code.slice(-1));
     if (keys.has(e.key)) return keys.get(e.key);
-    return keys.get(e.key.toLowerCase()) || keys.get(e.code.replace(/^Digit/, ''));
+    const unshifted=Object.keys(symbolBase).find(key=>symbolBase[key]===e.key);
+    return keys.get(e.key.toLowerCase()) || keys.get(unshifted);
 }
 document.addEventListener('keydown', e => {
     const button = matchingKey(e);
