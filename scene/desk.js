@@ -19,7 +19,7 @@ function buildDesk(renderer) {
     document.body.classList.add('spatial');
     stage.prepend(renderer.domElement, css.domElement);
     css.domElement.className = 'projected-controls';
-    renderer.domElement.setAttribute('aria-label','Bureau en trois dimensions');
+    renderer.domElement.setAttribute('aria-label','Bureau de Victor en 3D avec un PC rétro, une figurine inspirée de Claude, un casque et un carnet de notes sur l’IA');
     const renderSize = () => stage.getBoundingClientRect();
     renderer.setPixelRatio(Math.min(devicePixelRatio,1.65));
     renderer.shadowMap.enabled = true;
@@ -247,6 +247,78 @@ function buildDesk(renderer) {
     box(.045,.01,2.01,.002,dark,.57,.17,0,book);
     const pencil=group(-.16,.217,.02,book);pencil.rotation.set(Math.PI/2,.05,.20,'ZXY');
     cyl(.029,.029,1.48,orange,0,0,0,pencil);cyl(.029,0,.09,paper,0,-.785,0,pencil);
+    // A small resin sunburst on the desk, with sneakers and a moulded face.
+    const mascot=group(2.77,0,.46);
+    mascot.rotation.y=.26;
+    const terracotta=mat(0xe16b46,.52), sole=mat(0xf1e3c4,.7);
+    const ink=mat(0x382421,.35);
+    for(const side of [-1,1]){
+        box(.113,.19,.10,.036,terracotta,side*.108,.18,0,mascot);
+        box(.19,.12,.26,.045,sole,side*.13,.062,.047,mascot);
+        box(.166,.088,.21,.039,mat(0x495b55),side*.13,.103,.034,mascot);
+    }
+    const face=group(0,.56,0,mascot);
+    face.rotation.z=-.09;
+    const burst=new T.Shape();
+    const lengths=[.37,.33,.40,.345,.385,.32,.37,.34,.40,.33,.36,.34];
+    lengths.forEach((radius,i)=>{
+        const angle=i*Math.PI/6;
+        const points=[[.218,-.24],[radius,-.083],[radius+.006,.056],[.218,.19]];
+        points.forEach(([r,offset],j)=>{
+            const x=r*Math.cos(angle+offset), y=r*Math.sin(angle+offset);
+            if(i===0 && j===0)burst.moveTo(x,y);
+            else burst.lineTo(x,y);
+        });
+    });
+    burst.closePath();
+    mesh(new T.ExtrudeGeometry(burst,{depth:.104,bevelEnabled:true,bevelSize:.012,bevelThickness:.015,bevelSegments:3}),terracotta,0,0,-.065,face);
+    for(const side of [-1,1])egg(.021,.031,.017,ink,side*.075,.026,.065,face);
+    path([[-.042,-.047,.067],[0,-.066,.071],[.041,-.045,.067]],.009,ink,face);
+    contact(2.77,.46,.82,.52);
+
+    // The grid sheet is tucked under the notebook elastic, beside the pencil.
+    const notes=canvasTexture(640,700,c=>{
+        c.fillStyle='#f4ebcb';c.fillRect(0,0,640,700);
+        c.strokeStyle='#cfcebb';c.lineWidth=1;
+        c.beginPath();
+        for(let x=0;x<640;x+=25){c.moveTo(x,0);c.lineTo(x,700);}
+        for(let y=0;y<700;y+=25){c.moveTo(0,y);c.lineTo(640,y);}
+        c.stroke();
+        c.rotate(-.023);c.fillStyle='#304b64';c.font='italic bold 66px Georgia';
+        c.fillText('test RAG',51,105);c.font='italic 36px Georgia';
+        const stages=[['mes notes',193],['embeddings',365],['recherche',539]];
+        c.strokeStyle='#3f5b70';c.lineWidth=5;
+        for(const [word,y] of stages){
+            c.strokeRect(65,y,332,70);c.fillText(word,85,y+49);
+            if(y<500){c.beginPath();c.moveTo(217,y+76);c.lineTo(215,y+145);c.lineTo(204,y+131);c.moveTo(215,y+145);c.lineTo(227,y+130);c.stroke();}
+        }
+        c.fillStyle='#ac5037';c.font='italic 31px Georgia';c.fillText('top 3 ?',418,582);
+    });
+    notes.anisotropy=grain.anisotropy;
+    const note=mesh(new T.PlaneGeometry(1.14,1.32),new T.MeshStandardMaterial({map:notes,roughness:.96}),-.07,.172,.02,book);
+    note.rotation.set(flat,0,.045);
+    pencil.position.x=.59;
+    pencil.position.y=.22;
+    pencil.rotation.z=-.04;
+
+    // Over-ear headphones resting on their cushions, left of the mug.
+    const headphones=group(-4.02,0,1.42);
+    headphones.rotation.y=.46;
+    const rubber=mat(0x222527,.88), navy=mat(0x35434a,.43), aluminium=mat(0x889094,.35,.72);
+    const band=[];
+    for(let i=0;i<=18;i++){
+        const a=i*Math.PI/18;
+        band.push([.56*Math.cos(a),.156+.046*Math.sin(a),-.61*Math.sin(a)]);
+    }
+    path(band,.068,rubber,headphones);
+    for(const side of [-1,1]){
+        strut([side*.56,.155,0],[side*.48,.158,.224],.039,aluminium,headphones);
+        egg(.173,.093,.243,rubber,side*.445,.092,.23,headphones);
+        egg(.168,.082,.227,navy,side*.445,.188,.23,headphones);
+        const ring=mesh(new T.TorusGeometry(.096,.008,8,36),aluminium,side*.445,.260,.23,headphones);
+        ring.rotation.x=flat;
+    }
+    contact(-4.02,1.42,1.72,1.49);
     // A three-and-a-half inch archive disk beside the computer.
     const disk=group(-3.03,.05,2.38);disk.rotation.y=-.27;
     box(.68,.057,.70,.027,dark,0,0,0,disk);
@@ -259,6 +331,34 @@ function buildDesk(renderer) {
         for(let y=162;y<295;y+=52)c.fillRect(16,y,444,2);
     });
     const sticker=mesh(new T.PlaneGeometry(.53,.31),new T.MeshStandardMaterial({map:diskLabel}),0,.035,.104,disk);sticker.rotation.x=flat;
+    // A taped two-colour generative print, drawn directly on warm paper.
+    const print=canvasTexture(512,640,c=>{
+        c.fillStyle='#ede6d3';c.fillRect(0,0,512,640);
+        c.fillStyle='#192e44';c.fillRect(25,25,462,468);
+        c.save();c.beginPath();c.rect(25,25,462,468);c.clip();
+        c.translate(251,266);c.rotate(-.35);c.lineWidth=2.4;
+        for(let i=0;i<76;i++){
+            const phase=i*.038;
+            c.strokeStyle=i<43?'#a9cdd0':'#f98352';
+            c.beginPath();
+            for(let j=0;j<=240;j++){
+                const a=2*Math.PI*j/240;
+                const r=105+45*Math.cos(3*a+phase)+16*Math.sin(5*a-phase);
+                const x=r*Math.cos(a)+56*Math.cos(phase);
+                const y=r*Math.sin(a)+77*Math.sin(phase);
+                if(j===0)c.moveTo(x,y);else c.lineTo(x,y);
+            }
+            c.closePath();c.stroke();
+        }
+        c.restore();c.fillStyle='#24384b';c.font='bold 53px sans-serif';c.fillText('Espace latent',25,571);
+    });
+    const poster=group(2.94,2.27,-3.975);poster.rotation.z=-.027;
+    mesh(new T.PlaneGeometry(1.28,1.60),new T.MeshStandardMaterial({map:print,roughness:1}),0,0,0,poster);
+    const tape=mat(0xd2c6a4,.94);
+    for(const side of [-1,1]){
+        const strip=box(.30,.084,.005,.002,tape,side*.47,.798,.012,poster);
+        strip.rotation.z=side*.18;
+    }
     // Wooden shelf and a few bound volumes behind the work surface.
     box(5.2,.13,.77,.024,walnut,4.7,3.75,-3.53);
     const spines=[0x856546,0xa4906c,0x394b46,0x976749,0xaca28a,0x40514c];
