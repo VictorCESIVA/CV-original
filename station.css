@@ -84,4 +84,5 @@ body::after { display:none; }
 .spatial .key.wide { color:#f2ead8; font-size:12px; }
 .spatial .key[data-key="Enter"] { color:#292d27; }
 .key[data-upper]::before { content:attr(data-upper); padding-right:.25em; font-size:.73em; opacity:.72; vertical-align:super; }
-.spatial #terminal-wrap::after { background:linear-gradient(126deg,#d9efdc12,transparent 23%,transparent 68%,#93c7a805),radial-gradient(ellipse at 50% 40%,transparent 55%,#0d130d44); }
+.spatial #terminal-wrap::after { background:linear-gradient(114deg,#e8f4e01e,transparent 26%,transparent 62%,#bfe4c50c 70%,transparent 78%),radial-gradient(ellipse at 50% 42%,transparent 56%,#0d130d55 97%); }
+.spatial #terminal-wrap::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:4; box-shadow:inset 0 0 20px #000b,inset 0 0 90px #00000052; }

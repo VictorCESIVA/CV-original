@@ -6,4 +6,6 @@ Pour reconstruire le bundle depuis ce dossier, exécuter `npm ci` puis `npm run 
 
 La texture photographique du bois provient de [Wood Table 001, Poly Haven](https://polyhaven.com/a/wood_table_001), sous licence CC0. Three.js est distribué sous la licence MIT reproduite dans `THREE-LICENSE.txt`.
 
+La pièce complète est modélisée en primitives : plateau et piètement tourné avec tiroir central, chaise de bureau, sol parqueté avec tapis kilim et plinthe, fenêtre à store semi-levé derrière le moniteur, multiprise et câbles d'alimentation, étagère murale à équerres avec serre-livres et plante.
+
 La face de Clawd utilise [le visuel diffusé sur claude.dev](https://claude.dev/shared/img/clawd-mark.png). Son contour est extrudé dans la scène. L’autocollant utilise le [logo Hugging Face](https://huggingface.co/brand). La fiche murale renvoie à [Attention Is All You Need](https://arxiv.org/abs/1706.03762).

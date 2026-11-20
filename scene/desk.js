@@ -73,6 +73,20 @@ function buildDesk(renderer) {
         const curve=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p)));
         return mesh(new T.TubeGeometry(curve,32,r,8,false),m,0,0,0,parent);
     }
+    function coil(points,turns,radius,m,parent=world) {
+        const base=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p)));
+        const wrapped=[];
+        for(let i=0;i<=320;i++){
+            const f=i/320;
+            const c=base.getPoint(f), t=base.getTangent(f);
+            const side=new T.Vector3(-t.z,0,t.x).normalize();
+            const taper=Math.max(0,Math.sin(Math.PI*T.MathUtils.clamp((f-.10)/.80,0,1)));
+            const a=f*turns*Math.PI*2;
+            wrapped.push(c.clone().addScaledVector(side,Math.cos(a)*radius*taper)
+                .add(new T.Vector3(0,Math.sin(a)*radius*.5*taper+.012,0)));
+        }
+        return mesh(new T.TubeGeometry(new T.CatmullRomCurve3(wrapped),520,.0155,8,false),m,0,0,0,parent);
+    }
     function canvasTexture(w,h,draw) {
         const c=document.createElement('canvas'); c.width=w;c.height=h;
         draw(c.getContext('2d')); const t=new T.CanvasTexture(c); t.colorSpace=T.SRGBColorSpace;return t;
@@ -114,7 +128,7 @@ function buildDesk(renderer) {
         c.globalCompositeOperation='destination-in';
         const v=c.createRadialGradient(0,0,70,0,0,280);v.addColorStop(0,'white');v.addColorStop(1,'transparent');c.fillStyle=v;c.fillRect(-400,-400,800,800);
     });
-    mesh(new T.PlaneGeometry(12,7),new T.MeshBasicMaterial({map:sun,transparent:true,depthWrite:false}),-2.3,3.1,-3.99).castShadow=false;
+    mesh(new T.PlaneGeometry(8.5,6),new T.MeshBasicMaterial({map:sun,transparent:true,depthWrite:false}),2.6,3.1,-3.99).castShadow=false;
     const shadowTex=canvasTexture(128,128,c=>{
         c.scale(1,1);const g=c.createRadialGradient(64,64,8,64,64,64);
         g.addColorStop(0,'rgba(30,19,11,.72)');g.addColorStop(.65,'rgba(30,19,11,.45)');g.addColorStop(1,'transparent');c.fillStyle=g;c.fillRect(0,0,128,128);
@@ -136,7 +150,9 @@ function buildDesk(renderer) {
     badge('NOËL  /  PC',.76,.14,-1.38,.31,.802,'#c2b99e','#2b322d');
     const led=new T.MeshStandardMaterial({color:0xbbe88a,emissive:0x76b45b,emissiveIntensity:.8});
     box(.045,.032,.02,.008,led,-.96,.29,.815);
-    box(2.5,.14,1.65,.065,dark,0,.61,-.52);
+    // Swivel riser: a wide plate with a turntable ring carrying the CRT.
+    box(3.2,.05,1.5,.02,dark,0,.565,-.52);
+    cyl(.5,.54,.10,dark,0,.565,-.52);
     // Deep CRT cabinet. Separate rear shell, front moulding and recessed glass.
     box(4.12,2.85,1.88,.20,edge,0,2.04,-.94);
     box(4.52,3.07,.75,.16,plastic,0,2.17,-.025);
@@ -156,7 +172,7 @@ function buildDesk(renderer) {
     box(.29,.15,.052,.026,dark,-1.98,.30,.816);
     box(.22,.105,.055,.016,orange,-1.98,.30,.843);
     box(.020,.055,.005,.001,dark,-1.98,.308,.874);
-    for(let i=0;i<14;i++)box(.42,.014,.038,.006,dark,1.68,3.15,-1.67+i*.082);
+    for(let i=0;i<14;i++)box(.42,.014,.038,.006,dark,1.68,3.47,-1.67+i*.082);
     function surface(el,parent,x,y,z,rotation,scale) {
         const o=new CSS3DObject(el); o.position.set(x,y,z);o.rotation.x=rotation;o.scale.setScalar(scale);parent.add(o);return o;
     }
@@ -168,6 +184,12 @@ function buildDesk(renderer) {
     box(4.68,.096,1.60,.044,satin,0,.037,0,keyRig);
     box(4.64,.088,1.56,.041,graphite,0,.079,0,keyRig);
     box(4.32,.028,1.33,.032,dark,0,.10,0,keyRig);
+    // Status LEDs and a moulded badge on the keyboard's rear strip.
+    const shiftLed=new T.MeshStandardMaterial({color:0xbbe88a,emissive:0x76b45b,emissiveIntensity:.12});
+    box(.05,.018,.05,.012,shiftLed,1.98,.098,-.705,keyRig);
+    box(.05,.018,.05,.012,new T.MeshStandardMaterial({color:0xe8c98a,emissive:0xb4762f,emissiveIntensity:.85}),1.85,.098,-.705,keyRig);
+    const keyBadge=badge('N O Ë L · 8 4',1.05,.10,0,.098,-.72,'#2b322d','#c2b99e',keyRig);
+    keyBadge.rotation.x=-Math.PI/2;
     const boardRig=group(0,0,0,overlays); boardRig.position.copy(keyRig.position);boardRig.rotation.copy(keyRig.rotation);
     const unit=4.28/700;
     surface(board,boardRig,0,.229,0,flat,unit);
@@ -254,8 +276,11 @@ function buildDesk(renderer) {
     box(.09,.018,.031,.006,orange,0,.326,.107,mouseRig);
     const mouseSurface=surface(mouse,overlays,2.87,.32,1.85,flat,.0064);
     mouseSurface.rotation.order='YXZ';mouseSurface.rotation.y=-.14;
-    path([[2.88,.14,1.45],[2.94,.054,1.10],[3.12,.025,.44],[3.43,.025,-.21],[2.94,.023,-1.10],[1.98,.22,-1.48]],.022,dark);
-    path([[-2.31,.12,1.30],[-2.7,.045,.96],[-2.86,.035,.43],[-2.07,.23,-.33]],.028,dark);
+    // Mouse cord: strain-relief grommet at the nose, then a smooth run behind the tower.
+    cyl(.032,.032,.07,dark,0,.155,-.485,mouseRig).rotation.x=Math.PI/2;
+    path([[2.80,.21,1.37],[2.98,.07,1.03],[3.24,.045,.42],[3.44,.035,-.30],[3.30,.03,-1.08],[2.95,.03,-1.80],[2.50,.04,-2.35],[2.15,.05,-2.70]],.022,dark);
+    // Keyboard cord: a coiled telephone-style lead that sweeps right and plugs in behind the case.
+    coil([[1.26,.15,1.12],[1.95,.075,.97],[2.75,.055,.55],[3.12,.05,-.12],[2.95,.05,-1.0],[2.55,.05,-1.75],[2.05,.05,-2.45],[1.65,.05,-2.85]],11,.075,dark);
     // Articulated enamel task lamp and its visible joints.
     // Paper speckle and fine mould texture break up broad highlights.
     const stipple=canvasTexture(256,256,ctx=>{
@@ -279,9 +304,19 @@ function buildDesk(renderer) {
         screw.rotation.x=Math.PI/2;
         box(.033,.005,.004,0,dark,x,.28,.809);
     }
-    // The desktop has an apron and legs, visible from below on tall screens.
+    // Aprons on every face, tapered turned legs, a centre drawer and a modesty panel.
     box(15.4,.29,.12,.015,walnut,0,-.34,3.72);
-    for(const x of [-6.2,6.2]) box(.24,3,.24,.012,dark,x,-1.69,3.62);
+    box(15.2,.29,.12,.015,walnut,0,-.34,-3.42);
+    for(const x of [-6.92,6.92]) box(.14,.27,6.9,.02,walnut,x,-.32,.24);
+    const legWood=mat(0x4a3a2a,.55);
+    const legGeo=new T.LatheGeometry([[.10,0],[.116,.9],[.15,2.1],[.158,2.6],[.104,2.8],[.09,2.84],[.09,3.0]].map(([x,y])=>new T.Vector2(x,y)),26);
+    for(const [x,z] of [[-6.9,3.62],[6.9,3.62],[-6.9,-3.14],[6.9,-3.14]])
+        mesh(legGeo,legWood,x,-3.19,z);
+    box(3.1,.5,2.2,.04,walnut,0,-.56,.85);
+    box(3.06,.44,.05,.01,mat(0x241c14,.9),0,-.56,1.955);
+    box(3.02,.42,.05,.01,walnut,0,-.56,2.0);
+    cyl(.05,.05,.06,dark,0,-.56,2.03).rotation.x=Math.PI/2;
+    box(13.4,1.0,.09,.02,walnut,0,-1.38,-3.06);
     const lamp=group(-3.63,0,-.43);
     cyl(.53,.58,.135,red,0,.09,0,lamp);
     function strut(a,b,r,m,g) {
@@ -301,6 +336,7 @@ function buildDesk(renderer) {
     mesh(new T.LatheGeometry([[.07,.16],[.19,.11],[.28,-.02],[.43,-.30],[.46,-.32]].map(([x,y])=>new T.Vector2(x,y)),64),enamel,0,0,0,shade);
     cyl(.432,.425,.018,new T.MeshStandardMaterial({color:0xffe2ac,emissive:0xffc078,emissiveIntensity:1.3}),0,-.309,0,shade);
     const lampLight=new T.PointLight(0xffb569,12,6);lampLight.position.set(-3.03,2.02,-.35);world.add(lampLight);
+    box(.14,.05,.20,.012,dark,0,.17,.42,lamp);
     contact(-3.63,-.43,1.64,1.45);
     // Ceramic mug with a glazed lip, coffee surface and a loop handle.
     const mug=group(-2.99,0,1.33), glaze=mat(0x6c8d80,.24);
@@ -445,9 +481,92 @@ function buildDesk(renderer) {
     // Wooden shelf and a few bound volumes behind the work surface.
     box(5.2,.13,.77,.024,walnut,4.7,3.75,-3.53);
     const spines=[0x856546,0xa4906c,0x394b46,0x976749,0xaca28a,0x40514c];
+    const volumes=[];
     for(let i=0;i<12;i++){
         const h=.75+(i%4)*.09;
-        box(.18+(i%2)*.035,h,.53,.018,mat(spines[i%6]),2.48+i*.225,3.82+h/2,-3.52);
+        volumes.push(box(.18+(i%2)*.035,h,.53,.018,mat(spines[i%6]),2.48+i*.225,3.82+h/2,-3.52));
+    }
+    volumes[9].rotation.z=-.16;
+    volumes[9].position.x+=.02;volumes[9].position.y+=.02;
+
+    // Daylight window with a half-raised blind, framed behind the monitor.
+    const casement=group(-2.9,0,-3.9);
+    const cream=mat(0xcfc6ae,.62);
+    box(3.9,.16,.24,.03,cream,0,4.64,0,casement);
+    box(3.9,.16,.24,.03,cream,0,1.56,0,casement);
+    for(const x of [-1.87,1.87]) box(.16,3.24,.24,.03,cream,x,3.10,0,casement);
+    box(4.34,.13,.50,.03,walnut,0,1.36,.28,casement);
+    mesh(new T.PlaneGeometry(3.62,3.08),new T.MeshBasicMaterial({color:0xf2e6c8}),0,3.10,-.02,casement).castShadow=false;
+    const slatWood=mat(0xd8c9a8,.85);
+    for(let i=0;i<13;i++){
+        const slat=box(3.66,.062,.02,.008,slatWood,0,4.42-i*.155,.05,casement);
+        slat.rotation.x=-.93;
+    }
+    box(3.7,.09,.03,.01,slatWood,0,2.44,.05,casement).rotation.x=-.93;
+    cyl(.013,.013,2.1,mat(0xd9d2bd,.9),-1.45,3.3,.10,casement);
+    // Wooden floor, skirting board and a kilim rug that catches the chair.
+    const floorGrain=grain.clone();
+    floorGrain.needsUpdate=true;
+    floorGrain.rotation=0;floorGrain.repeat.set(5,4.6);
+    const floorMat=mat(0x8a7a5e,.62);
+    floorMat.map=floorGrain;floorMat.bumpMap=floorGrain;floorMat.bumpScale=.02;
+    box(46,.32,32,.25,floorMat,0,-3.35,-.4);
+    box(26,.55,.16,.02,mat(0x9a9585,.9),0,-2.92,-3.93);
+    const rugTex=canvasTexture(768,512,c=>{
+        c.fillStyle='#44584d';c.fillRect(0,0,768,512);
+        c.strokeStyle='#b06a3e';c.lineWidth=10;c.strokeRect(18,18,732,476);
+        c.strokeStyle='#d9d2bd';c.lineWidth=3;c.strokeRect(42,42,684,428);
+        c.strokeStyle='#b06a3e';c.lineWidth=4;
+        for(let x=96;x<672;x+=96){c.beginPath();c.moveTo(x,96);c.lineTo(x+48,256);c.lineTo(x,416);c.lineTo(x-48,256);c.closePath();c.stroke();}
+        c.strokeStyle='#d9d2bd';
+        for(let x=144;x<672;x+=96){c.beginPath();c.moveTo(x,150);c.lineTo(x+32,256);c.lineTo(x,362);c.lineTo(x-32,256);c.closePath();c.stroke();}
+    });
+    box(7.6,.07,5.3,.05,mat(0x3c4a42,.98),-.9,-3.155,4.25);
+    const rugFace=mesh(new T.PlaneGeometry(7.5,5.2),new T.MeshStandardMaterial({map:rugTex,roughness:.97}),-.9,-3.114,4.25);
+    rugFace.rotation.x=-Math.PI/2;
+    // A high-back vinyl chair tucked close to the desk, angled as if just vacated.
+    const chair=group(-.9,-3.15,3.86);
+    chair.rotation.y=.12;
+    const cushion=mat(0xb35c33,.72);
+    for(let i=0;i<5;i++){
+        const a=i*Math.PI*2/5;
+        const spoke=box(1.02,.085,.13,.02,dark,Math.cos(a)*.52,.09,Math.sin(a)*.52,chair);
+        spoke.rotation.y=-a;
+        egg(.105,.105,.075,dark,Math.cos(a)*1.0,.10,Math.sin(a)*1.0,chair);
+    }
+    cyl(.06,.075,2.0,metal,0,1.12,0,chair);
+    cyl(.13,.13,.34,dark,0,2.12,0,chair);
+    box(1.38,.12,1.30,.04,dark,0,2.12,0,chair);
+    box(1.50,.32,1.42,.11,cushion,0,2.32,0,chair);
+    const chairBack=box(1.34,1.86,.26,.11,cushion,0,3.27,.66,chair);
+    chairBack.rotation.x=.15;
+    box(1.40,.10,.22,.03,dark,0,4.20,.84,chair).rotation.x=.15;
+    // Mains strip tucked against the skirting, feeding the lamp and the computer.
+    const strip=group(1.4,-3.08,-3.5);
+    box(2.8,.22,.58,.05,dark,0,0,0,strip);
+    for(const x of [-1.05,-.35,.35,1.05]) box(.30,.028,.34,.01,mat(0x101412,.6),x,.115,0,strip);
+    const plugBody=mat(0xd9d2bd,.5);
+    for(const x of [-1.05,-.35,.35]) {
+        cyl(.055,.055,.16,plugBody,x,.20,-.02,strip).rotation.x=1.25;
+        box(.07,.03,.10,.012,dark,x,.13,-.14,strip);
+    }
+    box(.14,.05,.20,.012,dark,-1.32,.12,0,strip);
+    box(.05,.03,.05,.01,new T.MeshStandardMaterial({color:0xff6a5a,emissive:0xd43f2f,emissiveIntensity:1.1}),1.26,.12,.12,strip);
+    path([[-1.10,.10,-1.78],[-1.30,.055,-2.50],[-1.35,.045,-3.25],[-1.40,.03,-3.60],[-1.45,-1.30,-3.80],[-1.45,-2.80,-3.70],[-1.0,-2.90,-3.55],[.95,-2.92,-3.55]],.024,dark);
+    path([[1.55,1.10,-1.95],[2.20,.50,-2.50],[2.45,.09,-3.00],[2.50,.05,-3.42],[2.55,.02,-3.70],[2.60,-1.40,-3.80],[2.60,-2.80,-3.70],[2.00,-2.90,-3.55],[1.78,-2.92,-3.52]],.026,dark);
+    path([[-3.63,.07,-1.02],[-3.80,.05,-2.30],[-3.90,.04,-3.30],[-3.95,.02,-3.68],[-4.00,-1.40,-3.78],[-4.00,-2.80,-3.70],[-2.60,-2.90,-3.58],[.30,-2.92,-3.52]],.024,dark);
+    // Shelf brackets, a steel bookend and a small potted plant.
+    for(const x of [3.1,6.35]) box(.09,.40,.34,.02,metal,x,3.485,-3.83);
+    box(.06,.50,.40,.01,dark,5.35,4.06,-3.52);
+    box(.26,.05,.40,.01,dark,5.24,3.84,-3.52);
+    const pot=new T.LatheGeometry([[.01,0],[.12,0],[.145,.04],[.16,.26],[.172,.28],[.148,.28],[.13,.05]].map(([x,y])=>new T.Vector2(x,y)),32);
+    const plant=group(6.15,3.815,-3.46);
+    mesh(pot,mat(0x9c5a3c,.8),0,0,0,plant);
+    cyl(.125,.125,.02,mat(0x241a12,.95),0,.25,0,plant);
+    for(let i=0;i<7;i++){
+        const a=i*Math.PI*2/7+.4;
+        const leaf=egg(.30,.010,.10,i%2?mat(0x3f5f3f,.8):mat(0x51724d,.8),Math.cos(a)*.13,.32+(i%3)*.10,Math.sin(a)*.13,plant);
+        leaf.rotation.set(0,-a,.55+(i%3)*.12,'YXZ');
     }
 
     let yaw=.32, pitch=.34, orbit=null, focus=false, pending=false;
@@ -474,6 +593,7 @@ function buildDesk(renderer) {
         left.position.y=mouse.querySelector('.left.on')?-.005:.014;
         right.position.y=mouse.querySelector('.right.on')?-.005:.014;
         wheel.material=mouse.querySelector('.wheel.on')?orange:dark;
+        shiftLed.emissiveIntensity=board.querySelector('[data-key="Shift"]')?.classList.contains('on')?1.6:.12;
         mouseSurface.position.x=mouseRig.position.x;mouseSurface.position.z=mouseRig.position.z;
         composer.render();css.render(overlays,camera);
     }
