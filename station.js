@@ -9,10 +9,10 @@ const rows = [
     [...'azertyuiop', '^', '$'],
     [...'qsdfghjklm', 'ù', 'Enter'],
     ['Shift', ...'wxcvbn', ',', ';', ':', '!'],
-    ['Home', 'End', ' ', 'ArrowLeft', 'ArrowRight', 'Delete']
+    ['Home', 'End', ' ', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight', 'Delete']
 ];
-const labels = { Escape:'Échap', Home:'Début', End:'Fin', Delete:'Suppr', Backspace:'⌫', Enter:'Entrée', Shift:'Maj', ArrowLeft:'←', ArrowRight:'→', ' ':'Espace' };
-const names = { Backspace:'Effacer', ArrowLeft:'Curseur à gauche', ArrowRight:'Curseur à droite' };
+const labels = { Escape:'Échap', Home:'Début', End:'Fin', Delete:'Suppr', Backspace:'⌫', Enter:'Entrée', Shift:'Maj', ArrowLeft:'←', ArrowUp:'↑', ArrowDown:'↓', ArrowRight:'→', ' ':'Espace' };
+const names = { Backspace:'Effacer', ArrowLeft:'Curseur à gauche', ArrowRight:'Curseur à droite', ArrowUp:'Commande précédente', ArrowDown:'Commande suivante' };
 const screens = {
     home: document.getElementById('screen-home'),
     dossier: document.getElementById('screen-dossier'),
@@ -35,7 +35,10 @@ function showScreen(mode) {
     else stopMatrix();
 }
 
-screenTabs.forEach(button => button.addEventListener('click', () => showScreen(button.dataset.screen)));
+screenTabs.forEach(button => button.addEventListener('click', () => {
+    if (button.dataset.screen === 'terminal') screenFrame.dispatchEvent(new Event('cv:read-screen'));
+    showScreen(button.dataset.screen);
+}));
 
 function isPlainClick(event) {
     return event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey;
@@ -87,6 +90,8 @@ function typeKey(key) {
         keys.get(key).classList.toggle('on', shift);
     } else if (key === 'Enter') {
         submitCommand();
+    } else if (key === 'ArrowUp' || key === 'ArrowDown') {
+        recallCommand(key === 'ArrowUp' ? -1 : 1);
     } else if (key === 'ArrowLeft' || key === 'ArrowRight') {
         const pos = key === 'ArrowLeft' ? (start !== end ? start : Math.max(0,start-1))
             : (start !== end ? end : Math.min(input.value.length,end+1));
@@ -377,7 +382,7 @@ function syncDesk() {
     if (want3d && deskState === 'idle' && !guide.open && !resume.open) {
         deskState = 'loading';
         const script = document.createElement('script');
-        script.src = 'desk.bundle.js?v=mode';
+        script.src = 'desk.bundle.js?v=clavier';
         script.addEventListener('error', deskUnavailable, {once:true});
         script.addEventListener('load', () => {
             if (deskState === 'loading') deskUnavailable();

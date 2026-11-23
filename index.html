@@ -16,7 +16,7 @@
     <meta property="og:image:alt" content="Le bureau 3D de Victor Noël : un moniteur rétro affiche les dossiers du CV, entouré des miniatures des projets.">
     <meta name="theme-color" content="#101b17">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101b17'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='34' font-weight='700' fill='%23ff9500' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
-    <link rel="stylesheet" href="station.css?v=portfolio">
+    <link rel="stylesheet" href="station.css?v=clavier">
 </head>
 <body>
 
@@ -85,17 +85,17 @@
       </section>
       <section class="screen-terminal" id="screen-terminal" aria-label="Terminal du CV" hidden>
         <div class="screen-scroll" id="terminal-body" tabindex="0" role="region" aria-label="Historique du terminal">
-          <p class="terminal-intro">Tapez <code>help</code> ou utilisez les commandes rapides.</p>
+          <p class="terminal-intro" id="terminal-hint">Tapez <code>aide</code> ou utilisez les raccourcis. <kbd>↑</kbd> et <kbd>↓</kbd> parcourent les commandes déjà saisies.</p>
           <div id="output" role="log" aria-label="Sortie du terminal"></div>
         </div>
         <form class="input-line" id="terminal-form">
           <span class="prompt" aria-hidden="true">victor@noel:~$</span>
-          <input type="text" id="commandInput" aria-label="Commande du terminal" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="help">
+          <input type="text" id="commandInput" aria-label="Commande du terminal" aria-describedby="terminal-hint" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="aide">
         </form>
         <nav class="shortcuts" aria-label="Commandes rapides">
-          <button type="button" data-command="help">help</button>
-          <button type="button" data-command="xp">xp</button>
-          <button type="button" data-command="projects">projects</button>
+          <button type="button" data-command="aide">aide</button>
+          <button type="button" data-command="parcours">parcours</button>
+          <button type="button" data-command="projets">projets</button>
           <button type="button" data-command="contact">contact</button>
         </nav>
       </section>
@@ -128,6 +128,7 @@
         <div data-3d-option><dt>Bureau 3D</dt><dd>Faites glisser la scène et ouvrez une miniature pour voir sa fiche projet.</dd></div>
         <div><dt>CV express</dt><dd>Lisez l’essentiel sans explorer le bureau, ou ouvrez la version à partager.</dd></div>
     </dl>
+    <p class="guide-keyboard"><kbd>Tab</kbd> pour parcourir les choix, <kbd>Entrée</kbd> pour ouvrir, <kbd>Échap</kbd> pour fermer le guide.</p>
     <form class="dialog-actions" method="dialog">
         <button type="submit" value="3d" class="primary-action" data-3d-option autofocus>Explorer en 3D</button>
         <button type="submit" value="pc">Ouvrir le PC seul</button>
@@ -267,22 +268,23 @@ ${cvContact}
 
     help: `<h4 class="section-title">Commandes disponibles</h4>
 <div class="help-grid">
-  <code>about</code><span>Profil et liens</span>
-  <code>skills</code><span>Compétences techniques</span>
-  <code>softskills</code><span>Qualités et centres d’intérêt</span>
-  <code>certifications</code><span>Langues et TOEIC</span>
-  <code>education</code><span>Formations</span>
-  <code>projects</code><span>Projets personnels et CESI</span>
-  <code>xp</code><span>Expériences professionnelles</span>
+  <code>profil</code><span>Profil et liens</span>
+  <code>compétences</code><span>Compétences techniques</span>
+  <code>intérêts</code><span>Qualités et centres d’intérêt</span>
+  <code>langues</code><span>Langues et TOEIC</span>
+  <code>formation</code><span>Formations</span>
+  <code>projets</code><span>Projets personnels et CESI</span>
+  <code>parcours</code><span>Expériences professionnelles</span>
   <code>contact</code><span>E-mail, LinkedIn et GitHub</span>
   <code>github</code><span>Statistiques du profil GitHub</span>
-  <code>all</code><span>Afficher toutes les rubriques</span>
-  <code>theme [color]</code><span>green, red, blue, pink ou default</span>
-  <code>game</code><span>Deviner un nombre (quit pour arrêter)</span>
+  <code>tout</code><span>Afficher toutes les rubriques</span>
+  <code>thème [couleur]</code><span>vert, rouge, bleu, rose ou défaut</span>
+  <code>jeu</code><span>Deviner un nombre (quitter pour arrêter)</span>
   <code>matrix</code><span>Animation rétro</span>
-  <code>clear</code><span>Effacer l’historique</span>
-  <code>download</code><span>Télécharger le CV PDF</span>
-</div>`
+  <code>effacer</code><span>Effacer les résultats affichés</span>
+  <code>pdf</code><span>Télécharger le CV PDF</span>
+</div>
+<p class="command-note">Les commandes anglaises restent disponibles, dont <code>help</code>, <code>projects</code> et <code>xp</code>.</p>`
 };
 
 const input = document.getElementById('commandInput');
@@ -290,11 +292,39 @@ const output = document.getElementById('output');
 const terminalBody = document.getElementById('terminal-body');
 const matrixCanvas = document.getElementById('matrix-canvas');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const commandAliases = { toeic:'certifications', formation:'education', projets:'projects', experience:'xp', pdf:'download' };
+const commandAliases = {
+    aide:'help', profil:'about', competences:'skills', interets:'softskills', langues:'certifications',
+    toeic:'certifications', formation:'education', projets:'projects', parcours:'xp', experience:'xp',
+    tout:'all', jeu:'game', quitter:'quit', effacer:'clear', pdf:'download', telecharger:'download'
+};
+const themeAliases = {vert:'green', rouge:'red', bleu:'blue', rose:'pink', defaut:'default'};
 const themes = { green:'#aff4af', red:'#ffa7a0', blue:'#92d6ff', pink:'#ffb0cb', default:'' };
 const cvSections = ['about','xp','education','skills','projects','certifications','softskills','contact'];
 let targetNumber = 0;
 let matrixInterval, matrixTimeout;
+const commandHistory = [];
+let historyIndex = 0;
+let commandDraft = '';
+
+function recallCommand(direction) {
+    const next = Math.max(0, Math.min(commandHistory.length, historyIndex + direction));
+    if (next === historyIndex) return;
+    if (historyIndex === commandHistory.length) commandDraft = input.value;
+    historyIndex = next;
+    input.value = commandHistory[next] ?? commandDraft;
+    input.setSelectionRange(input.value.length, input.value.length);
+}
+
+input.addEventListener('keydown', event => {
+    if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+    event.preventDefault();
+    recallCommand(event.key === 'ArrowUp' ? -1 : 1);
+});
+
+function normalizeCommand(value) {
+    return value.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/\s+/g, ' ');
+}
 
 document.getElementById('terminal-form').addEventListener('submit', event => {
     event.preventDefault();
@@ -302,8 +332,15 @@ document.getElementById('terminal-form').addEventListener('submit', event => {
 });
 
 function submitCommand(value = input.value) {
-    const command = value.trim().toLowerCase();
-    if (!command) return;
+    const submitted = value.trim();
+    if (!submitted) return;
+    if (commandHistory.at(-1) !== submitted) {
+        commandHistory.push(submitted);
+        if (commandHistory.length > 50) commandHistory.shift();
+    }
+    historyIndex = commandHistory.length;
+    commandDraft = '';
+    const command = normalizeCommand(submitted);
     input.value = '';
     const cmd = Object.hasOwn(commandAliases, command) ? commandAliases[command] : command;
     if (cmd === 'clear') {
@@ -318,7 +355,7 @@ function submitCommand(value = input.value) {
     entry.className = 'command-output';
     const echo = document.createElement('p');
     echo.className = 'command-echo';
-    echo.textContent = `$ ${value.trim()}`;
+    echo.textContent = `$ ${submitted}`;
     const result = document.createElement('div');
     entry.append(echo, result);
     output.append(entry);
@@ -337,18 +374,19 @@ function submitCommand(value = input.value) {
         result.innerHTML = cv[cmd];
     } else if (cmd === 'all') {
         result.innerHTML = cvSections.map(section => cv[section]).join('');
-    } else if (cmd === 'theme' || cmd.startsWith('theme ')) {
-        const color = cmd.slice(5).trim() || 'default';
+    } else if (command === 'theme' || command.startsWith('theme ')) {
+        const requested = command.slice(5).trim() || 'defaut';
+        const color = Object.hasOwn(themeAliases, requested) ? themeAliases[requested] : requested;
         if (Object.hasOwn(themes, color)) {
             terminalBody.closest('.screen').style.setProperty('--green', themes[color]);
-            result.textContent = `Thème : ${color}`;
-        } else result.textContent = 'Couleurs : green, red, blue, pink ou default.';
+            result.textContent = `Thème : ${requested}`;
+        } else result.textContent = 'Couleurs : vert, rouge, bleu, rose ou défaut.';
     } else if (cmd === 'download') {
         document.getElementById('cv-pdf').click();
         result.innerHTML = '<a href="CV_Victor_NOEL.pdf" download>Télécharger le CV PDF</a>';
     } else if (cmd === 'game') {
         targetNumber = Math.floor(Math.random() * 100) + 1;
-        result.textContent = 'Devinez le nombre entre 1 et 100. Tapez quit pour arrêter.';
+        result.textContent = 'Devinez le nombre entre 1 et 100. Tapez quitter pour arrêter.';
     } else if (cmd === 'matrix') {
         result.textContent = reducedMotion.matches ? 'Animation désactivée (mouvement réduit).' : 'Bienvenue dans la Matrice.';
         if (!reducedMotion.matches) startMatrix();
@@ -357,7 +395,7 @@ function submitCommand(value = input.value) {
         renderGitHub(result);
     } else {
         result.className = 'error';
-        result.textContent = `Commande inconnue : ${cmd}. Tapez help pour la liste.`;
+        result.textContent = `Commande inconnue : ${submitted}. Tapez aide pour la liste.`;
     }
     terminalBody.scrollTop = entry.offsetTop - 12;
 }
@@ -407,6 +445,6 @@ function startMatrix() {
     matrixTimeout = setTimeout(stopMatrix, 4200);
 }
 </script>
-<script src="station.js?v=portfolio"></script>
+<script src="station.js?v=clavier"></script>
 </body>
 </html>

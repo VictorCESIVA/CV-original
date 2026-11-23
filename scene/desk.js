@@ -23,7 +23,7 @@ function buildDesk(renderer) {
     stage.prepend(canvas);
     canvas.setAttribute('aria-label','Bureau de Victor en 3D avec un PC rétro, la mascotte Clawd, un casque et un carnet de notes sur l’IA');
     const renderSize = () => stage.getBoundingClientRect();
-    const compactView=matchMedia('(max-width:760px)');
+    const compactView=matchMedia('(max-width:760px), (max-height:560px)');
     const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
     const pixelRatio=()=>Math.min(devicePixelRatio,compactView.matches?1.25:1.65);
     renderer.setPixelRatio(pixelRatio());
@@ -963,7 +963,7 @@ function buildDesk(renderer) {
     cameraControls.lastElementChild.onclick=()=>{yaw=homeYaw;pitch=homePitch;setFocus(false);};
     frame.addEventListener('cv:read-screen',()=>{
         // Small projected text becomes readable only after choosing a file.
-        if(deskActive && !focus && frame.getBoundingClientRect().width<560)setFocus(true);
+        if(deskActive && !focus && (compactView.matches || frame.getBoundingClientRect().width<560))setFocus(true);
     });
     const projectTip=document.getElementById('project-tip');
     const raycaster=new T.Raycaster();
