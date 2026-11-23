@@ -68,10 +68,10 @@ body::after { display:none; }
 .view-controls button { background:transparent; color:#eee9da; border:0; font:13px/1.4 system-ui,sans-serif; padding:6px 9px; cursor:pointer; border-radius:3px; }
 .view-controls button:hover,.view-controls button:focus-visible { background:#ffffff20; }
 .view-controls button:last-child { border-left:1px solid #ffffff2c; font-size:17px; line-height:1; }
-@media(max-width:649px) and (orientation:portrait) {
-    .spatial.reading #terminal-wrap { width:min(680px,96vw); height:70svh; }
+@media(max-width:700px) {
+    .spatial.reading #terminal-wrap { width:min(680px,96vw); height:calc(100dvh - 72px); }
     .spatial.reading .projected-controls { z-index:2; }
-    .spatial.reading #terminal-wrap { position:fixed!important; transform:none!important; left:2vw; top:12svh; }
+    .spatial.reading #terminal-wrap { position:fixed!important; transform:none!important; left:2vw; top:58px; }
     .spatial.reading .projected-controls div:has(>#terminal-wrap),.spatial.reading .projected-controls>div { transform:none!important; perspective:none!important; }
     .spatial.reading #keyboard,.spatial.reading #mouse { visibility:hidden; }
     .spatial.reading .welcome h1 { font-size:40px; }
@@ -90,7 +90,6 @@ body::after { display:none; }
 .project-nav { display:flex; justify-content:center; gap:8px; padding:8px; }
 .project-nav button,.archive-links button { cursor:pointer; font:600 14px monospace; padding:7px 10px; border:1px solid #818779; border-radius:4px; color:#f0e9d7; background:#304139; }
 .archive-links { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
-.spatial .project-nav { display:none; }
 #portfolio-archive { margin:auto; width:min(520px,94vw); max-height:82svh; padding:0 24px 18px; background:#f3eddb; color:#27332e; border:1px solid #817965; border-radius:8px; box-shadow:0 12px 64px #0008; font:16px/1.45 system-ui,sans-serif; }
 #portfolio-archive::backdrop { background:#0a1613ae; }
 #portfolio-archive header { position:sticky; top:0; background:#f3eddb; display:flex; align-items:center; justify-content:space-between; padding:18px 0 12px; border-bottom:2px solid #364b42; }
@@ -114,11 +113,29 @@ body::after { display:none; }
 .sheet-tags span { padding:3px 8px; border:1px solid #b9b7a2; border-radius:3px; background:#e9e1cb; color:#405148; font:12px/1.5 monospace; }
 .sheet-link { display:inline-block; margin-top:18px; color:#245449; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
 .sheet-link[hidden] { display:none; }
-.sheet-hint { margin:20px 0 0; padding-top:12px; border-top:1px solid #c4c4af; color:#536258; font-size:13px; }
 #project-tip { position:fixed; z-index:30; pointer-events:none; padding:7px 10px; border:1px solid #ffffff2e; border-radius:5px; background:#14201bee; color:#f1ead9; font:600 12px/1.4 monospace; box-shadow:0 6px 20px #0006; white-space:nowrap; }
 #project-tip small { display:block; color:#9fb5a8; font-weight:400; }
+
+/* Collection access stays within reach when the scene is turned away. */
+.spatial .project-nav { display:flex; position:fixed; left:16px; top:14px; right:auto; gap:0; padding:3px; background:#18251ff2; border:1px solid #ffffff30; border-radius:6px; z-index:20; }
+.project-nav button { min-height:32px; border:0; background:transparent; color:#f3ecdc; font:600 13px/1.2 system-ui,sans-serif; }
+.project-nav button+button { border-left:1px solid #ffffff30; border-radius:0; }
+.project-nav button:hover,.project-nav button:focus-visible { background:#435448; }
+.project-index { display:none; }
+#portfolio-archive,#project-sheet { overscroll-behavior:contain; }
+#portfolio-archive .open-sheet { padding:0; border:none; color:#245449; font:inherit; text-align:left; text-decoration:underline; text-underline-offset:3px; }
 @media(max-width:700px) {
-    .spatial .project-nav { position:fixed; top:8px; left:0; right:0; display:flex; z-index:5; pointer-events:none; }
-    .project-nav button { pointer-events:auto; }
-    .view-controls { top:auto; bottom:max(14px,env(safe-area-inset-bottom)); }
+    .spatial .station { height:clamp(230px,43svh,420px); }
+    .spatial .station>canvas { touch-action:pan-y; }
+    .spatial .project-nav,.project-nav { display:none; }
+    .spatial .view-controls:not([hidden]) { position:relative; inset:auto; width:max-content; margin:0 auto; top:-12px; }
+    .project-index { display:block; max-width:600px; margin:auto; padding:10px 20px max(32px,env(safe-area-inset-bottom)); color:#e8e2d3; font:16px/1.4 system-ui,sans-serif; }
+    .project-index section+section { margin-top:24px; }
+    .project-index h2 { font:700 24px/1.2 Georgia,serif; padding-bottom:9px; border-bottom:1px solid #b7b6a255; }
+    .project-index button { width:100%; display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:48px; text-align:left; border:0; border-bottom:1px solid #b7b6a22c; background:transparent; padding:9px 0; color:inherit; font:600 15px/1.4 system-ui,sans-serif; }
+    .project-index button small { color:#c2cabe; font:12px monospace; white-space:nowrap; }
+    .project-index button:focus-visible,.project-index button:hover { background:#ffffff12; }
+    .spatial.reading .station { height:100dvh; }
+    .spatial.reading .project-index { display:none; }
+    .spatial.reading .view-controls:not([hidden]) { position:fixed; top:8px; right:8px; margin:0; }
 }

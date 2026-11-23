@@ -23,7 +23,9 @@ function buildDesk(renderer) {
     css.domElement.className = 'projected-controls';
     renderer.domElement.setAttribute('aria-label','Bureau de Victor en 3D avec un PC rétro, la mascotte Clawd, un casque et un carnet de notes sur l’IA');
     const renderSize = () => stage.getBoundingClientRect();
-    renderer.setPixelRatio(Math.min(devicePixelRatio,1.65));
+    const compactView=matchMedia('(max-width:700px)');
+    const pixelRatio=()=>Math.min(devicePixelRatio,compactView.matches?1.25:1.65);
+    renderer.setPixelRatio(pixelRatio());
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = T.PCFShadowMap;
     renderer.shadowMap.autoUpdate = false;
@@ -34,6 +36,7 @@ function buildDesk(renderer) {
     world.fog = new T.FogExp2(0x52574d,.043);
     const target=new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,samples:Math.min(4,renderer.capabilities.maxSamples)});
     const composer=new EffectComposer(renderer,target);
+    composer.setPixelRatio(renderer.getPixelRatio());
     composer.addPass(new RenderPass(world,camera));
     const occlusion=new GTAOPass(world,camera,512,512,undefined,{radius:.33,thickness:.65,samples:12});
     composer.addPass(occlusion);
@@ -422,7 +425,7 @@ function buildDesk(renderer) {
     contact(-4.90,-.48,1.72,1.49);
     // Seven project miniatures replace the old floppy shortcuts. Each one is a
     // small physical diorama with a printed label, and opens its fiche on click.
-    const projectStations=[];
+    const projectTargets=[];
     const projBase=mat(0x26312d,.62,.14);
     const projInk=mat(0x1b2420,.7,.06);
     const projIvory=mat(0xded6c2,.5);
@@ -435,30 +438,15 @@ function buildDesk(renderer) {
     function screenTexture(w,h,draw){
         const t=canvasTexture(w,h,draw);t.anisotropy=grain.anisotropy;return t;
     }
-    function splitProjectLabel(text){
-        if(text.length<=10)return [text];
-        const words=text.split(' ');
-        if(words.length>1){
-            const mid=Math.ceil(words.length/2);
-            return [words.slice(0,mid).join(' '),words.slice(mid).join(' ')];
-        }
-        const capitals=[...text].map((ch,i)=>/[A-ZÀ-Ý]/.test(ch)&&i>2?i:-1).filter(i=>i>0);
-        const cut=capitals.sort((a,b)=>Math.abs(a-text.length/2)-Math.abs(b-text.length/2))[0];
-        return cut?[text.slice(0,cut),text.slice(cut)]:[text];
-    }
     function projectPlaque(text,width,accent,parent){
-        const lines=splitProjectLabel(text);
-        const t=screenTexture(768,300,c=>{
-            c.fillStyle='#f1e6ca';c.fillRect(0,0,768,300);
-            c.fillStyle=accent;c.fillRect(0,0,18,300);
-            c.strokeStyle='#b7a57d';c.lineWidth=6;c.strokeRect(3,3,762,294);
-            c.fillStyle='#26332d';c.textAlign='center';c.textBaseline='middle';
-            let size=lines.length>1?116:142;
-            do { c.font=`bold ${size}px Georgia`; } while(lines.some(line=>c.measureText(line).width>690)&&(size-=3)>48);
-            const gap=lines.length>1?96:0;
-            lines.forEach((line,index)=>c.fillText(line,396,150+gap*(index-(lines.length-1)/2)));
+        const t=screenTexture(640,132,c=>{
+            c.fillStyle='#eee6d5';c.fillRect(0,0,640,132);
+            c.fillStyle=accent;c.fillRect(0,0,14,132);
+            c.fillStyle='#21332e';c.textAlign='center';c.textBaseline='middle';
+            c.font='bold 76px sans-serif';
+            c.fillText(text,325,69,590);
         });
-        const h=.28;
+        const h=.20;
         const back=box(width+.035,h+.035,.014,.006,projInk,0,.17,.286,parent);
         back.rotation.x=-.5;
         const face=mesh(new T.PlaneGeometry(width,h),new T.MeshStandardMaterial({map:t,roughness:.86}),0,.17,.296,parent);
@@ -470,16 +458,15 @@ function buildDesk(renderer) {
         box(.68,.055,.50,.02,projBase,0,.0275,0,g);
         box(.64,.006,.46,.003,mat(0x1d2723,.8),0,.056,0,g);
         box(.58,.12,.42,.018,mat(0x1f2925,.6,.06),0,.115,-.035,g);
-        projectPlaque(project.label,.66,projAccent[project.collection],g);
+        projectPlaque(project.label,.91,projAccent[project.collection],g);
         const ring=mesh(new T.RingGeometry(.46,.52,48),new T.MeshBasicMaterial({
             color:0xb8f0c0,transparent:true,opacity:.62,side:T.DoubleSide,depthWrite:false,toneMapped:false
         }),0,.004,0,g);
         ring.rotation.x=-Math.PI/2;ring.visible=false;ring.castShadow=false;ring.receiveShadow=false;
-        const hit=box(.70,.78,.54,.02,new T.MeshBasicMaterial({visible:false}),0,.39,0,g);
-        hit.castShadow=false;hit.receiveShadow=false;
+
         g.userData.projectId=project.id;
         g.userData.ring=ring;
-        projectStations.push(g);
+
         contact(x,z,.88,.70,lift+.008);
         return g;
     }
@@ -610,7 +597,7 @@ function buildDesk(renderer) {
         const cell=.33/5;
         for(const key of alive){
             const [col,row]=key.split(',').map(Number);
-            box(cell*.58,.022,cell*.58,.004,projGreen,(col-2)*cell,.025,(row-2)*cell,board);
+            box(cell*.58,cell*.58,.009,.003,projGreen,(col-2)*cell,(2-row)*cell,.023,board);
         }
     }
 
@@ -716,26 +703,34 @@ function buildDesk(renderer) {
 
     const builders={cleaner:buildCleaner,meter:buildMeter,cotalyse:buildCotalyse,life:buildLife,web:buildWeb,prosit:buildProsit,station:buildStation};
     const projectMeta=window.CV_PROJECTS||[];
-    const projectPlacements={
-        opencleaner:[-4.15,2.72,.20,0,1.70],
-        sardochemetre:[-3.45,2.74,.20,0,1.70],
-        cotalyse:[-2.75,2.76,.20,0,1.70],
-        '3ww':[3.55,1.05,-.08,.55,1.80],
-        web4all:[4.45,1.05,-.08,.55,1.50],
-        conway:[3.55,1.95,-.08,0,1.55],
-        prosit5:[4.45,1.95,-.08,0,1.50]
-    };
-    // Walnut step under the back row: its labels stay visible over the front row.
-    box(1.66,.55,.58,.02,mat(0x2a2118,.55),4.00,.275,1.05);
-    box(1.70,.018,.62,.005,mat(0x3b2b1e,.6),4.00,.559,1.05);
-    for(const project of projectMeta){
-        const placement=projectPlacements[project.id];
-        const build=builders[project.model];
-        if(!placement||!build) continue;
-        const station=projectPlinth(project,placement[0],placement[1],placement[2],placement[3]);
-        const model=group(0,.067,0,station);
-        model.scale.setScalar(placement[4]);
-        build(model);
+    const shelfDepth=3.63;
+    const spacing=1.10;
+    const collections=[
+        {id:'perso',left:-3.58,title:'PROJETS PERSO'},
+        {id:'cesi',left:.12,title:'PROJETS CESI'}
+    ];
+    const pickMaterial=new T.MeshBasicMaterial({visible:false});
+    for(const collection of collections){
+        const items=projectMeta.filter(p=>p.collection===collection.id && builders[p.model]);
+        // Put the weather mast at the outside edge, clear of the interactive keyboard.
+        items.sort((a,b)=>Number(a.model==='station')-Number(b.model==='station'));
+        if(!items.length) continue;
+        const width=items.length*spacing;
+        const center=collection.left+width/2-.5*spacing;
+        box(width,.185,.89,.038,projBase,center,.103,shelfDepth+.04);
+        const edge=mat(projAccent[collection.id]);
+        box(width-.07,.024,.024,.006,edge,center,.185,shelfDepth+.487);
+        badge(collection.title,1.34,.105,center,.094,shelfDepth+.49,'#26312d','#eee8d4');
+        items.forEach((project,i)=>{
+            const x=collection.left+i*spacing;
+            const station=projectPlinth(project,x,shelfDepth,0,.197);
+            const model=group(0,.067,0,station);
+            model.scale.setScalar(1.32);
+            builders[project.model](model);
+            const hit=box(1.02,project.id==='3ww'?1:.81,.77,0,pickMaterial,0,.40,.02,station);
+            hit.castShadow=false;hit.receiveShadow=false;
+            projectTargets.push(hit);
+        });
     }
 
     // A taped two-colour generative print, drawn directly on warm paper.
@@ -759,7 +754,7 @@ function buildDesk(renderer) {
         }
         c.restore();c.fillStyle='#24384b';c.font='bold 53px sans-serif';c.fillText('Espace latent',25,571);
     });
-    const poster=group(2.94,1.77,-3.975);poster.rotation.z=-.027;
+    const poster=group(3.93,1.77,-3.975);poster.rotation.z=-.027;
     mesh(new T.PlaneGeometry(1.28,1.60),new T.MeshStandardMaterial({map:print,roughness:1}),0,0,0,poster);
     const tape=mat(0xd2c6a4,.94);
     for(const side of [-1,1]){
@@ -786,7 +781,7 @@ function buildDesk(renderer) {
     box(.39,.10,.007,.002,tape,0,.814,.009,reading);
     // Lay the books horizontally so the titles face the visitor.
     const shelfTop=2.85;
-    box(4.35,.13,.77,.024,walnut,3.98,shelfTop-.065,-3.53);
+    box(4.35,.13,.77,.024,walnut,4.93,shelfTop-.065,-3.53);
     const library=[
         {title:'Deep Learning',width:2.09,height:.245,color:'#344b48',ink:'#fff2cb',font:'bold 60px Georgia'},
         {title:'Dive into Deep Learning',width:2.04,height:.225,color:'#e8d4ae',ink:'#253b45',font:'bold 55px sans-serif'},
@@ -794,7 +789,7 @@ function buildDesk(renderer) {
     ];
     let restingHeight=shelfTop;
     library.forEach(({title,width,height,color,ink,font},index)=>{
-        const volume=group(3.09+index*.025,restingHeight,-3.48);
+        const volume=group(4.04+index*.025,restingHeight,-3.48);
         volume.rotation.y=[-.025,.035,-.06][index];
         const cloth=mat(color,.9);
         const depth=.73;
@@ -847,8 +842,8 @@ function buildDesk(renderer) {
     const rugFace=mesh(new T.PlaneGeometry(7.5,5.2),new T.MeshStandardMaterial({map:rugTex,roughness:.97}),-.9,-3.114,4.25);
     rugFace.rotation.x=-Math.PI/2;
     // A high-back vinyl chair tucked close to the desk, angled as if just vacated.
-    const chair=group(-.9,-3.15,3.86);
-    chair.rotation.y=.12;
+    const chair=group(-5.8,-3.15,4.68);
+    chair.rotation.y=.70;
     const cushion=mat(0xb35c33,.72);
     for(let i=0;i<5;i++){
         const a=i*Math.PI*2/5;
@@ -878,9 +873,9 @@ function buildDesk(renderer) {
     path([[1.55,1.10,-1.95],[2.20,.50,-2.50],[2.45,.09,-3.00],[2.50,.05,-3.42],[2.55,.02,-3.70],[2.60,-1.40,-3.80],[2.60,-2.80,-3.70],[2.00,-2.90,-3.55],[1.78,-2.92,-3.52]],.026,dark);
     path([[-3.63,.07,-1.02],[-3.80,.05,-2.30],[-3.90,.04,-3.30],[-3.95,.02,-3.68],[-4.00,-1.40,-3.78],[-4.00,-2.80,-3.70],[-2.60,-2.90,-3.58],[.30,-2.92,-3.52]],.024,dark);
     // Shelf brackets and a small potted plant.
-    for(const x of [2.3,5.6]) box(.09,.40,.34,.02,metal,x,shelfTop-.33,-3.83);
+    for(const x of [3.25,6.55]) box(.09,.40,.34,.02,metal,x,shelfTop-.33,-3.83);
     const pot=new T.LatheGeometry([[.01,0],[.12,0],[.145,.04],[.16,.26],[.172,.28],[.148,.28],[.13,.05]].map(([x,y])=>new T.Vector2(x,y)),32);
-    const plant=group(4.65,shelfTop,-3.46);
+    const plant=group(5.60,shelfTop,-3.46);
     mesh(pot,mat(0x9c5a3c,.8),0,0,0,plant);
     cyl(.125,.125,.02,mat(0x241a12,.95),0,.25,0,plant);
     for(let i=0;i<7;i++){
@@ -889,11 +884,12 @@ function buildDesk(renderer) {
         leaf.rotation.set(0,-a,.55+(i%3)*.12,'YXZ');
     }
 
-    let yaw=.32, pitch=.34, orbit=null, focus=false, pending=false;
+    const homeYaw=.06,homePitch=.43;
+    let yaw=homeYaw, pitch=homePitch, orbit=null, focus=false, pending=false;
     const cameraControls=document.querySelector('.view-controls');
     cameraControls.hidden=false;
     const zoom=cameraControls.querySelector('button');
-    const mobile=()=>innerWidth<650 && innerHeight>innerWidth;
+
     function invalidate() {
         if(!pending) { pending=true;requestAnimationFrame(render); }
     }
@@ -901,11 +897,11 @@ function buildDesk(renderer) {
         pending=false;
         const {width,height}=renderSize();
         camera.aspect=width/height;camera.updateProjectionMatrix();
-        const portrait=mobile();
-        const aim=new T.Vector3(0,focus?2.24:1.22,focus?.46:.50);
+        const compact=compactView.matches;
+        const aim=new T.Vector3(0,focus?2.24:1.22,focus?.46:1.13);
         const tan=Math.tan(T.MathUtils.degToRad(camera.fov/2));
         const distance=focus?Math.max(1.40/tan,2.10/(tan*camera.aspect)):
-            Math.max(10.8, (portrait?3.05:5.05)/(tan*camera.aspect));
+            Math.max(11.05, (compact?5.35:5.25)/(tan*camera.aspect));
         const a=focus?.022:yaw, p=focus?.055:pitch;
         camera.position.copy(aim).add(new T.Vector3(Math.sin(a)*Math.cos(p),Math.sin(p),Math.cos(a)*Math.cos(p)).multiplyScalar(distance));
         camera.lookAt(aim);camera.updateMatrixWorld();
@@ -917,15 +913,29 @@ function buildDesk(renderer) {
         mouseSurface.position.x=mouseRig.position.x;mouseSurface.position.z=mouseRig.position.z;
         composer.render();css.render(overlays,camera);
     }
-    function resize(){const {width,height}=renderSize();renderer.setSize(width,height);composer.setSize(width,height);css.setSize(width,height);invalidate();}
+    function resize(){
+        const {width,height}=renderSize();
+        const ratio=pixelRatio();
+        if(renderer.getPixelRatio()!==ratio){
+            renderer.setPixelRatio(ratio);
+            composer.setPixelRatio(ratio);
+        }
+        occlusion.enabled=!compactView.matches;
+        renderer.setSize(width,height);
+        composer.setSize(width,height);
+        css.setSize(width,height);
+        invalidate();
+    }
     function setFocus(next){
         focus=next;document.body.classList.toggle('reading',next);
         setHovered(null);
         zoom.textContent=next?'Vue du bureau':'Lire le terminal';
-        zoom.setAttribute('aria-pressed',String(next));invalidate();
+        zoom.setAttribute('aria-pressed',String(next));
+        if(next && !compactView.matches) document.querySelector('#commandInput').focus({preventScroll:true});
+        invalidate();
     }
     zoom.onclick=()=>setFocus(!focus);
-    cameraControls.lastElementChild.onclick=()=>{yaw=.32;pitch=.34;setFocus(false);};
+    cameraControls.lastElementChild.onclick=()=>{yaw=homeYaw;pitch=homePitch;setFocus(false);};
     const canvas=renderer.domElement;
     const projectTip=document.getElementById('project-tip');
     const raycaster=new T.Raycaster();
@@ -935,12 +945,7 @@ function buildDesk(renderer) {
         const rect=canvas.getBoundingClientRect();
         pointerNdc.set((clientX-rect.left)/rect.width*2-1,-(clientY-rect.top)/rect.height*2+1);
         raycaster.setFromCamera(pointerNdc,camera);
-        for(const hit of raycaster.intersectObjects(projectStations,true)){
-            let node=hit.object;
-            while(node&&!node.userData.projectId)node=node.parent;
-            if(node)return node;
-        }
-        return null;
+        return raycaster.intersectObjects(projectTargets,false)[0]?.object.parent ?? null;
     }
     function positionProjectTip(clientX,clientY){
         if(!projectTip||projectTip.hidden)return;
@@ -970,13 +975,15 @@ function buildDesk(renderer) {
         invalidate();
     }
     canvas.addEventListener('pointerdown',e=>{
-        if(focus||e.button!==0)return;
+        if(focus||orbit||e.button!==0)return;
         if(projectTip)projectTip.hidden=true;
-        orbit={x:e.clientX,y:e.clientY,yaw,pitch,moved:false};canvas.setPointerCapture(e.pointerId);
+        orbit={x:e.clientX,y:e.clientY,yaw,pitch,id:e.pointerId,moved:false};canvas.setPointerCapture(e.pointerId);
     });
     canvas.addEventListener('pointermove',e=>{
         if(orbit){
-            if(Math.hypot(e.clientX-orbit.x,e.clientY-orbit.y)>6)orbit.moved=true;
+            if(e.pointerId!==orbit.id)return;
+            if(!orbit.moved && Math.hypot(e.clientX-orbit.x,e.clientY-orbit.y)<=6)return;
+            orbit.moved=true;setHovered(null);
             yaw=T.MathUtils.clamp(orbit.yaw-(e.clientX-orbit.x)*.003,-.62,.62);
             pitch=T.MathUtils.clamp(orbit.pitch+(e.clientY-orbit.y)*.002,.15,.60);
             invalidate();
@@ -987,22 +994,24 @@ function buildDesk(renderer) {
         positionProjectTip(e.clientX,e.clientY);
     });
     canvas.addEventListener('pointerup',e=>{
-        if(!orbit)return;
+        if(!orbit||orbit.id!==e.pointerId)return;
         const moved=orbit.moved;
         orbit=null;
         if(moved||focus)return;
         const station=projectAt(e.clientX,e.clientY);
         if(!station)return;
-        setHovered(station);
-        if(projectTip)projectTip.hidden=true;
+        setHovered(null);
         window.dispatchEvent(new CustomEvent('cv:open-project',{detail:station.userData.projectId}));
     });
     canvas.addEventListener('pointerleave',()=>{if(!orbit)setHovered(null);});
-    canvas.addEventListener('lostpointercapture',()=>{orbit=null;});
+    canvas.addEventListener('lostpointercapture',e=>{if(orbit?.id===e.pointerId)orbit=null;});
     window.addEventListener('blur',()=>setHovered(null));
     document.addEventListener('pointermove',e=>{
-        mouseRig.position.x=2.87+(e.clientX/innerWidth-.5)*.11;
-        mouseRig.position.z=1.85+(e.clientY/innerHeight-.5)*.08;
+        if(e.pointerType==='touch'||focus||document.querySelector('dialog[open]'))return;
+        const nextX=2.87+(e.clientX/innerWidth-.5)*.11;
+        const nextZ=1.85+(e.clientY/innerHeight-.5)*.08;
+        if(Math.abs(nextX-mouseRig.position.x)+Math.abs(nextZ-mouseRig.position.z)<.003)return;
+        mouseRig.position.x=nextX;mouseRig.position.z=nextZ;
         invalidate();
     });
     new MutationObserver(invalidate).observe(board,{attributes:true,attributeFilter:['class'],subtree:true});
