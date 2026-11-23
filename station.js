@@ -167,9 +167,7 @@ const projects = window.CV_PROJECTS || [];
 const collectionNames = { perso:'Projets perso', cesi:'Projets CESI' };
 
 function projectArticle(project) {
-    const title = project.url
-        ? `<a href="${project.url}" target="_blank" rel="noopener noreferrer">${project.name}</a>`
-        : project.name;
+    const title = `<button class="open-sheet" data-project="${project.id}">${project.name}</button>`;
     return `<article><h3>${title}</h3><p>${project.description}</p><small>${project.tags.join(' · ')}</small></article>`;
 }
 
@@ -201,8 +199,8 @@ const sheetDescription = document.getElementById('project-sheet-description');
 const sheetTags = document.getElementById('project-sheet-tags');
 const sheetLink = document.getElementById('project-sheet-link');
 
-window.addEventListener('cv:open-project', event => {
-    const project = projects.find(item => item.id === event.detail);
+function openProject(id) {
+    const project = projects.find(item => item.id === id);
     if (!project) return;
     sheetKicker.textContent = `PROJET ${project.collection === 'cesi' ? 'CESI' : 'PERSO'}`;
     sheetKicker.dataset.collection = project.collection;
@@ -222,4 +220,27 @@ window.addEventListener('cv:open-project', event => {
         sheetLink.removeAttribute('href');
     }
     if (!projectSheet.open) projectSheet.showModal();
+}
+
+window.addEventListener('cv:open-project', event => openProject(event.detail));
+document.addEventListener('click', event => {
+    const button = event.target.closest('button[data-project]');
+    if (button) openProject(button.dataset.project);
 });
+const projectIndex = document.querySelector('.project-index');
+for (const [collection,title] of Object.entries(collectionNames)) {
+    const group = document.createElement('section');
+    const heading = document.createElement('h2');
+    heading.textContent = title;
+    group.append(heading);
+    for (const project of projects.filter(item => item.collection === collection)) {
+        const button = document.createElement('button');
+        button.dataset.project = project.id;
+        button.textContent = project.name;
+        const tech = document.createElement('small');
+        tech.textContent = project.tags[0];
+        button.append(tech);
+        group.append(button);
+    }
+    projectIndex.append(group);
+}
