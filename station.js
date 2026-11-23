@@ -163,6 +163,23 @@ window.addEventListener('blur', () => {
     keys.forEach((button,key) => button.classList.toggle('on',key === 'Shift' && shift));
 });
 
+const projects = window.CV_PROJECTS || [];
+const collectionNames = { perso:'Projets perso', cesi:'Projets CESI' };
+
+function projectArticle(project) {
+    const title = project.url
+        ? `<a href="${project.url}" target="_blank" rel="noopener noreferrer">${project.name}</a>`
+        : project.name;
+    return `<article><h3>${title}</h3><p>${project.description}</p><small>${project.tags.join(' · ')}</small></article>`;
+}
+
+document.querySelectorAll('#portfolio-archive [data-collection]').forEach(section => {
+    section.innerHTML = projects
+        .filter(project => project.collection === section.dataset.collection)
+        .map(projectArticle)
+        .join('');
+});
+
 const archiveDialog = document.getElementById('portfolio-archive');
 document.addEventListener('click', event => {
     const trigger = event.target.closest('button[data-archive]');
@@ -171,7 +188,38 @@ document.addEventListener('click', event => {
     archiveDialog.querySelectorAll('[data-collection]').forEach(section => {
         section.hidden = section.dataset.collection !== collection;
     });
-    document.getElementById('archive-title').textContent = collection === 'cesi' ? 'Projets CESI' : 'Projets perso';
+    document.getElementById('archive-title').textContent = collectionNames[collection];
     archiveDialog.showModal();
     archiveDialog.scrollTop = 0;
+});
+
+// A project miniature on the desk opens this fiche through a custom event.
+const projectSheet = document.getElementById('project-sheet');
+const sheetKicker = document.getElementById('project-sheet-kicker');
+const sheetTitle = document.getElementById('project-sheet-title');
+const sheetDescription = document.getElementById('project-sheet-description');
+const sheetTags = document.getElementById('project-sheet-tags');
+const sheetLink = document.getElementById('project-sheet-link');
+
+window.addEventListener('cv:open-project', event => {
+    const project = projects.find(item => item.id === event.detail);
+    if (!project) return;
+    sheetKicker.textContent = `PROJET ${project.collection === 'cesi' ? 'CESI' : 'PERSO'}`;
+    sheetKicker.dataset.collection = project.collection;
+    sheetTitle.textContent = project.name;
+    sheetDescription.textContent = project.description;
+    sheetTags.replaceChildren(...project.tags.map(tag => {
+        const chip = document.createElement('span');
+        chip.textContent = tag;
+        return chip;
+    }));
+    if (project.url) {
+        sheetLink.hidden = false;
+        sheetLink.href = project.url;
+        sheetLink.textContent = 'Voir le dépôt GitHub ↗';
+    } else {
+        sheetLink.hidden = true;
+        sheetLink.removeAttribute('href');
+    }
+    if (!projectSheet.open) projectSheet.showModal();
 });

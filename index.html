@@ -427,20 +427,23 @@
 </nav>
 <dialog id="portfolio-archive" aria-labelledby="archive-title">
     <header><h2 id="archive-title"></h2><form method="dialog"><button aria-label="Fermer le dossier">Fermer</button></form></header>
-    <section data-collection="perso" hidden>
-        <article><h3><a href="https://github.com/VictorCESIVA/OpenCleaner" target="_blank" rel="noopener noreferrer">OpenCleaner</a></h3><p>Un utilitaire Windows gratuit et open source pour repérer les fichiers inutiles, consulter ce qui occupe le disque et choisir quoi nettoyer.</p><small>C# · .NET</small></article>
-        <article><h3><a href="https://github.com/VictorCESIVA/sardochemetre" target="_blank" rel="noopener noreferrer">SardocheMètre</a></h3><p>Un site satirique qui utilise l’IA pour commenter et noter les tweets de Sardoche.</p></article>
-        <article><h3>Cotalyse</h3><p>Une plateforme pour suivre les cotes de football et évaluer les sélections après chaque match.</p><small>Python · FastAPI · Dépôt privé</small></article>
-    </section>
-    <section data-collection="cesi" hidden>
-        <article><h3><a href="https://github.com/VictorCESIVA/Worldwide-Weather-Watcher" target="_blank" rel="noopener noreferrer">Worldwide Weather Watcher</a></h3><p>Une station météo sur carte STM32. Le dépôt rassemble le programme en C, les essais sur le montage et les livrables du projet.</p><small>C · STM32 · PlatformIO</small></article>
-        <article><h3><a href="https://github.com/VictorCESIVA/projet-cesi-jeux-de-la-vie" target="_blank" rel="noopener noreferrer">Jeu de la vie de Conway</a></h3><p>Un automate cellulaire avec deux modes d’exécution, en console ou dans une fenêtre graphique.</p><small>C++17 · SFML</small></article>
-        <article><h3><a href="https://github.com/VictorCESIVA/projet-web" target="_blank" rel="noopener noreferrer">Web4All — CESI Stages</a></h3><p>Une application web de gestion de stages construite autour d’une architecture MVC.</p><small>PHP · MySQL · PHPUnit</small></article>
-        <article><h3><a href="https://github.com/VictorCESIVA/prosit-5-pile-stm32" target="_blank" rel="noopener noreferrer">Prosit 5 — Pile et mémoire</a></h3><p>Un exercice embarqué pour observer au débogueur comment trois capteurs simulés conservent leurs dernières mesures.</p><small>C · STM32</small></article>
-    </section>
+    <section data-collection="perso" hidden></section>
+    <section data-collection="cesi" hidden></section>
+</dialog>
+<dialog id="project-sheet" aria-labelledby="project-sheet-title">
+    <header>
+        <div><p class="sheet-kicker" id="project-sheet-kicker"></p><h2 id="project-sheet-title"></h2></div>
+        <form method="dialog"><button aria-label="Fermer la fiche projet">Fermer</button></form>
+    </header>
+    <p class="sheet-description" id="project-sheet-description"></p>
+    <div class="sheet-tags" id="project-sheet-tags"></div>
+    <a class="sheet-link" id="project-sheet-link" target="_blank" rel="noopener noreferrer"></a>
+    <p class="sheet-hint">Fermez la fiche pour revenir au bureau et explorer un autre projet.</p>
 </dialog>
 <div class="view-controls" aria-label="Point de vue" hidden><button aria-pressed="false">Lire le terminal</button><button title="Recentrer le bureau" aria-label="Recentrer le bureau">↺</button></div>
+<div id="project-tip" role="tooltip" hidden></div>
 
+<script src="projects.js"></script>
 <script>
 // =============================================
 //  CV DATA
@@ -800,6 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
     asciiDiv.innerHTML = '<h1>Victor Noël<span>.</span></h1><p>Élève ingénieur informatique · CESI Lille<br>Automatisation &amp; intelligence artificielle</p>';
     output.appendChild(asciiDiv);
     addLine('Tapez <strong class="c-cyan">help</strong> pour explorer mon CV.');
+    addLine('<span class="c-dim">Les miniatures posées sur le bureau ouvrent les fiches projets.</span>');
 });
 
 terminalBody.addEventListener('click', e => {
