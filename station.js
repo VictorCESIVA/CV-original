@@ -250,8 +250,9 @@ const dossierContent = document.getElementById('dossier-content');
 const dossierLink = document.getElementById('dossier-link');
 const dossierFiles = new Map();
 let currentFile;
+let dossierOpener;
 
-for (const launcher of screens.home.querySelectorAll('a[data-dossier]')) {
+for (const launcher of screens.home.querySelectorAll('.home-launchers a[data-dossier]')) {
     const key = launcher.dataset.dossier;
     const name = launcher.querySelector('strong').textContent;
     const textHref = launcher.href;
@@ -265,9 +266,10 @@ for (const launcher of screens.home.querySelectorAll('a[data-dossier]')) {
     dossierNav.append(item);
 }
 
-function showRoute(key, moveFocus) {
+function showRoute(key, moveFocus, trigger) {
     const file = dossierFiles.get(key);
     if (file) {
+        dossierOpener = trigger && screens.home.contains(trigger) ? trigger : file.launcher;
         const newFile = currentFile !== file;
         if (newFile) {
             currentFile?.item.removeAttribute('aria-current');
@@ -292,26 +294,26 @@ function showRoute(key, moveFocus) {
         const previous = activeScreen;
         showScreen('home');
         if (!moveFocus) return;
-        if (previous === 'dossier') currentFile.launcher.focus({preventScroll:true});
+        if (previous === 'dossier') dossierOpener.focus({preventScroll:true});
         if (previous === 'terminal') homeTab.focus({preventScroll:true});
     }
 }
 
-function navigateScreen(key) {
+function navigateScreen(key, trigger) {
     const hash = key === 'home' ? '' : `#${key}`;
     if (location.hash !== hash) {
         const url = new URL(location.href);
         url.hash = hash;
         history.pushState(null, '', url);
     }
-    showRoute(key, true);
+    showRoute(key, true, trigger);
 }
 
 screenFrame.addEventListener('click', event => {
     const launcher = event.target.closest('a[data-dossier]');
     if (!launcher || !isPlainClick(event)) return;
     event.preventDefault();
-    navigateScreen(launcher.dataset.dossier);
+    navigateScreen(launcher.dataset.dossier, launcher);
 });
 dossierMenu.addEventListener('focusout', ({relatedTarget}) => {
     if (relatedTarget && !dossierMenu.contains(relatedTarget)) dossierMenu.open = false;
@@ -404,6 +406,15 @@ const guide = document.getElementById('site-guide');
 const guideButton = document.getElementById('open-guide');
 const resume = document.getElementById('resume-dialog');
 const resumeContent = resume.querySelector('.resume-content');
+const {date:missionDate, title:missionTitle, tags:missionTags} = cvData.experience[0];
+const homeMission = document.getElementById('home-mission');
+homeMission.href = dossierFiles.get(homeMission.dataset.dossier).launcher.href;
+homeMission.setAttribute('aria-controls', 'screen-dossier');
+document.getElementById('home-mission-title').textContent = missionTitle.split(' — ', 1)[0];
+homeMission.hidden = false;
+document.getElementById('resume-mission-date').textContent = `Expérience récente · ${missionDate}`;
+document.getElementById('resume-mission-title').textContent = missionTitle;
+document.getElementById('resume-mission-tags').textContent = missionTags.join(' · ');
 document.getElementById('resume-summary').textContent = cvData.summary;
 document.getElementById('resume-email').href = `mailto:${cvData.email}`;
 document.getElementById('resume-timeline').innerHTML = dossiers.parcours;
@@ -435,7 +446,7 @@ function syncDesk() {
     if (want3d && deskState === 'idle' && !guide.open && !resume.open) {
         deskState = 'loading';
         const script = document.createElement('script');
-        script.src = 'desk.bundle.js?v=vitre';
+        script.src = 'desk.bundle.js?v=moniteur';
         script.addEventListener('error', deskUnavailable, {once:true});
         script.addEventListener('load', () => {
             if (deskState === 'loading') deskUnavailable();

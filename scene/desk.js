@@ -19,6 +19,7 @@ function buildDesk(renderer) {
     const board = document.querySelector('#keyboard');
     const mouse = document.querySelector('#mouse');
     const canvas=renderer.domElement;
+    canvas.style.removeProperty('display');
     document.body.classList.add('spatial');
     stage.prepend(canvas);
     canvas.setAttribute('aria-label','Bureau de Victor en 3D avec un PC rétro, la mascotte Clawd, un casque et un carnet de notes sur l’IA');
@@ -162,7 +163,7 @@ function buildDesk(renderer) {
     const glassScale=glassWidth/frame.offsetWidth;
     const glassHeight=frame.offsetHeight*glassScale;
     box(4.14,3.26,1.88,.20,edge,0,2.18,-.94);
-    box(4.42,3.33,.75,.16,plastic,0,2.26,-.025);
+    const monitorShell=box(4.42,3.33,.75,.16,plastic,0,2.26,-.025);
     box(4.25,3.20,.095,.12,graphite,0,2.24,.32);
     // A real opening in the bevel, with clearance for the projected glass at oblique angles.
     function roundedProfile(profile,w,h,r){
@@ -453,7 +454,7 @@ function buildDesk(renderer) {
     contact(-4.33,1.83,1.72,1.49);
     // Seven project miniatures replace the old floppy shortcuts. Each one is a
     // small physical diorama with a printed label, and opens its fiche on click.
-    const projectTargets=[];
+    const deskTargets=[monitorShell];
     const projBase=mat(0x26312d,.62,.14);
     const projInk=mat(0x1b2420,.7,.06);
     const projIvory=mat(0xded6c2,.5);
@@ -760,7 +761,7 @@ function buildDesk(renderer) {
         build(model);
         const hit=box(1.02,project.id==='3ww'?1:.81,.77,0,pickMaterial,0,.40,.02,station);
         hit.castShadow=false;hit.receiveShadow=false;
-        projectTargets.push(hit);
+        deskTargets.push(hit);
     }
 
     // A taped two-colour generative print, drawn directly on warm paper.
@@ -919,20 +920,21 @@ function buildDesk(renderer) {
     let deskActive=true;
     const cameraControls=document.querySelector('.view-controls');
     cameraControls.hidden=false;
-    const zoom=cameraControls.querySelector('button');
+    const zoom=document.getElementById('read-monitor');
     const aim=new T.Vector3();
     const tan=Math.tan(T.MathUtils.degToRad(camera.fov/2));
 
     function invalidate() {
-        if(deskActive && !pending) { pending=true;requestAnimationFrame(render); }
+        if(deskActive && !pending && !(focus&&compactView.matches)) { pending=true;requestAnimationFrame(render); }
     }
     function render(){
         pending=false;
         if(!deskActive || !canvas.isConnected || (focus&&compactView.matches))return;
-        aim.set(0,focus?glassY:1.40,focus?glassZ:.40);
+        const narrow=compactView.matches && camera.aspect<1.30;
+        aim.set(0,focus?glassY:narrow?1.86:1.40,focus?glassZ:.40);
         const distance=focus
             ?Math.max((glassHeight/2+.30)/tan,(glassWidth/2+.25)/(tan*camera.aspect))
-            :Math.max(11.1,(compactView.matches?5.82:5.65)/(tan*camera.aspect));
+            :Math.max(narrow?9.3:11.1,(narrow?3.60:compactView.matches?5.82:5.65)/(tan*camera.aspect));
         const a=focus?.022:yaw, p=focus?.055:pitch;
         camera.position.set(Math.sin(a)*Math.cos(p),Math.sin(p),Math.cos(a)*Math.cos(p)).multiplyScalar(distance).add(aim);
         camera.lookAt(aim);camera.updateMatrixWorld();
@@ -950,7 +952,7 @@ function buildDesk(renderer) {
         }
     }
     function resize(){
-        if(!deskActive || !canvas.isConnected)return;
+        if(!deskActive || !canvas.isConnected || (focus&&compactView.matches))return;
         const {width,height}=renderSize();
         camera.aspect=width/height;
         camera.updateProjectionMatrix();
@@ -969,58 +971,72 @@ function buildDesk(renderer) {
     function setFocus(next){
         focus=next;document.body.classList.toggle('reading',next);
         setHovered(null);
-        zoom.lastElementChild.textContent=next?'Bureau':'Agrandir';
-        zoom.title=next?'Revenir à la vue du bureau':'Agrandir l’écran';
-        zoom.setAttribute('aria-label',zoom.title);
+        const label=next?'Vue du bureau':'Lire l’écran';
+        zoom.lastElementChild.textContent=label;
+        zoom.title=label;
         zoom.setAttribute('aria-expanded',String(next));
-        invalidate();
+        if(!next&&compactView.matches)resize();
+        else invalidate();
     }
     zoom.onclick=()=>setFocus(!focus);
     cameraControls.lastElementChild.onclick=()=>{yaw=homeYaw;pitch=homePitch;setFocus(false);};
+    function openMonitor(){
+        setFocus(true);
+        frame.querySelector('section:not([hidden]) :is(h1,#dossier-title,#terminal-body)')?.focus({preventScroll:true});
+    }
+    frame.addEventListener('click',e=>{
+        if(!deskActive||focus||e.defaultPrevented||e.target.closest('a,button,summary,input'))return;
+        if(getSelection()?.isCollapsed!==false)openMonitor();
+    });
     frame.addEventListener('cv:read-screen',()=>{
         // Small projected text becomes readable only after choosing a file.
         if(deskActive && !focus && (compactView.matches || frame.getBoundingClientRect().width<560))setFocus(true);
     });
-    const projectTip=document.getElementById('project-tip');
+    const deskTip=document.getElementById('desk-tip');
+    const tipTitle=deskTip.firstElementChild, tipHint=deskTip.lastElementChild;
     const raycaster=new T.Raycaster();
     const pointerNdc=new T.Vector2();
-    let hoveredStation=null;
-    function projectAt(clientX,clientY){
+    const hits=[];
+    let hovered=null;
+    function deskTargetAt(clientX,clientY){
         const rect=canvas.getBoundingClientRect();
         pointerNdc.set((clientX-rect.left)/rect.width*2-1,-(clientY-rect.top)/rect.height*2+1);
         raycaster.setFromCamera(pointerNdc,camera);
-        return raycaster.intersectObjects(projectTargets,false)[0]?.object.parent ?? null;
+        hits.length=0;
+        raycaster.intersectObjects(deskTargets,false,hits);
+        return hits[0]?.object ?? null;
     }
-    function positionProjectTip(clientX,clientY){
-        if(!projectTip||projectTip.hidden)return;
-        const margin=10,rect=projectTip.getBoundingClientRect();
+    function positionDeskTip(clientX,clientY){
+        if(deskTip.hidden)return;
+        const margin=10,rect=deskTip.getBoundingClientRect();
         let left=clientX+16,top=clientY+18;
         if(left+rect.width>innerWidth-margin)left=clientX-rect.width-16;
         if(top+rect.height>innerHeight-margin)top=clientY-rect.height-18;
-        projectTip.style.left=Math.max(margin,left)+'px';
-        projectTip.style.top=Math.max(margin,top)+'px';
+        deskTip.style.left=Math.max(margin,left)+'px';
+        deskTip.style.top=Math.max(margin,top)+'px';
     }
-    function setHovered(station){
-        if(station===hoveredStation)return;
-        if(hoveredStation)hoveredStation.userData.ring.visible=false;
-        hoveredStation=station;
-        canvas.style.cursor=station?'pointer':'';
-        if(!station){if(projectTip)projectTip.hidden=true;invalidate();return;}
-        station.userData.ring.visible=true;
-        const meta=projectMeta.find(project=>project.id===station.userData.projectId);
-        if(meta&&projectTip){
-            projectTip.replaceChildren();
-            const name=document.createElement('b');name.textContent=meta.name;
-            const hint=document.createElement('small');
-            hint.textContent=(meta.collection==='cesi'?'Projet CESI':'Projet perso')+' · cliquer pour ouvrir la fiche';
-            projectTip.append(name,hint);
-            projectTip.hidden=false;
+    function setHovered(target){
+        if(target===hovered)return;
+        const previousRing=hovered?.parent.userData.ring;
+        const ring=target?.parent.userData.ring;
+        if(previousRing)previousRing.visible=false;
+        if(ring)ring.visible=true;
+        hovered=target;
+        canvas.style.cursor=target?'pointer':'';
+        deskTip.hidden=!target;
+        if(target===monitorShell){
+            tipTitle.textContent='Moniteur';
+            tipHint.textContent='Cliquer pour lire l’écran';
+        } else if(target){
+            const meta=projectMeta.find(project=>project.id===target.parent.userData.projectId);
+            tipTitle.textContent=meta.name;
+            tipHint.textContent=(meta.collection==='cesi'?'Projet CESI':'Projet perso')+' · cliquer pour ouvrir la fiche';
         }
-        invalidate();
+        if(previousRing||ring)invalidate();
     }
     canvas.addEventListener('pointerdown',e=>{
         if(focus||orbit||e.button!==0)return;
-        if(projectTip)projectTip.hidden=true;
+        setHovered(null);
         orbit={x:e.clientX,y:e.clientY,yaw,pitch,id:e.pointerId,moved:false};canvas.setPointerCapture(e.pointerId);
     });
     canvas.addEventListener('pointermove',e=>{
@@ -1034,18 +1050,20 @@ function buildDesk(renderer) {
             return;
         }
         if(focus){setHovered(null);return;}
-        setHovered(projectAt(e.clientX,e.clientY));
-        positionProjectTip(e.clientX,e.clientY);
+        setHovered(deskTargetAt(e.clientX,e.clientY));
+        positionDeskTip(e.clientX,e.clientY);
     });
     canvas.addEventListener('pointerup',e=>{
         if(!orbit||orbit.id!==e.pointerId)return;
         const moved=orbit.moved;
         orbit=null;
         if(moved||focus)return;
-        const station=projectAt(e.clientX,e.clientY);
-        if(!station)return;
-        setHovered(null);
-        window.dispatchEvent(new CustomEvent('cv:open-project',{detail:station.userData.projectId}));
+        const target=deskTargetAt(e.clientX,e.clientY);
+        if(target===monitorShell)openMonitor();
+        else if(target){
+            setHovered(null);
+            window.dispatchEvent(new CustomEvent('cv:open-project',{detail:target.parent.userData.projectId}));
+        }
     });
     canvas.addEventListener('pointerleave',()=>{if(!orbit)setHovered(null);});
     canvas.addEventListener('lostpointercapture',e=>{if(orbit?.id===e.pointerId)orbit=null;});
