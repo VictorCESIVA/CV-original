@@ -217,12 +217,17 @@ cv.projects = projectGroups.map(({title,cards}) =>
     `<h4 class="section-title">${title}</h4><div class="project-grid">${cards}</div>`
 ).join('') + cv.otherProjects;
 
-function dossierProject({name, description, tags, url}) {
+const projectPage = id => `cv.html#projet-${id}`;
+
+function dossierProject({id, name, description, tags, url}) {
     return `<details class="dossier-project">
         <summary>${cvEscape(name)}</summary>
         <p>${cvEscape(description)}</p>
         <p class="dossier-project-tags">${cvEscape(tags.join(' · '))}</p>
-        ${url ? `<a href="${cvEscape(url)}" target="_blank" rel="noopener noreferrer">Dépôt GitHub ↗</a>` : ''}
+        <div class="dossier-project-links">
+            <a href="${cvEscape(projectPage(id))}">Fiche à partager</a>
+            ${url ? `<a href="${cvEscape(url)}" target="_blank" rel="noopener noreferrer">Dépôt GitHub ↗</a>` : ''}
+        </div>
     </details>`;
 }
 
@@ -290,6 +295,7 @@ const sheetTitle = document.getElementById('project-sheet-title');
 const sheetDescription = document.getElementById('project-sheet-description');
 const sheetTags = document.getElementById('project-sheet-tags');
 const sheetLink = document.getElementById('project-sheet-link');
+const sheetShare = document.getElementById('project-sheet-share');
 
 function openProject(id) {
     const project = projects.find(item => item.id === id);
@@ -303,10 +309,10 @@ function openProject(id) {
         chip.textContent = tag;
         return chip;
     }));
+    sheetShare.href = projectPage(id);
     if (project.url) {
         sheetLink.hidden = false;
         sheetLink.href = project.url;
-        sheetLink.textContent = 'Voir le dépôt GitHub ↗';
     } else {
         sheetLink.hidden = true;
         sheetLink.removeAttribute('href');

@@ -4,13 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="CV de Victor Noël : parcours, compétences en automatisation et IA appliquée, et projets sélectionnés.">
+    <meta name="description" content="CV de Victor Noël : parcours, compétences en automatisation et IA appliquée, et portfolio.">
     <title>Victor Noël — CV</title>
-    <link rel="stylesheet" href="cv.css">
+    <link rel="stylesheet" href="cv.css?v=portfolio">
 </head>
 <body>
 <nav class="cv-nav" aria-label="Formats du CV">
     <a href="index.html">Retour au bureau interactif</a>
+    <a href="#projets">Projets</a>
     <a class="download" href="CV_Victor_NOEL.pdf" download>Télécharger le PDF</a>
 </nav>
 <main class="cv-paper">
@@ -67,11 +68,50 @@
         </ul>
     </section>
     <section class="cv-section" id="projets" aria-labelledby="projects-title">
-        <h2 id="projects-title">Projets sélectionnés</h2>
-        <ul class="cv-list">
-            <li><strong><a href="https://github.com/VictorCESIVA/OpenCleaner">OpenCleaner</a></strong> <span class="entry-note">(C# · .NET · Open source)</span> — Un utilitaire Windows gratuit et open source pour repérer les fichiers inutiles, consulter ce qui occupe le disque et choisir quoi nettoyer.</li>
-            <li><strong>Cotalyse</strong> <span class="entry-note">(Python · FastAPI · Dépôt privé)</span> — Une plateforme pour suivre les cotes de football et évaluer les sélections après chaque match.</li>
-            <li><strong><a href="https://github.com/VictorCESIVA/Worldwide-Weather-Watcher">Worldwide Weather Watcher</a></strong> <span class="entry-note">(C · STM32 · PlatformIO)</span> — Une station météo sur carte STM32. Le dépôt rassemble le programme en C, les essais sur le montage et les livrables du projet.</li>
+        <h2 id="projects-title">Projets</h2>
+        <ul class="cv-projects">
+            <li class="cv-project" id="projet-opencleaner">
+                <h3><a href="https://github.com/VictorCESIVA/OpenCleaner">OpenCleaner</a></h3>
+                <span class="cv-project-category">Projet personnel</span>
+                <span class="entry-note">(C# · .NET · Open source)</span>
+                <p>Un utilitaire Windows gratuit et open source pour repérer les fichiers inutiles, consulter ce qui occupe le disque et choisir quoi nettoyer.</p>
+            </li>
+            <li class="cv-project" id="projet-cotalyse">
+                <h3>Cotalyse</h3>
+                <span class="cv-project-category">Projet personnel</span>
+                <span class="entry-note">(Python · FastAPI · Dépôt privé)</span>
+                <p>Une plateforme pour suivre les cotes de football et évaluer les sélections après chaque match.</p>
+            </li>
+            <li class="cv-project" id="projet-3ww">
+                <h3><a href="https://github.com/VictorCESIVA/Worldwide-Weather-Watcher">Worldwide Weather Watcher</a></h3>
+                <span class="cv-project-category">Projet CESI</span>
+                <span class="entry-note">(C · STM32 · PlatformIO)</span>
+                <p>Une station météo sur carte STM32. Le dépôt rassemble le programme en C, les essais sur le montage et les livrables du projet.</p>
+            </li>
+            <li class="cv-project cv-project-extra" id="projet-sardochemetre">
+                <h3><a href="https://github.com/VictorCESIVA/sardochemetre">SardocheMètre</a></h3>
+                <span class="cv-project-category">Projet personnel</span>
+                <span class="entry-note">(JavaScript · IA · Humour)</span>
+                <p>Un site satirique qui utilise l’IA pour commenter et noter les tweets de Sardoche.</p>
+            </li>
+            <li class="cv-project cv-project-extra" id="projet-conway">
+                <h3><a href="https://github.com/VictorCESIVA/projet-cesi-jeux-de-la-vie">Jeu de la vie de Conway</a></h3>
+                <span class="cv-project-category">Projet CESI</span>
+                <span class="entry-note">(C++17 · SFML)</span>
+                <p>Un automate cellulaire avec deux modes d’exécution, en console ou dans une fenêtre graphique.</p>
+            </li>
+            <li class="cv-project cv-project-extra" id="projet-web4all">
+                <h3><a href="https://github.com/VictorCESIVA/projet-web">Web4All — CESI Stages</a></h3>
+                <span class="cv-project-category">Projet CESI</span>
+                <span class="entry-note">(PHP · MySQL · PHPUnit)</span>
+                <p>Une application web de gestion de stages construite autour d’une architecture MVC.</p>
+            </li>
+            <li class="cv-project cv-project-extra" id="projet-prosit5">
+                <h3><a href="https://github.com/VictorCESIVA/prosit-5-pile-stm32">Prosit 5 — Pile et mémoire</a></h3>
+                <span class="cv-project-category">Projet CESI</span>
+                <span class="entry-note">(C · STM32)</span>
+                <p>Un exercice embarqué pour observer au débogueur comment trois capteurs simulés conservent leurs dernières mesures.</p>
+            </li>
         </ul>
     </section>
     <section class="cv-section" aria-labelledby="languages-title">

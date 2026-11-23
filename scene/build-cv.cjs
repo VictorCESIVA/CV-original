@@ -22,9 +22,16 @@ function rows(items) {
     return items.map(([title, detail]) => `            <li><strong>${esc(title)}</strong> — ${esc(detail)}</li>`).join('\n');
 }
 
-const featured = cv.featuredProjects.map(id => {
-    const {url, name, description, tags} = projects.find(project => project.id === id);
-    return `            <li><strong>${url ? link(url, name) : esc(name)}</strong> <span class="entry-note">(${esc(tags.join(' · '))})</span> — ${esc(description)}</li>`;
+const featured = cv.featuredProjects.map(id => projects.find(project => project.id === id));
+const others = projects.filter(project => !cv.featuredProjects.includes(project.id));
+const catalog = [...featured, ...others].map(({id, url, name, description, tags, collection}, index) => {
+    const extra = index < featured.length ? '' : ' cv-project-extra';
+    return `            <li class="cv-project${extra}" id="projet-${esc(id)}">
+                <h3>${url ? link(url, name) : esc(name)}</h3>
+                <span class="cv-project-category">${collection === 'cesi' ? 'Projet CESI' : 'Projet personnel'}</span>
+                <span class="entry-note">(${esc(tags.join(' · '))})</span>
+                <p>${esc(description)}</p>
+            </li>`;
 }).join('\n');
 
 const html = `<!DOCTYPE html>
@@ -33,13 +40,14 @@ const html = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="CV de ${esc(cv.name)} : parcours, compétences en automatisation et IA appliquée, et projets sélectionnés.">
+    <meta name="description" content="CV de ${esc(cv.name)} : parcours, compétences en automatisation et IA appliquée, et portfolio.">
     <title>${esc(cv.name)} — CV</title>
-    <link rel="stylesheet" href="cv.css">
+    <link rel="stylesheet" href="cv.css?v=portfolio">
 </head>
 <body>
 <nav class="cv-nav" aria-label="Formats du CV">
     <a href="index.html">Retour au bureau interactif</a>
+    <a href="#projets">Projets</a>
     <a class="download" href="${pdfName}" download>Télécharger le PDF</a>
 </nav>
 <main class="cv-paper">
@@ -71,9 +79,9 @@ ${rows(cv.skills)}
         </ul>
     </section>
     <section class="cv-section" id="projets" aria-labelledby="projects-title">
-        <h2 id="projects-title">Projets sélectionnés</h2>
-        <ul class="cv-list">
-${featured}
+        <h2 id="projects-title">Projets</h2>
+        <ul class="cv-projects">
+${catalog}
         </ul>
     </section>
     <section class="cv-section" aria-labelledby="languages-title">

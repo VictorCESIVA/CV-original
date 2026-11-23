@@ -14,12 +14,16 @@ Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteu
 - **CV express** et **CV PDF** sont accessibles sans manipuler la scène. Si le moniteur est petit, il passe en gros plan à l’ouverture d’un dossier. **Agrandir** et **Bureau** permettent aussi de changer de vue manuellement. Sur mobile, les projets restent accessibles sous la scène en vue du bureau.
 - **PC seul** et **Bureau 3D** basculent entre les deux vues sans fermer le dossier courant. La 3D déjà chargée est mise en pause en mode PC seul. Si le moteur ne répond pas ou si le contexte WebGL est perdu, le même écran reste lisible en 2D.
 - **Version à partager** ouvre `../cv.html`, une page de lecture indépendante du bureau et utilisable sans JavaScript.
+- **Fiche à partager** ouvre directement le projet dans `../cv.html#projet-…`. Toutes les miniatures ont une adresse stable, y compris les projets sans dépôt public.
 
 L’écran spatial est dessiné sur un plan de 640 × 480 pixels CSS. La scène en déduit les dimensions de la vitre ; la même matrice de caméra projette l’interface, le clavier et la souris sur leurs surfaces 3D.
 
 ## Mettre à jour le CV texte et PDF
 
 Les faits du CV sont dans `../cv-data.js` et les fiches projets dans `../projects.js`. Depuis ce dossier, `npm run build:cv` génère ensemble `../cv.html` et `../CV_Victor_NOEL.pdf` en utilisant `../cv.css`, y compris sa mise en page A4.
+La version web affiche le catalogue complet ; l’impression ne conserve que la sélection `featuredProjects` du PDF A4.
+
+`../cv-apercu.jpg` (1200 × 630) est la capture réelle du bureau utilisée par l’aperçu Open Graph de la page interactive.
 
 La commande utilise `chromium` ou le binaire donné par `CHROME`. L’option `npm run build:cv -- --no-sandbox` est réservée aux environnements isolés qui n’offrent pas de sandbox Chromium, pour imprimer ces fichiers locaux de confiance.
 
