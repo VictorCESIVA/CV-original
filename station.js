@@ -18,7 +18,7 @@ const screens = {
     dossier: document.getElementById('screen-dossier'),
     terminal: document.getElementById('screen-terminal')
 };
-const screenLabels = {home:'BUREAU', dossier:'DOSSIERS', terminal:'TERMINAL'};
+const screenLabels = {home:'ACCUEIL', dossier:'DOSSIERS', terminal:'TERMINAL'};
 let activeScreen = 'home';
 const screenMode = document.getElementById('screen-mode');
 const screenTabs = document.querySelectorAll('[data-screen]');
@@ -378,6 +378,7 @@ for (const {title,items} of projectGroups) {
 
 const guide = document.getElementById('site-guide');
 const guideButton = document.getElementById('open-guide');
+const guideButtons = document.querySelectorAll('[data-guide]');
 document.getElementById('home-project-count').textContent = `${projects.length} réalisations`;
 for (const link of document.querySelectorAll('.desk-projects,.guide-example')) {
     link.href = `#${link.dataset.dossier}`;
@@ -400,6 +401,36 @@ document.getElementById('resume-timeline').innerHTML = dossiers.parcours;
 document.getElementById('resume-projects').innerHTML = projectCatalog(false);
 document.getElementById('resume-skills').innerHTML = dossiers.competences;
 document.getElementById('resume-contact-details').innerHTML = dossiers.contact;
+
+const shareButton = document.getElementById('share-dossier');
+const shareDialog = document.getElementById('share-dialog');
+const shareTitle = document.getElementById('share-title');
+const shareUrl = document.getElementById('share-url');
+const shareFeedback = document.getElementById('share-feedback');
+shareButton.hidden = typeof shareDialog.showModal !== 'function';
+shareButton.addEventListener('click', () => {
+    const url = new URL(cvData.portfolio);
+    url.hash = currentDossierKey;
+    shareTitle.textContent = `Partager : ${dossierTitle.textContent}`;
+    shareUrl.value = url.href;
+    shareFeedback.textContent = '';
+    shareButton.focus({preventScroll:true});
+    shareDialog.showModal();
+});
+document.getElementById('share-copy').addEventListener('click', async () => {
+    const url = shareUrl.value;
+    let copied = false;
+    try {
+        await navigator.clipboard.writeText(url);
+        copied = true;
+    } catch { /* Manual selection also works when the clipboard is blocked. */ }
+    if (!shareDialog.open || shareUrl.value !== url) return;
+    if (!copied) {
+        shareUrl.focus();
+        shareUrl.select();
+    }
+    shareFeedback.textContent = copied ? 'Lien copié.' : 'Copie automatique indisponible. Copiez le lien sélectionné.';
+});
 
 const guideKey = 'cv-noel:guide-v1';
 const viewKey = 'cv-noel:view';
@@ -466,10 +497,11 @@ viewToggle.addEventListener('click', () => {
     chooseView(viewMode === '3d' && deskState === 'ready' ? 'pc' : '3d');
 });
 
-guideButton.addEventListener('click', () => {
+guideButtons.forEach(button => button.addEventListener('click', () => {
+    button.focus({preventScroll:true});
     guide.returnValue = '';
     guide.showModal();
-});
+}));
 guide.addEventListener('close', () => {
     try {
         localStorage.setItem(guideKey, '1');
@@ -502,7 +534,7 @@ const initialRoute = location.hash.slice(1);
 const directRoute = initialRoute === 'terminal' || dossierFiles.has(initialRoute) || projectsByRoute.has(initialRoute);
 if (directRoute) showRoute(initialRoute, false);
 if (typeof guide.showModal === 'function') {
-    guideButton.hidden = false;
+    guideButtons.forEach(button => { button.hidden = false; });
     document.querySelectorAll('a[data-resume]').forEach(link => link.setAttribute('aria-haspopup', 'dialog'));
     if (!guideSeen && !directRoute) guide.showModal();
 }

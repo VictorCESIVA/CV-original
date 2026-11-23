@@ -8,7 +8,7 @@ Pour reconstruire le bundle depuis ce dossier, exécuter `npm ci` puis `npm run 
 
 Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteur 2D donne accès au même écran, au terminal et au CV express.
 
-- **Guide** explique les trois accès dès la première visite : explorer en 3D, ouvrir le PC seul ou lire le CV express. Le guide et le mode choisi sont mémorisés dans `localStorage`, sans compte.
+- **Guide** propose en premier le PC seul, puis le bureau 3D et le CV express. Le bouton **?** dans la barre de NOËL OS le rouvre depuis le moniteur. Le guide et le mode choisi sont mémorisés dans `localStorage`, sans compte.
   **Voir un exemple** ouvre la fiche OpenCleaner dans le moniteur, sans charger la 3D lors d’une première visite. Le PDF se télécharge aussi directement depuis le guide. Fermer le guide laisse le mode déjà choisi ou, à défaut, le PC seul.
 - Le moniteur démarre sur l’accueil NOËL OS. **À la une** ouvre l’expérience professionnelle la plus récente. Le menu `C:\CV` permet de changer de dossier sans revenir à l’accueil. **Version texte** ouvre la même rubrique hors de la scène.
   Les liens `../index.html#parcours`, `#projets`, `#competences` et `#contact` ouvrent le dossier sans afficher le guide ; **Précédent** et **Suivant** suivent la navigation. Le terminal reste accessible depuis la barre du PC et à l’adresse `#terminal`.
@@ -18,8 +18,10 @@ Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteu
 - **PC seul** et **Bureau 3D** basculent entre les deux vues sans fermer le dossier courant. La 3D déjà chargée est mise en pause en mode PC seul. Si le moteur ne répond pas ou si le contexte WebGL est perdu, le même écran reste lisible en 2D.
 - **Version à partager** ouvre `../cv.html`, une page de lecture indépendante du bureau et utilisable sans JavaScript.
 - Dans le dossier **Projets**, les miniatures et les liens de la liste ouvrent des fiches `.NFO` à l’intérieur du moniteur. **Échap** ferme le menu ou remonte de la fiche vers la liste, puis de la liste vers l’accueil. Chaque fiche a un lien direct `../index.html#projet-…` et une version sans JavaScript `../cv.html#projet-…`, même pour un dépôt privé.
+- **Partager** copie le lien public du dossier ou du projet courant, même depuis `file:`. Si le navigateur refuse la copie, l’adresse est sélectionnée pour une copie manuelle.
 
 La vitre est dessinée sur un plan de 640 × 480 pixels CSS, en retrait derrière l’ouverture biseautée du moniteur. La scène en déduit les dimensions de la vitre ; la même matrice de caméra projette l’interface, le clavier et la souris sur leurs surfaces 3D.
+Les reflets et les lignes de balayage sont atténués dans les dossiers et le terminal pour garder le texte lisible.
 
 ## Mettre à jour le CV texte et PDF
 
@@ -33,6 +35,7 @@ La commande utilise `chromium` ou le binaire donné par `CHROME`. L’option `np
 ## Scène et crédits
 
 La texture photographique du bois provient de [Wood Table 001, Poly Haven](https://polyhaven.com/a/wood_table_001), sous licence CC0. Three.js est distribué sous la licence MIT reproduite dans `THREE-LICENSE.txt`.
+Les titres et le logo de NOËL OS utilisent [VT323, de Peter Hull](https://github.com/phoikoi/VT323), distribué sous [SIL Open Font License 1.1](assets/VT323-OFL.txt). La police est intégrée au CSS pour fonctionner sans connexion, y compris en ouvrant `index.html` directement.
 
 La pièce complète est modélisée en primitives : plateau et piètement tourné avec tiroir central, chaise de bureau, sol parqueté avec tapis kilim et plinthe, fenêtre à store semi-levé derrière le moniteur, multiprise et câbles d'alimentation, étagère murale à équerres avec serre-livres et plante.
 

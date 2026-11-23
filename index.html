@@ -10,13 +10,14 @@
     <meta property="og:type" content="website">
     <meta property="og:locale" content="fr_FR">
     <meta property="og:url" content="https://victorcesiva.github.io/CV-original/">
-    <meta property="og:image" content="https://victorcesiva.github.io/CV-original/cv-apercu.jpg?v=moniteur">
+    <meta property="og:image" content="https://victorcesiva.github.io/CV-original/cv-apercu.jpg?v=phosphore">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Le bureau 3D de Victor Noël : un moniteur rétro affiche les dossiers du CV, entouré des miniatures des projets.">
     <meta name="theme-color" content="#101b17">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101b17'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='34' font-weight='700' fill='%23ff9500' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
-    <link rel="stylesheet" href="station.css?v=fiches">
+    <link rel="stylesheet" href="scene/assets/vt323-latin.css">
+    <link rel="stylesheet" href="station.css?v=phosphore">
 </head>
 <body>
 
@@ -24,7 +25,7 @@
     <nav class="site-actions" aria-label="Accès rapides">
         <a href="cv.html" data-resume="profil">CV express</a>
         <a id="cv-pdf" href="CV_Victor_NOEL.pdf" download>CV PDF <span aria-hidden="true">↓</span></a>
-        <button type="button" id="open-guide" aria-haspopup="dialog" hidden>Guide</button>
+        <button type="button" id="open-guide" data-guide aria-haspopup="dialog" hidden>Guide</button>
     </nav>
     <nav class="desk-actions" aria-label="Commandes du bureau">
         <a class="desk-projects" href="cv.html#projets" data-dossier="projets">Projets</a>
@@ -44,13 +45,19 @@
     <div class="display-bezel">
     <div class="screen" id="terminal-wrap">
       <canvas id="matrix-canvas" aria-hidden="true" hidden></canvas>
-      <div id="topbar"><span class="os-name">NOËL OS</span><span id="screen-mode">BUREAU</span></div>
+      <div id="topbar">
+        <span class="os-name">NOËL OS</span>
+        <div class="screen-status">
+          <span id="screen-mode">ACCUEIL</span>
+          <button type="button" class="screen-help" data-guide aria-label="Guide de visite" aria-haspopup="dialog" title="Guide de visite" hidden>?</button>
+        </div>
+      </div>
       <section class="screen-home" id="screen-home" aria-labelledby="home-title">
-        <p class="home-kicker">CV PRÊT <span aria-hidden="true">/</span> CESI LILLE</p>
+        <p class="home-kicker">BIENVENUE <span aria-hidden="true">/</span> CESI LILLE</p>
         <h1 id="home-title" tabindex="-1">Victor Noël<span aria-hidden="true">.</span></h1>
         <p class="home-role">Élève ingénieur informatique<br>Automatisation &amp; IA appliquée</p>
         <div class="home-command">
-          <p class="home-hint"><span aria-hidden="true">C:\CV&gt;</span> <span class="home-instruction">Ouvrir un dossier</span></p>
+          <p class="home-hint"><span aria-hidden="true">C:\CV&gt;</span> <span class="home-instruction">Choisissez une rubrique</span></p>
           <a class="home-mission" id="home-mission" href="cv.html#parcours" data-dossier="parcours" hidden>
             <span class="home-mission-label">À la une</span><span id="home-mission-title"></span><span aria-hidden="true">→</span>
           </a>
@@ -81,7 +88,10 @@
             <summary aria-label="Changer de dossier" aria-describedby="dossier-current"><span class="dossier-drive" aria-hidden="true">C:\CV\</span><span id="dossier-current"></span></summary>
             <nav aria-label="Dossiers du CV"></nav>
           </details>
-          <a id="dossier-link" href="cv.html">Version texte <span aria-hidden="true">↗</span></a>
+          <div class="dossier-actions">
+            <button type="button" id="share-dossier" aria-haspopup="dialog" hidden>Partager</button>
+            <a id="dossier-link" href="cv.html" aria-label="Version texte"><span class="dossier-verbose">Version</span> texte <span aria-hidden="true">↗</span></a>
+          </div>
         </div>
         <div class="screen-scroll" id="dossier-scroll" tabindex="0" role="region" aria-labelledby="dossier-title">
           <h2 id="dossier-title" tabindex="-1"></h2>
@@ -133,16 +143,16 @@
     </header>
     <div class="guide-layout">
         <div class="guide-copy">
-            <h2 id="guide-title">Bienvenue sur mon bureau.</h2>
-            <p id="guide-summary">Je suis Victor Noël, élève ingénieur au CESI Lille. Mon CV se lit sur ce PC rétro : les dossiers présentent mon parcours et chaque miniature du bureau ouvre une fiche à l’écran.</p>
+            <h2 id="guide-title">Bienvenue dans NOËL&nbsp;OS.</h2>
+            <p id="guide-summary">Je suis Victor Noël, élève ingénieur au CESI Lille. Mon CV se lit dans les dossiers de ce PC rétro. Le bureau 3D représente mes projets par des miniatures.</p>
             <form class="guide-routes" method="dialog">
-                <button type="submit" value="3d" data-3d-option autofocus>
-                    <strong>Explorer en 3D</strong>
-                    <span>Glissez pour tourner le bureau. Cliquez sur le moniteur pour le lire en grand.</span>
+                <button type="submit" value="pc" autofocus>
+                    <strong>Ouvrir le PC</strong>
+                    <span>Les dossiers et le terminal sont prêts, sans charger la 3D.</span>
                 </button>
-                <button type="submit" value="pc">
-                    <strong>Ouvrir le PC seul</strong>
-                    <span>Les dossiers et le terminal, sans charger la 3D.</span>
+                <button type="submit" value="3d" data-3d-option>
+                    <strong>Explorer le bureau en 3D</strong>
+                    <span>Tournez le bureau en glissant. Chaque miniature ouvre sa fiche dans le PC.</span>
                 </button>
                 <a href="cv.html" data-resume="profil">
                     <strong>Lire le CV express</strong>
@@ -156,7 +166,7 @@
             <p class="guide-keyboard"><kbd>Tab</kbd> pour naviguer · <kbd>Échap</kbd> pour fermer</p>
         </div>
         <figure class="guide-preview" data-3d-option>
-            <img src="cv-apercu.jpg?v=moniteur" width="1200" height="630" alt="Le PC rétro au centre du bureau, entouré de miniatures représentant mes projets." loading="lazy">
+            <img src="cv-apercu.jpg?v=phosphore" width="1200" height="630" alt="Le PC rétro au centre du bureau, entouré de miniatures représentant mes projets." loading="lazy">
             <figcaption>Aperçu du bureau 3D</figcaption>
         </figure>
     </div>
@@ -197,6 +207,19 @@
             <h3 id="resume-contact" tabindex="-1">Contact</h3>
             <div id="resume-contact-details"></div>
         </section>
+    </div>
+</dialog>
+
+<dialog class="site-dialog" id="share-dialog" aria-labelledby="share-title">
+    <header class="resume-bar">
+        <h2 id="share-title">Partager</h2>
+        <form method="dialog"><button type="submit">Fermer</button></form>
+    </header>
+    <div class="share-panel">
+        <label for="share-url">Lien public</label>
+        <input id="share-url" type="url" readonly spellcheck="false">
+        <p id="share-feedback" role="status"></p>
+        <div class="dialog-actions"><button type="button" class="primary-action" id="share-copy" autofocus>Copier le lien</button></div>
     </div>
 </dialog>
 
@@ -461,6 +484,6 @@ function startMatrix() {
     matrixTimeout = setTimeout(stopMatrix, 4200);
 }
 </script>
-<script src="station.js?v=fiches"></script>
+<script src="station.js?v=phosphore"></script>
 </body>
 </html>
