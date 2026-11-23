@@ -1,5 +1,5 @@
 // Single source of truth for the projects shown on the desk and in the dialogues.
-window.CV_PROJECTS = [
+const cvProjects = [
     {
         id: 'opencleaner',
         model: 'cleaner',
@@ -71,3 +71,6 @@ window.CV_PROJECTS = [
         url: 'https://github.com/VictorCESIVA/prosit-5-pile-stm32'
     }
 ];
+
+if (typeof module === 'object' && module.exports) module.exports = cvProjects;
+else window.CV_PROJECTS = cvProjects;

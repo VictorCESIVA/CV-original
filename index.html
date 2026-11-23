@@ -15,9 +15,9 @@
 
 <header class="site-bar">
     <nav class="site-actions" aria-label="Accès rapides">
-        <button type="button" data-resume="profil" aria-haspopup="dialog">CV express</button>
+        <a href="cv.html" data-resume="profil">CV express</a>
         <a id="cv-pdf" href="CV_Victor_NOEL.pdf" download>CV PDF <span aria-hidden="true">↓</span></a>
-        <button type="button" id="open-guide" aria-haspopup="dialog">Guide</button>
+        <button type="button" id="open-guide" aria-haspopup="dialog" hidden>Guide</button>
     </nav>
     <nav class="desk-actions" aria-label="Commandes du bureau">
         <div class="project-nav">
@@ -40,28 +40,28 @@
       <canvas id="matrix-canvas" aria-hidden="true" hidden></canvas>
       <div id="topbar"><span class="os-name">NOËL OS</span><span id="screen-mode">BUREAU</span></div>
       <section class="screen-home" id="screen-home" aria-labelledby="home-title">
-        <p class="home-kicker">POSTE PERSONNEL <span aria-hidden="true">/</span> CESI LILLE</p>
+        <p class="home-kicker">SYSTÈME PRÊT <span aria-hidden="true">/</span> CESI LILLE</p>
         <h1 id="home-title">Victor Noël<span aria-hidden="true">.</span></h1>
         <p class="home-role">Élève ingénieur informatique<br>Automatisation &amp; IA appliquée</p>
         <div class="home-launchers" role="group" aria-label="Dossiers du CV">
-          <button type="button" data-resume="parcours">
+          <a href="cv.html#parcours" data-resume="parcours">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 12h8m-8 4h8"/></svg>
             <span>Parcours</span>
-          </button>
-          <button type="button" data-resume="projets">
+          </a>
+          <a href="cv.html#projets" data-resume="projets">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 3h9v11H3zm0 3h9"/></svg>
             <span>Projets</span>
-          </button>
-          <button type="button" data-resume="competences">
+          </a>
+          <a href="cv.html#competences" data-resume="competences">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-2-14-4 18"/></svg>
             <span>Compétences</span>
-          </button>
-          <button type="button" data-resume="contact">
+          </a>
+          <a href="cv.html#contact" data-resume="contact">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zm0 1 9 7 9-7"/></svg>
             <span>Contact</span>
-          </button>
+          </a>
         </div>
-        <noscript>Activez JavaScript pour explorer le bureau, ou téléchargez le CV PDF.</noscript>
+        <noscript>Les dossiers restent consultables. Activez JavaScript pour le terminal et le bureau 3D.</noscript>
       </section>
       <section class="screen-terminal" id="screen-terminal" aria-label="Terminal du CV" hidden>
         <div id="terminal-body" tabindex="0" role="region" aria-label="Historique du terminal">
@@ -102,14 +102,14 @@
 <dialog class="site-dialog" id="site-guide" aria-labelledby="guide-title" aria-describedby="guide-summary">
     <p class="dialog-kicker"><span class="os-name">NOËL OS</span> <span>GUIDE DE VISITE / 01</span></p>
     <h2 id="guide-title">Bienvenue sur mon bureau.</h2>
-    <p id="guide-summary">Je suis Victor Noël, élève ingénieur au CESI Lille. J’ai installé mon CV sur un PC rétro, dans un bureau en 3D.</p>
+    <p id="guide-summary">Je suis Victor Noël, élève ingénieur au CESI Lille. Ici, mon CV prend la forme d’un ordinateur rétro.</p>
     <dl class="guide-steps">
-        <div><dt>Explorez la pièce</dt><dd>Faites glisser le bureau pour changer d’angle. Les miniatures ouvrent mes fiches projets.</dd></div>
-        <div><dt>Explorez le PC</dt><dd>Ouvrez un dossier du PC ou lancez le terminal et tapez <code>help</code>. Vous pouvez agrandir l’écran.</dd></div>
+        <div><dt>Sur le PC</dt><dd>Ouvrez un dossier pour voir mon parcours ou lancez le terminal et tapez <code>help</code>.</dd></div>
+        <div class="requires-3d"><dt>Autour du PC</dt><dd>Faites glisser le bureau pour changer d’angle. Les miniatures ouvrent mes projets et le bouton Agrandir rend l’écran plus lisible.</dd></div>
     </dl>
     <div class="dialog-actions">
         <form method="dialog"><button type="submit" class="primary-action" autofocus>Explorer le bureau</button></form>
-        <button type="button" data-resume="profil">Lire le CV express</button>
+        <a href="cv.html" data-resume="profil">Lire le CV express</a>
     </div>
 </dialog>
 
@@ -125,9 +125,7 @@
             <p>Élève ingénieur informatique · Automatisation &amp; IA</p>
             <div class="dialog-actions">
                 <a class="primary-action" href="CV_Victor_NOEL.pdf" download>Télécharger le CV PDF</a>
-                <a href="mailto:victor_noel2004@icloud.com">Me contacter</a>
-                <a href="https://www.linkedin.com/in/vic-noel" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-                <a href="https://github.com/VictorCESIVA" target="_blank" rel="noopener noreferrer">GitHub</a>
+                <a href="cv.html">Version à partager</a>
             </div>
         </div>
         <nav class="resume-nav" aria-label="Rubriques du CV">
@@ -141,8 +139,7 @@
         <section class="resume-section" aria-labelledby="resume-competences"><h3 id="resume-competences" tabindex="-1">Compétences</h3><div id="resume-skills"></div></section>
         <section class="resume-section" aria-labelledby="resume-contact">
             <h3 id="resume-contact" tabindex="-1">Contact</h3>
-            <p>Villeneuve-d’Ascq, métropole lilloise · Permis B, véhiculé</p>
-            <p><a href="mailto:victor_noel2004@icloud.com">victor_noel2004@icloud.com</a></p>
+            <div id="resume-contact-details"></div>
         </section>
     </div>
 </dialog>
@@ -164,26 +161,50 @@
 <div id="project-tip" role="tooltip" hidden></div>
 
 <script src="projects.js"></script>
+<script src="cv-data.js"></script>
 <script>
-// Rubriques partagées par le terminal et le CV express.
+function cvSection(title) {
+    return `<h4 class="section-title">${cvEscape(title)}</h4>`;
+}
+
+function cvGroups(title, groups) {
+    return cvSection(title) + `<dl class="skill-groups">${groups.map(([label, value]) =>
+        `<div><dt>${cvEscape(label)}</dt><dd>${cvEscape(value)}</dd></div>`
+    ).join('')}</dl>`;
+}
+
+function cvTimeline(title, entries) {
+    return cvSection(title) + entries.map(entry => `<article class="timeline-item">
+        <span class="timeline-dot" aria-hidden="true"></span>
+        <div class="timeline-content">
+            <p class="timeline-date">${cvEscape(entry.date)}</p>
+            <p><strong>${cvEscape(entry.title)}</strong></p>
+            <p class="timeline-detail">${cvEscape(entry.detail)}</p>
+            ${entry.tags.length ? `<div class="timeline-tags">${entry.tags.map(tag =>
+                `<span class="tag tag-cyan">${cvEscape(tag)}</span>`
+            ).join('')}</div>` : ''}
+        </div>
+    </article>`).join('');
+}
+
+const cvContact = `<ul class="other-projects">
+  <li><a href="mailto:${cvEscape(cvData.email)}">${cvEscape(cvData.email)}</a></li>
+  <li><a href="${cvEscape(cvData.linkedin)}" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+  <li><a href="${cvEscape(cvData.github)}" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+  <li>${cvEscape(cvData.location)} · ${cvEscape(cvData.mobility)}</li>
+</ul>`;
+
 const cv = {
-    about: `<h4 class="section-title">Profil</h4>
-<p><strong>Victor Noël</strong> · Élève ingénieur informatique au CESI Lille.</p>
-<p>Automatisation métier, IA appliquée et hébergement de services sous Docker.</p>
-<p>Villeneuve-d’Ascq · Permis B, véhiculé.</p>
+    about: `${cvSection('Profil')}
+<p><strong>${cvEscape(cvData.name)}</strong> · ${cvEscape(cvData.role)}.</p>
+<p>${cvEscape(cvData.summary)}</p>
+${cvContact}
 <div class="profile-links">
-  <a href="https://github.com/VictorCESIVA" target="_blank" rel="noopener noreferrer">GitHub</a>
-  <a href="https://www.linkedin.com/in/vic-noel" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+  <a href="cv.html">Version à partager</a>
   <a href="CV_Victor_NOEL.pdf" download>CV PDF</a>
 </div>`,
 
-    skills: `<h4 class="section-title">Compétences techniques</h4>
-<dl class="skill-groups">
-  <div><dt>Automatisation &amp; IA</dt><dd>Python, FastAPI, intégrations API, classification et curation par LLM.</dd></div>
-  <div><dt>Web &amp; données</dt><dd>JavaScript, HTML/CSS, PHP, SQL, PostgreSQL, MySQL et Supabase.</dd></div>
-  <div><dt>Logiciel &amp; embarqué</dt><dd>C#/.NET, C/C++, STM32 et PlatformIO.</dd></div>
-  <div><dt>Outils &amp; déploiement</dt><dd>Docker, Linux, Git/GitHub, VS Code, Vercel et Claude Code.</dd></div>
-</dl>`,
+    skills: cvGroups('Compétences techniques', cvData.skills),
 
     softskills: `<h4 class="section-title">Qualités &amp; centres d’intérêt</h4>
 
@@ -211,84 +232,13 @@ const cv = {
   <div class="interest-item">💡 Side projects</div>
 </div>`,
 
-    certifications: `<h4 class="section-title">Langues &amp; certification</h4>
-<dl class="skill-groups">
-  <div><dt>Anglais</dt><dd>Niveau B2+ · TOEIC 870</dd></div>
-  <div><dt>Français</dt><dd>Langue maternelle</dd></div>
-</dl>`,
-
-    education: `<h4 class="section-title">Formations</h4>
-<div class="timeline-item">
-  <div class="timeline-dot" style="color:var(--cyan);background:var(--cyan)"></div>
-  <div class="timeline-content">
-    <div class="timeline-date">2025 → Aujourd'hui</div>
-    <div class="c-white" style="font-weight:700">CESI Lille</div>
-    <div class="c-dim" style="font-size:13px">Formation d'ingénieur informatique</div>
-    <div style="margin-top:4px"><span class="tag tag-cyan">Algorithmie</span><span class="tag tag-purple">Réseaux</span><span class="tag tag-green">BDD</span><span class="tag tag-orange">Projet</span></div>
-  </div>
-</div>
-<div class="timeline-item">
-  <div class="timeline-dot" style="color:var(--purple);background:var(--purple)"></div>
-  <div class="timeline-content">
-    <div class="timeline-date">2023 → 2025</div>
-    <div class="c-white" style="font-weight:700">ISEN Yncréa Lille</div>
-    <div class="c-dim" style="font-size:13px">1ère année Cycle Préparatoire Sciences & Informatique</div>
-    <div style="margin-top:4px"><span class="tag tag-purple">Maths</span><span class="tag tag-cyan">Physique</span><span class="tag tag-pink">C/C++</span></div>
-  </div>
-</div>
-<div class="timeline-item">
-  <div class="timeline-dot" style="color:var(--green);background:var(--green)"></div>
-  <div class="timeline-content">
-    <div class="timeline-date">2022</div>
-    <div class="c-white" style="font-weight:700">Baccalauréat Scientifique</div>
-    <div class="c-dim" style="font-size:13px">Spécialités : Maths — Physique-Chimie</div>
-    <div style="margin-top:4px"><span class="tag tag-green">Mention BIEN</span></div>
-  </div>
-</div>`,
-
-    otherProjects: `<h4 class="section-title">Autres travaux académiques</h4>
-<ul class="other-projects">
-  <li><strong>Application web PHP/MySQL (ISEN)</strong> — authentification et gestion de base de données.</li>
-  <li><strong>Infrastructure réseau (CESI)</strong> — VLAN, NAT/PAT, routage inter-VLAN, OSPF et DHCP.</li>
-  <li><strong>Modélisation mathématique 2D/3D (ISEN)</strong> — visualisation de courbes et surfaces avec Python et SageMath.</li>
-</ul>`,
-
-    xp: `<h4 class="section-title">Expériences professionnelles</h4>
-<div class="timeline-item">
-  <div class="timeline-dot" style="color:var(--cyan);background:var(--cyan)"></div>
-  <div class="timeline-content">
-    <div class="timeline-date">2026</div>
-    <div class="c-white" style="font-weight:700">NXTFood / ACCRO — Développeur Automatisation &amp; IA (CDD)</div>
-    <div class="c-dim" style="font-size:13px">Automatisations métier de bout en bout, classification et curation par LLM, intégrations API, applications internes et services auto-hébergés sous Docker — de la conception au déploiement en production.</div>
-    <div style="margin-top:4px"><span class="tag tag-green">IA / LLM</span><span class="tag tag-cyan">Python · FastAPI</span><span class="tag tag-purple">Docker</span><span class="tag tag-orange">Automatisation</span></div>
-  </div>
-</div>
-<div class="timeline-item">
-  <div class="timeline-dot" style="color:var(--orange);background:var(--orange)"></div>
-  <div class="timeline-content">
-    <div class="timeline-date">2024 &amp; 2025</div>
-    <div class="c-white" style="font-weight:700">Chronopost — Agent de conditionnement</div>
-    <div class="c-dim" style="font-size:13px">Tri et préparation de colis, travail en équipe sous cadence. Rigueur et organisation.</div>
-    <div style="margin-top:4px"><span class="tag tag-orange">Logistique</span><span class="tag tag-green">Travail d'équipe</span></div>
-  </div>
-</div>
-<div class="timeline-item">
-  <div class="timeline-dot" style="color:var(--pink);background:var(--pink)"></div>
-  <div class="timeline-content">
-    <div class="timeline-date">2023</div>
-    <div class="c-white" style="font-weight:700">Fizzy — Stage ouvrier</div>
-    <div class="c-dim" style="font-size:13px">Découverte du monde professionnel. Production et contrôle qualité.</div>
-    <div style="margin-top:4px"><span class="tag tag-pink">Stage</span><span class="tag tag-cyan">Industrie</span></div>
-  </div>
-</div>`,
-
-    contact: `<h4 class="section-title">Contact</h4>
-<ul class="other-projects">
-  <li><a href="mailto:victor_noel2004@icloud.com">victor_noel2004@icloud.com</a></li>
-  <li><a href="https://www.linkedin.com/in/vic-noel" target="_blank" rel="noopener noreferrer">linkedin.com/in/vic-noel</a></li>
-  <li><a href="https://github.com/VictorCESIVA" target="_blank" rel="noopener noreferrer">github.com/VictorCESIVA</a></li>
-  <li>Villeneuve-d’Ascq, 59650</li>
-</ul>`,
+    certifications: cvGroups('Langues & certification', cvData.languages),
+    education: cvTimeline('Formations', cvData.education),
+    otherProjects: cvSection('Autres travaux académiques') + `<ul class="other-projects">${cvData.otherProjects.map(([title, detail]) =>
+        `<li><strong>${cvEscape(title)}</strong> — ${cvEscape(detail)}</li>`
+    ).join('')}</ul>`,
+    xp: cvTimeline('Expériences professionnelles', cvData.experience),
+    contact: cvSection('Contact') + cvContact,
 
     help: `<h4 class="section-title">Commandes disponibles</h4>
 <div class="help-grid">
@@ -389,7 +339,7 @@ function submitCommand(value = input.value) {
 
 async function renderGitHub(result) {
     const link = document.createElement('a');
-    link.href = 'https://github.com/VictorCESIVA';
+    link.href = cvData.github;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.textContent = 'Profil GitHub';
@@ -433,6 +383,6 @@ function startMatrix() {
 }
 </script>
 <script src="station.js"></script>
-<script src="desk.bundle.js"></script>
+<script src="desk.bundle.js" defer></script>
 </body>
 </html>

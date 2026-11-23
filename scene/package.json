@@ -1,7 +1,8 @@
 {
   "private": true,
   "scripts": {
-    "build": "esbuild desk.js --bundle --minify --loader:.jpg=dataurl --loader:.png=dataurl --loader:.svg=dataurl --outfile=../desk.bundle.js"
+    "build": "esbuild desk.js --bundle --minify --loader:.jpg=dataurl --loader:.png=dataurl --loader:.svg=dataurl --outfile=../desk.bundle.js",
+    "build:cv": "node build-cv.cjs"
   },
   "dependencies": { "three": "0.187.0" },
   "devDependencies": { "esbuild": "0.28.2" }

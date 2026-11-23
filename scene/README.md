@@ -11,8 +11,15 @@ Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteu
 - Le guide s’ouvre à la première visite et reste accessible via **Guide**. La fermeture est mémorisée dans `localStorage`, sans compte.
 - Le moniteur démarre sur l’accueil NOËL OS. Ses dossiers ouvrent le CV express à la rubrique correspondante. Le terminal reste accessible depuis la barre du PC.
 - **CV express** et **CV PDF** sont accessibles sans manipuler la scène. Sur petit écran, **Agrandir** ouvre le PC à taille de lecture ; la vue du bureau présente aussi la liste des projets.
+- **Version à partager** ouvre `../cv.html`, une page de lecture indépendante du bureau et utilisable sans JavaScript.
 
 L’écran spatial est dessiné sur un plan de 640 × 480 pixels CSS. La scène en déduit les dimensions de la vitre ; la même matrice de caméra projette l’interface, le clavier et la souris sur leurs surfaces 3D.
+
+## Mettre à jour le CV texte et PDF
+
+Les faits du CV sont dans `../cv-data.js` et les fiches projets dans `../projects.js`. Depuis ce dossier, `npm run build:cv` génère ensemble `../cv.html` et `../CV_Victor_NOEL.pdf` en utilisant `../cv.css`, y compris sa mise en page A4.
+
+La commande utilise `chromium` ou le binaire donné par `CHROME`. L’option `npm run build:cv -- --no-sandbox` est réservée aux environnements isolés qui n’offrent pas de sandbox Chromium, pour imprimer ces fichiers locaux de confiance.
 
 ## Scène et crédits
 

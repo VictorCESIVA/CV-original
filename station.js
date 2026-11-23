@@ -281,6 +281,7 @@ const resumeContent = resume.querySelector('.resume-content');
 document.getElementById('resume-timeline').innerHTML = cv.xp + cv.education;
 document.getElementById('resume-projects').innerHTML = cv.projects;
 document.getElementById('resume-skills').innerHTML = cv.skills + cv.certifications;
+document.getElementById('resume-contact-details').innerHTML = cvContact;
 
 const guideKey = 'cv-noel:guide-v1';
 let guideSeen = false;
@@ -298,8 +299,12 @@ guide.addEventListener('close', () => {
 });
 
 document.addEventListener('click', event => {
-    const trigger = event.target.closest('button[data-resume]');
-    if (!trigger) return;
+    const trigger = event.target.closest('[data-resume]');
+    if (!trigger || typeof resume.showModal !== 'function') return;
+    if (trigger instanceof HTMLAnchorElement) {
+        if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+    }
     if (guide.open) {
         guide.close();
         guideButton.focus({preventScroll:true});
@@ -310,4 +315,8 @@ document.addEventListener('click', event => {
     resumeContent.scrollTop = target.offsetTop - 16;
 });
 
-if (!guideSeen) guide.showModal();
+if (typeof guide.showModal === 'function') {
+    guideButton.hidden = false;
+    document.querySelectorAll('a[data-resume]').forEach(link => link.setAttribute('aria-haspopup', 'dialog'));
+    if (!guideSeen) guide.showModal();
+}
