@@ -13,11 +13,32 @@ const rows = [
 ];
 const labels = { Escape:'Échap', Home:'Début', End:'Fin', Delete:'Suppr', Backspace:'⌫', Enter:'Entrée', Shift:'Maj', ArrowLeft:'←', ArrowRight:'→', ' ':'Espace' };
 const names = { Backspace:'Effacer', ArrowLeft:'Curseur à gauche', ArrowRight:'Curseur à droite' };
+const homeScreen = document.getElementById('screen-home');
+const terminalScreen = document.getElementById('screen-terminal');
+const screenMode = document.getElementById('screen-mode');
+const screenTabs = document.querySelectorAll('[data-screen]');
+
+function showScreen(mode) {
+    const terminal = mode === 'terminal';
+    if (homeScreen.hidden !== terminal) {
+        homeScreen.hidden = terminal;
+        terminalScreen.hidden = !terminal;
+        screenMode.textContent = terminal ? 'TERMINAL' : 'BUREAU';
+        screenTabs.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.screen === mode)));
+    }
+    if (terminal) input.focus({preventScroll:true});
+    else stopMatrix();
+}
+
+screenTabs.forEach(button => button.addEventListener('click', () => showScreen(button.dataset.screen)));
+
 for (const row of rows) {
     const line = document.createElement('div');
     line.className = 'key-row';
     for (const key of row) {
         const button = document.createElement('button');
+        button.type = 'button';
+        button.tabIndex = -1; // The physical keyboard uses the terminal input directly.
         button.className = 'key';
         button.dataset.key = key;
         const digit=/^[0-9]$/.test(key);
@@ -41,8 +62,7 @@ for (const row of rows) {
 }
 
 function typeKey(key) {
-    if (isTyping) return;
-    input.focus({preventScroll:true});
+    showScreen('terminal');
     let start = input.selectionStart;
     const end = input.selectionEnd;
     if (key === 'Escape') {
@@ -79,6 +99,7 @@ function matchingKey(e) {
     return keys.get(e.key.toLowerCase()) || keys.get(unshifted);
 }
 document.addEventListener('keydown', e => {
+    if (e.target !== input || e.isComposing) return;
     const button = matchingKey(e);
     if (button) {
         down.set(e.code,button);
@@ -92,11 +113,7 @@ document.addEventListener('keyup', e => {
         button.classList.remove('on');
 });
 document.querySelectorAll('[data-command]').forEach(button => {
-    button.addEventListener('click', () => {
-        if (isTyping) return;
-        input.value = button.dataset.command;
-        submitCommand();
-    });
+    button.addEventListener('click', () => submitCommand(button.dataset.command));
 });
 
 const mouse = document.querySelector('#mouse');
@@ -106,6 +123,7 @@ const mouseButtons = ['left','wheel','right'].map(name => mouse.querySelector('.
 let drag = null;
 let moved = false;
 let x = .5, y = .5;
+const scrollArea = () => terminalScreen.hidden ? homeScreen : terminalBody;
 function showPointer() {
     pointer.hidden = false;
     pointer.style.left = (x*screenFrame.clientWidth)+'px';
@@ -118,8 +136,10 @@ mouse.addEventListener('pointerdown', e => {
     e.target.setPointerCapture(e.pointerId);
 });
 document.addEventListener('pointermove', e => {
-    mouse.style.setProperty('--mx', ((e.clientX/innerWidth-.5)*18)+'px');
-    mouse.style.setProperty('--my', ((e.clientY/innerHeight-.5)*12)+'px');
+    if (!document.body.classList.contains('spatial') && !reducedMotion.matches && e.pointerType !== 'touch') {
+        mouse.style.setProperty('--mx', ((e.clientX/innerWidth-.5)*18)+'px');
+        mouse.style.setProperty('--my', ((e.clientY/innerHeight-.5)*12)+'px');
+    }
     if (!drag || drag.id !== e.pointerId) return;
     const dx = e.clientX-drag.startX, dy = e.clientY-drag.startY;
     if (Math.hypot(dx,dy)>3) moved = true;
@@ -129,7 +149,7 @@ document.addEventListener('pointermove', e => {
         showPointer();
     }
 });
-document.addEventListener('pointerdown', e => mouseButtons[e.button]?.classList.add('on'));
+document.querySelector('.station').addEventListener('pointerdown', e => mouseButtons[e.button]?.classList.add('on'));
 function releaseMouse() {
     drag = null;
     mouseButtons.forEach(button => button.classList.remove('on'));
@@ -138,24 +158,27 @@ document.addEventListener('pointerup',releaseMouse);
 document.addEventListener('pointercancel',releaseMouse);
 mouse.addEventListener('click', e => {
     if (moved && e.detail) return;
-    if (e.target === mouseButtons[1]) terminalBody.scrollBy(0,terminalBody.clientHeight*.75);
-    else if (e.target === mouseButtons[0]) {
+    if (e.target === mouseButtons[1]) {
+        const area = scrollArea();
+        area.scrollBy(0, area.clientHeight * .75);
+    } else if (e.target === mouseButtons[0]) {
         showPointer();
         const rect = pointer.getBoundingClientRect();
         const hit = document.elementFromPoint(rect.left, rect.top)?.closest('a,button,input');
-        if (hit && screenFrame.contains(hit)) hit.click();
-        if (!hit || hit === input) input.focus({preventScroll:true});
-    } else input.focus({preventScroll:true});
+        if (screenFrame.contains(hit)) {
+            if (hit === input) input.focus({preventScroll:true});
+            else hit.click();
+        }
+    } else if (e.target === mouseButtons[2]) showScreen('terminal');
 });
 let wheelTimer;
-document.addEventListener('wheel', e => {
+mouse.addEventListener('wheel', e => {
+    e.preventDefault();
     mouseButtons[1].classList.add('on');
     clearTimeout(wheelTimer);
     wheelTimer = setTimeout(() => mouseButtons[1].classList.remove('on'),130);
-    if (mouse.contains(e.target)) {
-        e.preventDefault();
-        terminalBody.scrollBy(0,e.deltaY*(e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? terminalBody.clientHeight : 1));
-    }
+    const area = scrollArea();
+    area.scrollBy(0,e.deltaY*(e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? area.clientHeight : 1));
 },{passive:false});
 window.addEventListener('blur', () => {
     releaseMouse();
@@ -167,16 +190,21 @@ const projects = window.CV_PROJECTS || [];
 const collectionNames = { perso:'Projets perso', cesi:'Projets CESI' };
 
 function projectArticle(project) {
-    const title = `<button class="open-sheet" data-project="${project.id}">${project.name}</button>`;
-    return `<article><h3>${title}</h3><p>${project.description}</p><small>${project.tags.join(' · ')}</small></article>`;
+    return `<article class="catalog-card">
+        <button type="button" class="open-sheet" data-project="${project.id}">${project.name}</button>
+        <p>${project.description}</p><small>${project.tags.join(' · ')}</small>
+    </article>`;
 }
 
-document.querySelectorAll('#portfolio-archive [data-collection]').forEach(section => {
-    section.innerHTML = projects
-        .filter(project => project.collection === section.dataset.collection)
-        .map(projectArticle)
-        .join('');
+const projectGroups = Object.entries(collectionNames).map(([collection,title]) => {
+    const items = projects.filter(project => project.collection === collection);
+    const cards = items.map(projectArticle).join('');
+    document.querySelector(`#portfolio-archive [data-collection="${collection}"]`).innerHTML = cards;
+    return {title, items, cards};
 });
+cv.projects = projectGroups.map(({title,cards}) =>
+    `<h4 class="section-title">${title}</h4><div class="project-grid">${cards}</div>`
+).join('') + cv.otherProjects;
 
 const archiveDialog = document.getElementById('portfolio-archive');
 document.addEventListener('click', event => {
@@ -228,13 +256,14 @@ document.addEventListener('click', event => {
     if (button) openProject(button.dataset.project);
 });
 const projectIndex = document.querySelector('.project-index');
-for (const [collection,title] of Object.entries(collectionNames)) {
+for (const {title,items} of projectGroups) {
     const group = document.createElement('section');
     const heading = document.createElement('h2');
     heading.textContent = title;
     group.append(heading);
-    for (const project of projects.filter(item => item.collection === collection)) {
+    for (const project of items) {
         const button = document.createElement('button');
+        button.type = 'button';
         button.dataset.project = project.id;
         button.textContent = project.name;
         const tech = document.createElement('small');
@@ -244,3 +273,41 @@ for (const [collection,title] of Object.entries(collectionNames)) {
     }
     projectIndex.append(group);
 }
+
+const guide = document.getElementById('site-guide');
+const guideButton = document.getElementById('open-guide');
+const resume = document.getElementById('resume-dialog');
+const resumeContent = resume.querySelector('.resume-content');
+document.getElementById('resume-timeline').innerHTML = cv.xp + cv.education;
+document.getElementById('resume-projects').innerHTML = cv.projects;
+document.getElementById('resume-skills').innerHTML = cv.skills + cv.certifications;
+
+const guideKey = 'cv-noel:guide-v1';
+let guideSeen = false;
+try {
+    guideSeen = localStorage.getItem(guideKey) === '1';
+} catch { /* The guide remains usable when storage is blocked. */ }
+
+guideButton.addEventListener('click', () => guide.showModal());
+guide.addEventListener('close', () => {
+    try {
+        localStorage.setItem(guideKey, '1');
+    } catch { /* Storage is optional for the local copy. */ }
+    if (!guideSeen && !resume.open) guideButton.focus({preventScroll:true});
+    guideSeen = true;
+});
+
+document.addEventListener('click', event => {
+    const trigger = event.target.closest('button[data-resume]');
+    if (!trigger) return;
+    if (guide.open) {
+        guide.close();
+        guideButton.focus({preventScroll:true});
+    }
+    if (!resume.open) resume.showModal();
+    const target = document.getElementById(`resume-${trigger.dataset.resume}`);
+    target.focus({preventScroll:true});
+    resumeContent.scrollTop = target.offsetTop - 16;
+});
+
+if (!guideSeen) guide.showModal();

@@ -1,7 +1,6 @@
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
@@ -11,19 +10,20 @@ import huggingFace from './assets/hugging-face.svg';
 import woodPhoto from './assets/wood.jpg';
 
 function buildDesk(renderer) {
-    const world = new T.Scene(), overlays = new T.Scene();
+    const world = new T.Scene();
     const camera = new T.PerspectiveCamera(34, 1, .08, 65);
-    const css = new CSS3DRenderer();
+    const surfaces = [];
+    const viewport = new T.Matrix4(), projection = new T.Matrix4(), transform = new T.Matrix4();
     const stage = document.querySelector('.station');
     const frame = document.querySelector('#terminal-wrap');
     const board = document.querySelector('#keyboard');
     const mouse = document.querySelector('#mouse');
     document.body.classList.add('spatial');
-    stage.prepend(renderer.domElement, css.domElement);
-    css.domElement.className = 'projected-controls';
+    stage.prepend(renderer.domElement);
     renderer.domElement.setAttribute('aria-label','Bureau de Victor en 3D avec un PC rétro, la mascotte Clawd, un casque et un carnet de notes sur l’IA');
     const renderSize = () => stage.getBoundingClientRect();
-    const compactView=matchMedia('(max-width:700px)');
+    const compactView=matchMedia('(max-width:760px)');
+    const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
     const pixelRatio=()=>Math.min(devicePixelRatio,compactView.matches?1.25:1.65);
     renderer.setPixelRatio(pixelRatio());
     renderer.shadowMap.enabled = true;
@@ -156,16 +156,19 @@ function buildDesk(renderer) {
     // Swivel riser: a wide plate with a turntable ring carrying the CRT.
     box(3.2,.05,1.5,.02,dark,0,.565,-.52);
     cyl(.5,.54,.10,dark,0,.565,-.52);
-    // Deep CRT cabinet. Separate rear shell, front moulding and recessed glass.
-    box(4.12,2.85,1.88,.20,edge,0,2.04,-.94);
-    box(4.52,3.07,.75,.16,plastic,0,2.17,-.025);
-    box(4.34,2.95,.095,.12,graphite,0,2.16,.32);
-    box(4.10,2.60,.15,.12,metal,0,2.24,.33);
-    box(3.97,2.46,.12,.09,dark,0,2.24,.395);
+    // The visible phosphor, its rim and the camera all share the same 4:3 glass.
+    const glassWidth=3.60, glassY=2.36, glassZ=.462;
+    const glassScale=glassWidth/frame.offsetWidth;
+    const glassHeight=frame.offsetHeight*glassScale;
+    box(4.14,3.26,1.88,.20,edge,0,2.18,-.94);
+    box(4.42,3.33,.75,.16,plastic,0,2.26,-.025);
+    box(4.25,3.20,.095,.12,graphite,0,2.24,.32);
+    box(glassWidth+.28,glassHeight+.27,.15,.12,metal,0,glassY,.33);
+    box(glassWidth+.12,glassHeight+.12,.12,.09,dark,0,glassY,.395);
     badge('V I C T O R   /   N O Ë L',1.12,.11,-1.40,.84,.373,'#293635','#f2dfb7');
     for(let i=0;i<15;i++)box(.022,.090,.015,.008,dark,1.11+i*.045,.86,.379);
     box(.08,.08,.025,.018,led,1.91,.86,.379);
-    for(let i=0;i<15;i++)box(.022,.18,.036,.008,dark,2.057,2.95,-1.62+i*.078);
+    for(let i=0;i<15;i++)box(.022,.18,.036,.008,dark,2.07,2.95,-1.62+i*.078);
     const dialMaterial=mat(0x65716e,.45,.34);
     for(const x of [.51,.79]){
         const dial=cyl(.071,.077,.065,dialMaterial,x,.86,.393);
@@ -175,11 +178,22 @@ function buildDesk(renderer) {
     box(.29,.15,.052,.026,dark,-1.98,.30,.816);
     box(.22,.105,.055,.016,orange,-1.98,.30,.843);
     box(.020,.055,.005,.001,dark,-1.98,.308,.874);
-    for(let i=0;i<14;i++)box(.42,.014,.038,.006,dark,1.68,3.47,-1.67+i*.082);
-    function surface(el,parent,x,y,z,rotation,scale) {
-        const o=new CSS3DObject(el); o.position.set(x,y,z);o.rotation.x=rotation;o.scale.setScalar(scale);parent.add(o);return o;
+    for(let i=0;i<14;i++)box(.42,.014,.038,.006,dark,1.68,3.814,-1.67+i*.082);
+
+    // Map DOM pixels (top left, Y down) to the mesh plane (center, Y up).
+    // Compose into one CSS matrix so paint and hit testing use the same projection.
+    function surface(element,parent,x,y,z,rotation,scale) {
+        const anchor=group(x,y,z,parent);
+        anchor.rotation.x=rotation;
+        const local=new T.Matrix4().set(
+            scale,0,0,-element.offsetWidth*scale/2,
+            0,-scale,0,element.offsetHeight*scale/2,
+            0,0,scale,0,
+            0,0,0,1
+        );
+        surfaces.push({element,anchor,local});
     }
-    surface(frame,overlays,0,2.24,.462,0,3.82/680);
+    surface(frame,world,0,glassY,glassZ,0,glassScale);
     const keyRig=group(-.04,.115,1.91);
     keyRig.rotation.set(.075,-.035,0,'YXZ');
     const flat = -Math.PI/2;
@@ -193,11 +207,9 @@ function buildDesk(renderer) {
     box(.05,.018,.05,.012,new T.MeshStandardMaterial({color:0xe8c98a,emissive:0xb4762f,emissiveIntensity:.85}),1.85,.098,-.705,keyRig);
     const keyBadge=badge('N O Ë L · 8 4',1.05,.10,0,.098,-.72,'#2b322d','#c2b99e',keyRig);
     keyBadge.rotation.x=-Math.PI/2;
-    const boardRig=group(0,0,0,overlays); boardRig.position.copy(keyRig.position);boardRig.rotation.copy(keyRig.rotation);
-    const unit=4.28/700;
-    surface(board,boardRig,0,.229,0,flat,unit);
+    const unit=4.28/board.offsetWidth;
+    surface(board,keyRig,0,.229,0,flat,unit);
     const caps=[];
-    // Measure unprojected CSS coordinates before CSS3DRenderer reparents the controls.
     const keyMat=mat(0xe1dccf), modifier=mat(0x495d61);
     board.querySelectorAll('.key').forEach(button=>{
         const w=button.offsetWidth*unit, d=button.offsetHeight*unit;
@@ -277,8 +289,7 @@ function buildDesk(renderer) {
         tread.rotation.x=a;
     }
     box(.09,.018,.031,.006,orange,0,.326,.107,mouseRig);
-    const mouseSurface=surface(mouse,overlays,2.87,.32,1.85,flat,.0064);
-    mouseSurface.rotation.order='YXZ';mouseSurface.rotation.y=-.14;
+    surface(mouse,mouseRig,0,.265,0,flat,.0064);
     // Mouse cord: strain-relief grommet at the nose, then a smooth run behind the tower.
     cyl(.032,.032,.07,dark,0,.155,-.485,mouseRig).rotation.x=Math.PI/2;
     path([[2.80,.21,1.37],[2.98,.07,1.03],[3.24,.045,.42],[3.44,.035,-.30],[3.30,.03,-1.08],[2.95,.03,-1.80],[2.50,.04,-2.35],[2.15,.05,-2.70]],.022,dark);
@@ -891,32 +902,41 @@ function buildDesk(renderer) {
     const cameraControls=document.querySelector('.view-controls');
     cameraControls.hidden=false;
     const zoom=cameraControls.querySelector('button');
+    const aim=new T.Vector3();
+    const tan=Math.tan(T.MathUtils.degToRad(camera.fov/2));
 
     function invalidate() {
         if(!pending) { pending=true;requestAnimationFrame(render); }
     }
     function render(){
         pending=false;
-        const {width,height}=renderSize();
-        camera.aspect=width/height;camera.updateProjectionMatrix();
-        const compact=compactView.matches;
-        const aim=new T.Vector3(0,focus?2.24:1.30,focus?.46:.40);
-        const tan=Math.tan(T.MathUtils.degToRad(camera.fov/2));
-        const distance=focus?Math.max(1.40/tan,2.10/(tan*camera.aspect)):
-            Math.max(11.1, (compact?5.82:5.65)/(tan*camera.aspect));
+        if(focus&&compactView.matches)return;
+        aim.set(0,focus?glassY:1.40,focus?glassZ:.40);
+        const distance=focus
+            ?Math.max((glassHeight/2+.20)/tan,(glassWidth/2+.25)/(tan*camera.aspect))
+            :Math.max(11.1,(compactView.matches?5.82:5.65)/(tan*camera.aspect));
         const a=focus?.022:yaw, p=focus?.055:pitch;
-        camera.position.copy(aim).add(new T.Vector3(Math.sin(a)*Math.cos(p),Math.sin(p),Math.cos(a)*Math.cos(p)).multiplyScalar(distance));
+        camera.position.set(Math.sin(a)*Math.cos(p),Math.sin(p),Math.cos(a)*Math.cos(p)).multiplyScalar(distance).add(aim);
         camera.lookAt(aim);camera.updateMatrixWorld();
         caps.forEach(([cap,b])=>{cap.position.y=b.matches('.on,.pressed')?.129:.166;});
         left.position.y=mouse.querySelector('.left.on')?-.005:.014;
         right.position.y=mouse.querySelector('.right.on')?-.005:.014;
         wheel.material=mouse.querySelector('.wheel.on')?orange:dark;
         shiftLed.emissiveIntensity=board.querySelector('[data-key="Shift"]')?.classList.contains('on')?1.6:.12;
-        mouseSurface.position.x=mouseRig.position.x;mouseSurface.position.z=mouseRig.position.z;
-        composer.render();css.render(overlays,camera);
+        composer.render();
+        projection.copy(viewport).multiply(camera.projectionMatrix).multiply(camera.matrixWorldInverse);
+        for(const {element,anchor,local} of surfaces){
+            anchor.updateWorldMatrix(true,false);
+            transform.multiplyMatrices(projection,anchor.matrixWorld).multiply(local);
+            element.style.setProperty('--projection',`matrix3d(${transform.elements.join(',')})`);
+        }
     }
     function resize(){
         const {width,height}=renderSize();
+        camera.aspect=width/height;
+        camera.updateProjectionMatrix();
+        // From clip space to CSS pixels, keeping the perspective divide (W).
+        viewport.set(width/2,0,0,width/2,0,-height/2,0,height/2,0,0,1,0,0,0,0,1);
         const ratio=pixelRatio();
         if(renderer.getPixelRatio()!==ratio){
             renderer.setPixelRatio(ratio);
@@ -925,15 +945,14 @@ function buildDesk(renderer) {
         occlusion.enabled=!compactView.matches;
         renderer.setSize(width,height);
         composer.setSize(width,height);
-        css.setSize(width,height);
         invalidate();
     }
     function setFocus(next){
         focus=next;document.body.classList.toggle('reading',next);
         setHovered(null);
-        zoom.textContent=next?'Vue du bureau':'Lire le terminal';
-        zoom.setAttribute('aria-pressed',String(next));
-        if(next && !compactView.matches) document.querySelector('#commandInput').focus({preventScroll:true});
+        zoom.lastElementChild.textContent=next?'Bureau':'Agrandir';
+        zoom.setAttribute('aria-label',next?'Revenir à la vue du bureau':'Agrandir l’écran');
+        zoom.setAttribute('aria-expanded',String(next));
         invalidate();
     }
     zoom.onclick=()=>setFocus(!focus);
@@ -1009,7 +1028,7 @@ function buildDesk(renderer) {
     canvas.addEventListener('lostpointercapture',e=>{if(orbit?.id===e.pointerId)orbit=null;});
     window.addEventListener('blur',()=>setHovered(null));
     document.addEventListener('pointermove',e=>{
-        if(e.pointerType==='touch'||focus||document.querySelector('dialog[open]'))return;
+        if(e.pointerType==='touch'||focus||reducedMotion.matches||document.querySelector('dialog[open]'))return;
         const nextX=2.87+(e.clientX/innerWidth-.5)*.11;
         const nextZ=1.85+(e.clientY/innerHeight-.5)*.08;
         if(Math.abs(nextX-mouseRig.position.x)+Math.abs(nextZ-mouseRig.position.z)<.003)return;
@@ -1021,12 +1040,16 @@ function buildDesk(renderer) {
     new ResizeObserver(resize).observe(stage);
     resize();
     render();
-    if(matchMedia('(pointer:fine)').matches) document.querySelector('#commandInput').focus({preventScroll:true});
 }
 
+let renderer;
 try {
-    const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'low-power'});
+    renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'low-power'});
     buildDesk(renderer);
 } catch(error) {
+    renderer?.domElement.remove();
+    renderer?.dispose();
+    document.body.classList.remove('spatial');
+    document.querySelector('.view-controls').hidden=true;
     console.warn('Rendu 3D indisponible.',error);
 }
