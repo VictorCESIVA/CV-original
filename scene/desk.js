@@ -420,18 +420,30 @@ function buildDesk(renderer) {
         ring.rotation.x=flat;
     }
     contact(-4.02,1.42,1.72,1.49);
-    // A three-and-a-half inch archive disk beside the computer.
-    const disk=group(-3.03,.05,2.38);disk.rotation.y=-.27;
-    box(.68,.057,.70,.027,dark,0,0,0,disk);
-    box(.43,.013,.20,.009,metal,.025,.033,-.239,disk);
-    box(.083,.014,.130,.004,dark,.142,.040,-.253,disk);
-    const diskLabel=canvasTexture(480,300,c=>{
-        c.fillStyle='#e2d7b2';c.fillRect(0,0,480,300);
-        c.fillStyle='#9e4a2c';c.fillRect(0,0,480,58);c.fillStyle='#403b30';
-        c.font='italic 49px Georgia';c.fillText('CV  /  Victor',22,142);
-        for(let y=162;y<295;y+=52)c.fillRect(16,y,444,2);
-    });
-    const sticker=mesh(new T.PlaneGeometry(.53,.31),new T.MeshStandardMaterial({map:diskLabel}),0,.035,.104,disk);sticker.rotation.x=flat;
+    // Two labelled floppies share a mesh and a native, keyboard-accessible hit surface.
+    function projectDisk(id,title,subtitle,x,z,angle,color) {
+        const shell=group(x,.45,z);
+        shell.rotation.set(-.36,angle,0,'YXZ');
+        box(1.04,.92,.07,.039,mat(color,.67),0,0,0,shell);
+        box(.63,.26,.013,.013,metal,.035,.312,.039,shell);
+        box(.098,.166,.018,.004,dark,.214,.319,.047,shell);
+        box(.82,.09,.37,.024,dark,x,.05,z);
+        const button=document.createElement('button');
+        button.className='archive-disk';
+        button.dataset.archive=id;
+        button.setAttribute('aria-label','Ouvrir les '+title.toLowerCase());
+        const label=document.createElement('span');
+        label.textContent=title;
+        const detail=document.createElement('small');
+        detail.textContent=subtitle;
+        label.append(detail);button.append(label);
+        const plane=surface(button,overlays,x,.45,z,0,1.04/220);
+        plane.rotation.copy(shell.rotation);
+        plane.translateZ(.054);
+    }
+    projectDisk('perso','Projets perso','OpenCleaner…',-3.09,2.25,.16,0x3a4242);
+    projectDisk('cesi','Projets CESI','Station météo…',3.56,.86,.05,0x31585a);
+
     // A taped two-colour generative print, drawn directly on warm paper.
     const print=canvasTexture(512,640,c=>{
         c.fillStyle='#ede6d3';c.fillRect(0,0,512,640);

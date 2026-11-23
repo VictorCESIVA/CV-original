@@ -86,3 +86,28 @@ body::after { display:none; }
 .key[data-upper]::before { content:attr(data-upper); padding-right:.25em; font-size:.73em; opacity:.72; vertical-align:super; }
 .spatial #terminal-wrap::after { background:linear-gradient(114deg,#e8f4e01e,transparent 26%,transparent 62%,#bfe4c50c 70%,transparent 78%),radial-gradient(ellipse at 50% 42%,transparent 56%,#0d130d55 97%); }
 .spatial #terminal-wrap::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; z-index:4; box-shadow:inset 0 0 20px #000b,inset 0 0 90px #00000052; }
+
+.project-nav { display:flex; justify-content:center; gap:8px; padding:8px; }
+.project-nav button,.archive-links button { cursor:pointer; font:600 14px monospace; padding:7px 10px; border:1px solid #818779; border-radius:4px; color:#f0e9d7; background:#304139; }
+.archive-links { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.spatial .project-nav { display:none; }
+.archive-disk { width:220px; height:195px; border:0; padding:0; background:transparent; cursor:pointer; }
+.archive-disk span { position:absolute; inset:38% 7% 8%; display:grid; align-content:center; padding:0 10px; text-align:left; background:#f3e8c9; border-top:10px solid #a44c31; border-radius:2px; color:#282c27; box-shadow:0 1px 3px #0006; font:bold 23px/1.15 Georgia,serif; }
+.archive-disk[data-archive="cesi"] span { border-color:#316d71; }
+.archive-disk small { display:block; font:13px/1.6 monospace; color:#4a5048; }
+.archive-disk:hover span,.archive-disk:focus-visible span { background:#fff7db; text-decoration:underline; }
+.spatial.reading .archive-disk { visibility:hidden; }
+#portfolio-archive { margin:auto; width:min(520px,94vw); max-height:82svh; padding:0 24px 18px; background:#f3eddb; color:#27332e; border:1px solid #817965; border-radius:8px; box-shadow:0 12px 64px #0008; font:16px/1.45 system-ui,sans-serif; }
+#portfolio-archive::backdrop { background:#0a1613ae; }
+#portfolio-archive header { position:sticky; top:0; background:#f3eddb; display:flex; align-items:center; justify-content:space-between; padding:18px 0 12px; border-bottom:2px solid #364b42; }
+#portfolio-archive h2 { font:700 30px Georgia,serif; }
+#portfolio-archive button { color:#284638; background:transparent; cursor:pointer; border:1px solid #8f9989; border-radius:4px; padding:6px 10px; }
+#portfolio-archive article { padding:15px 0; }
+#portfolio-archive article+article { border-top:1px solid #c4c4af; }
+#portfolio-archive h3 { font-size:18px; margin:0 0 4px; }
+#portfolio-archive a { color:#245449; text-decoration:underline; text-underline-offset:3px; }
+#portfolio-archive small { display:block; margin-top:5px; color:#536258; }
+@media(max-width:700px) {
+    .spatial .project-nav { position:fixed; top:8px; left:0; right:0; display:flex; z-index:5; pointer-events:none; }
+    .project-nav button { pointer-events:auto; }
+}
