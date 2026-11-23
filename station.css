@@ -113,6 +113,7 @@ body::after { display:none; }
 .sheet-tags { display:flex; flex-wrap:wrap; gap:6px; }
 .sheet-tags span { padding:3px 8px; border:1px solid #b9b7a2; border-radius:3px; background:#e9e1cb; color:#405148; font:12px/1.5 monospace; }
 .sheet-link { display:inline-block; margin-top:18px; color:#245449; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
+.sheet-link[hidden] { display:none; }
 .sheet-hint { margin:20px 0 0; padding-top:12px; border-top:1px solid #c4c4af; color:#536258; font-size:13px; }
 #project-tip { position:fixed; z-index:30; pointer-events:none; padding:7px 10px; border:1px solid #ffffff2e; border-radius:5px; background:#14201bee; color:#f1ead9; font:600 12px/1.4 monospace; box-shadow:0 6px 20px #0006; white-space:nowrap; }
 #project-tip small { display:block; color:#9fb5a8; font-weight:400; }
