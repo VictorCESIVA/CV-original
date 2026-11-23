@@ -51,10 +51,21 @@ const cvData = {
         }
     ],
     skills: [
-        ['Automatisation & IA', 'Python, FastAPI, intégrations API, classification et curation par LLM.'],
-        ['Web & données', 'JavaScript, HTML/CSS, PHP, SQL, PostgreSQL, MySQL et Supabase.'],
-        ['Logiciel & embarqué', 'C#/.NET, C/C++, STM32 et PlatformIO.'],
-        ['Outils & déploiement', 'Docker, Linux, Git/GitHub, VS Code, Vercel et Claude Code.']
+        ['Automatisation & IA', 'Python, FastAPI, intégrations API, classification et curation par LLM.', [
+            ['parcours', 'NXTFood / ACCRO · API et LLM'],
+            ['projet-cotalyse', 'Cotalyse · Python et FastAPI']
+        ]],
+        ['Web & données', 'JavaScript, HTML/CSS, PHP, SQL, PostgreSQL, MySQL et Supabase.', [
+            ['projet-web4all', 'Web4All · PHP et MySQL']
+        ]],
+        ['Logiciel & embarqué', 'C#/.NET, C/C++, STM32 et PlatformIO.', [
+            ['projet-opencleaner', 'OpenCleaner · C# et .NET'],
+            ['projet-3ww', 'Station météo 3WW · C et STM32']
+        ]],
+        ['Outils & déploiement', 'Docker, Linux, Git/GitHub, VS Code, Vercel et Claude Code.', [
+            ['parcours', 'NXTFood / ACCRO · déploiement Docker'],
+            ['projet-3ww', 'Station météo 3WW · PlatformIO']
+        ]]
     ],
     languages: [
         ['Anglais', 'TOEIC 870'],

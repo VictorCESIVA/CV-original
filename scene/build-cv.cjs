@@ -18,9 +18,10 @@ function entries(items) {
         </article>`).join('\n');
 }
 
-function rows(items) {
-    return items.map(([title, detail]) => `            <li><strong>${esc(title)}</strong> — ${esc(detail)}</li>`).join('\n');
-}
+const skillRows = cv.skills.map(([title, detail, examples]) => `            <li>
+                <strong>${esc(title)}</strong> — ${esc(detail)}
+                <ul class="cv-skill-examples" aria-label="Exemples">${examples.map(([route, text]) => `<li>${link(`#${route}`, text)}</li>`).join('')}</ul>
+            </li>`).join('\n');
 
 const featured = cv.featuredProjects.map(id => projects.find(project => project.id === id));
 const others = projects.filter(project => !cv.featuredProjects.includes(project.id));
@@ -47,7 +48,7 @@ const html = `<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="CV de ${esc(cv.name)} : parcours, compétences en automatisation et IA appliquée, et portfolio.">
     <title>${esc(cv.name)} — CV</title>
-    <link rel="stylesheet" href="cv.css?v=fiches">
+    <link rel="stylesheet" href="cv.css?v=competences">
 </head>
 <body>
 <nav class="cv-nav" aria-label="Formats du CV">
@@ -80,7 +81,7 @@ ${entries(cv.education)}
     <section class="cv-section" id="competences" aria-labelledby="skills-title">
         <h2 id="skills-title">Compétences techniques</h2>
         <ul class="cv-list">
-${rows(cv.skills)}
+${skillRows}
         </ul>
     </section>
     <section class="cv-section" id="projets" aria-labelledby="projects-title">

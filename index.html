@@ -17,7 +17,7 @@
     <meta name="theme-color" content="#101b17">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101b17'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='34' font-weight='700' fill='%23ff9500' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="scene/assets/vt323-latin.css">
-    <link rel="stylesheet" href="station.css?v=phosphore">
+    <link rel="stylesheet" href="station.css?v=competences">
 </head>
 <body>
 
@@ -73,7 +73,7 @@
           </a>
           <a href="cv.html#competences" data-dossier="competences">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-2-14-4 18"/></svg>
-            <span class="file-label"><strong>Compétences</strong><small>Tech et langues</small></span>
+            <span class="file-label"><strong>Compétences</strong><small>Tech en pratique</small></span>
           </a>
           <a href="cv.html#contact" data-dossier="contact">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zm0 1 9 7 9-7"/></svg>
@@ -142,13 +142,22 @@
         <form method="dialog"><button type="submit" aria-label="Fermer le guide" title="Fermer le guide">×</button></form>
     </header>
     <div class="guide-layout">
-        <div class="guide-copy">
+        <div class="guide-intro">
             <h2 id="guide-title">Bienvenue dans NOËL&nbsp;OS.</h2>
-            <p id="guide-summary">Je suis Victor Noël, élève ingénieur au CESI Lille. Mon CV se lit dans les dossiers de ce PC rétro. Le bureau 3D représente mes projets par des miniatures.</p>
+            <p id="guide-summary">Je suis Victor Noël, élève ingénieur au CESI Lille. Sur ce PC rétro, les dossiers présentent mon parcours, mes projets et les compétences que j’y ai mises en pratique.</p>
+        </div>
+        <figure class="guide-preview" data-3d-option>
+            <picture>
+                <source media="(max-width:759px)" srcset="cv-apercu-mobile.webp">
+                <img src="cv-apercu.jpg?v=phosphore" width="1200" height="630" alt="Le moniteur rétro affiche les dossiers du CV, au milieu des miniatures." loading="lazy">
+            </picture>
+            <figcaption>Aperçu du bureau 3D</figcaption>
+        </figure>
+        <div class="guide-controls">
             <form class="guide-routes" method="dialog">
                 <button type="submit" value="pc" autofocus>
                     <strong>Ouvrir le PC</strong>
-                    <span>Les dossiers et le terminal sont prêts, sans charger la 3D.</span>
+                    <span>Parcourez le CV et ses exemples concrets, sans charger la 3D.</span>
                 </button>
                 <button type="submit" value="3d" data-3d-option>
                     <strong>Explorer le bureau en 3D</strong>
@@ -165,10 +174,6 @@
             </div>
             <p class="guide-keyboard"><kbd>Tab</kbd> pour naviguer · <kbd>Échap</kbd> pour fermer</p>
         </div>
-        <figure class="guide-preview" data-3d-option>
-            <img src="cv-apercu.jpg?v=phosphore" width="1200" height="630" alt="Le PC rétro au centre du bureau, entouré de miniatures représentant mes projets." loading="lazy">
-            <figcaption>Aperçu du bureau 3D</figcaption>
-        </figure>
     </div>
 </dialog>
 
@@ -226,16 +231,23 @@
 <div id="desk-tip" role="tooltip" hidden><b></b><small></small></div>
 
 <script src="projects.js?v=fiches"></script>
-<script src="cv-data.js"></script>
+<script src="cv-data.js?v=competences"></script>
 <script>
 function cvSection(title) {
     return `<h4 class="section-title">${cvEscape(title)}</h4>`;
 }
 
-function cvGroups(title, groups) {
-    return cvSection(title) + `<dl class="skill-groups">${groups.map(([label, value]) =>
-        `<div><dt>${cvEscape(label)}</dt><dd>${cvEscape(value)}</dd></div>`
-    ).join('')}</dl>`;
+function cvGroups(title, groups, onScreen = false) {
+    return cvSection(title) + `<dl class="skill-groups">${groups.map(([label, value, examples = []]) => {
+        const links = examples.map(([route, text]) => {
+            const key = cvEscape(route);
+            const target = onScreen ? `href="#${key}" data-dossier="${key}"` : `href="cv.html#${key}"`;
+            return `<li><a ${target}><span aria-hidden="true">↳</span> ${cvEscape(text)}</a></li>`;
+        });
+        return `<div><dt>${cvEscape(label)}</dt><dd>${cvEscape(value)}${
+            links.length ? `<ul class="skill-examples" aria-label="Exemples">${links.join('')}</ul>` : ''
+        }</dd></div>`;
+    }).join('')}</dl>`;
 }
 
 function cvTimeline(title, entries) {
@@ -269,7 +281,7 @@ ${cvContact}
   <a href="CV_Victor_NOEL.pdf" download>CV PDF</a>
 </div>`,
 
-    skills: cvGroups('Compétences techniques', cvData.skills),
+    skills: cvGroups('Technologies en pratique', cvData.skills, true),
 
     softskills: `<h4 class="section-title">Qualités &amp; centres d’intérêt</h4>
 
@@ -484,6 +496,6 @@ function startMatrix() {
     matrixTimeout = setTimeout(stopMatrix, 4200);
 }
 </script>
-<script src="station.js?v=phosphore"></script>
+<script src="station.js?v=competences"></script>
 </body>
 </html>

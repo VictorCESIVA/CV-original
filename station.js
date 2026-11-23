@@ -399,7 +399,7 @@ document.getElementById('resume-summary').textContent = cvData.summary;
 document.getElementById('resume-email').href = `mailto:${cvData.email}`;
 document.getElementById('resume-timeline').innerHTML = dossiers.parcours;
 document.getElementById('resume-projects').innerHTML = projectCatalog(false);
-document.getElementById('resume-skills').innerHTML = dossiers.competences;
+document.getElementById('resume-skills').innerHTML = cvGroups('Technologies en pratique', cvData.skills) + cv.certifications;
 document.getElementById('resume-contact-details').innerHTML = dossiers.contact;
 
 const shareButton = document.getElementById('share-dossier');

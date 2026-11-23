@@ -17,6 +17,7 @@ Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteu
 - Le **CV express** présente le résumé, le contact et la dernière mission professionnelle avec ses outils. Le **CV PDF** est accessible sans manipuler la scène.
 - **PC seul** et **Bureau 3D** basculent entre les deux vues sans fermer le dossier courant. La 3D déjà chargée est mise en pause en mode PC seul. Si le moteur ne répond pas ou si le contexte WebGL est perdu, le même écran reste lisible en 2D.
 - **Version à partager** ouvre `../cv.html`, une page de lecture indépendante du bureau et utilisable sans JavaScript.
+- Les exemples du dossier **Compétences** ouvrent la mission ou la fiche projet correspondante dans le moniteur. CV express et CV texte conservent les mêmes liens vers la version écrite, sans ajouter de contenu au PDF.
 - Dans le dossier **Projets**, les miniatures et les liens de la liste ouvrent des fiches `.NFO` à l’intérieur du moniteur. **Échap** ferme le menu ou remonte de la fiche vers la liste, puis de la liste vers l’accueil. Chaque fiche a un lien direct `../index.html#projet-…` et une version sans JavaScript `../cv.html#projet-…`, même pour un dépôt privé.
 - **Partager** copie le lien public du dossier ou du projet courant, même depuis `file:`. Si le navigateur refuse la copie, l’adresse est sélectionnée pour une copie manuelle.
 
@@ -28,7 +29,7 @@ Les reflets et les lignes de balayage sont atténués dans les dossiers et le te
 Les faits du CV sont dans `../cv-data.js` et les fiches projets dans `../projects.js`. Depuis ce dossier, `npm run build:cv` génère ensemble `../cv.html` et `../CV_Victor_NOEL.pdf` en utilisant `../cv.css`, y compris sa mise en page A4.
 La version web affiche le catalogue complet et les liens de preuve des projets documentés. L’impression conserve la sélection `featuredProjects` et ses descriptions courtes sur une page A4.
 
-`../cv-apercu.jpg` (1200 × 630) est la capture réelle du bureau utilisée dans le guide sur ordinateur et dans l’aperçu Open Graph.
+`../cv-apercu.jpg` (1200 × 630) est la capture réelle du bureau, utilisée dans le guide sur ordinateur et pour Open Graph. `../cv-apercu-mobile.webp` en est un recadrage léger centré sur le moniteur, affiché dans le guide sur les téléphones assez hauts. Le guide garde les accès visibles sur les écrans courts, et aucun aperçu ne charge la 3D.
 
 La commande utilise `chromium` ou le binaire donné par `CHROME`. L’option `npm run build:cv -- --no-sandbox` est réservée aux environnements isolés qui n’offrent pas de sandbox Chromium, pour imprimer ces fichiers locaux de confiance.
 

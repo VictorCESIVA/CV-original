@@ -25,7 +25,9 @@ h3 { font-size:1em; }
 .entry-date { white-space:nowrap; }
 .entry-note { font-size:.9em; }
 .cv-list { padding-left:1.15em; }
-.cv-list li+li { margin-top:3px; }
+.cv-list>li+li { margin-top:3px; }
+.cv-skill-examples { display:flex; flex-wrap:wrap; gap:0 14px; margin:2px 0 7px; padding:0; list-style:none; font-size:.88em; }
+.cv-skill-examples a { display:inline-flex; align-items:center; min-height:30px; font-weight:650; }
 .cv-projects { display:grid; gap:8px; padding:0; list-style:none; }
 .cv-project { min-width:0; padding:10px 12px; border:1px solid var(--line); border-radius:4px; scroll-margin-top:16px; }
 .cv-project h3 { display:inline; }
@@ -52,7 +54,7 @@ h3 { font-size:1em; }
     .cv-projects { display:block; list-style:disc; padding-left:1.15em; }
     .cv-project { padding:0; border:0; margin-top:3px; break-inside:avoid; }
     .cv-project:target { background:none; }
-    .cv-project-extra,.cv-project-category,.cv-project-proof { display:none; }
+    .cv-project-extra,.cv-project-category,.cv-project-proof,.cv-skill-examples { display:none; }
     .cv-project .entry-note,.cv-project p { display:inline; }
     .cv-project p::before { content:" — "; }
     .entry+.entry { margin-top:4pt; }
