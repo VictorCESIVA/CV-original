@@ -913,7 +913,7 @@ function buildDesk(renderer) {
         if(focus&&compactView.matches)return;
         aim.set(0,focus?glassY:1.40,focus?glassZ:.40);
         const distance=focus
-            ?Math.max((glassHeight/2+.20)/tan,(glassWidth/2+.25)/(tan*camera.aspect))
+            ?Math.max((glassHeight/2+.30)/tan,(glassWidth/2+.25)/(tan*camera.aspect))
             :Math.max(11.1,(compactView.matches?5.82:5.65)/(tan*camera.aspect));
         const a=focus?.022:yaw, p=focus?.055:pitch;
         camera.position.set(Math.sin(a)*Math.cos(p),Math.sin(p),Math.cos(a)*Math.cos(p)).multiplyScalar(distance).add(aim);
@@ -957,6 +957,10 @@ function buildDesk(renderer) {
     }
     zoom.onclick=()=>setFocus(!focus);
     cameraControls.lastElementChild.onclick=()=>{yaw=homeYaw;pitch=homePitch;setFocus(false);};
+    frame.addEventListener('cv:read-screen',()=>{
+        // Small projected text becomes readable only after choosing a file.
+        if(!focus && frame.getBoundingClientRect().width<560)setFocus(true);
+    });
     const canvas=renderer.domElement;
     const projectTip=document.getElementById('project-tip');
     const raycaster=new T.Raycaster();

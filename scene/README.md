@@ -9,8 +9,8 @@ Pour reconstruire le bundle depuis ce dossier, exécuter `npm ci` puis `npm run 
 Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteur 2D donne accès au même écran, au terminal et au CV express.
 
 - Le guide s’ouvre à la première visite et reste accessible via **Guide**. La fermeture est mémorisée dans `localStorage`, sans compte.
-- Le moniteur démarre sur l’accueil NOËL OS. Ses dossiers ouvrent le CV express à la rubrique correspondante. Le terminal reste accessible depuis la barre du PC.
-- **CV express** et **CV PDF** sont accessibles sans manipuler la scène. Sur petit écran, **Agrandir** ouvre le PC à taille de lecture ; la vue du bureau présente aussi la liste des projets.
+- Le moniteur démarre sur l’accueil NOËL OS. Les dossiers se lisent dans le PC, avec des fiches dépliables dans **Projets**. **Échap** revient à l’accueil et **Version texte** ouvre la rubrique correspondante hors de la scène. Le terminal reste accessible depuis la barre du PC.
+- **CV express** et **CV PDF** sont accessibles sans manipuler la scène. Si le moniteur est petit, il passe en gros plan à l’ouverture d’un dossier. **Agrandir** et **Bureau** permettent aussi de changer de vue manuellement. Sur mobile, les projets restent accessibles sous la scène en vue du bureau.
 - **Version à partager** ouvre `../cv.html`, une page de lecture indépendante du bureau et utilisable sans JavaScript.
 
 L’écran spatial est dessiné sur un plan de 640 × 480 pixels CSS. La scène en déduit les dimensions de la vitre ; la même matrice de caméra projette l’interface, le clavier et la souris sur leurs surfaces 3D.

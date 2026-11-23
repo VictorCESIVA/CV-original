@@ -59,7 +59,7 @@ code { font-family:var(--mono); }
     z-index:5;
     pointer-events:none;
     border-radius:inherit;
-    background:repeating-linear-gradient(0deg,#06150e18 0 1px,transparent 1px 4px),linear-gradient(114deg,#f3f4e017,transparent 26%,transparent 62%,#cbe0ce0e 70%,transparent 79%);
+    background:repeating-linear-gradient(0deg,var(--scanline,#06150e18) 0 1px,transparent 1px 4px),linear-gradient(114deg,#f3f4e017,transparent 26%,transparent 62%,#cbe0ce0e 70%,transparent 79%);
     box-shadow:inset 0 0 24px #020b0785;
 }
 #terminal-wrap :focus-visible { outline-offset:-2px; }
@@ -99,8 +99,23 @@ code { font-family:var(--mono); }
 .taskbar a { margin-left:auto; display:inline-flex; align-items:center; gap:.4em; color:var(--orange); }
 .shortcuts button { min-height:28px; padding-inline:6px; color:#bed6c2; }
 .shortcuts button::before { content:'./'; color:var(--green); }
-.screen-terminal { display:flex; flex:1; flex-direction:column; min-height:0; }
-#terminal-body { position:relative; flex:1; min-height:0; overflow:auto; padding:15px var(--screen-pad); scrollbar-color:#819b85 transparent; overscroll-behavior:contain; font-size:clamp(13px,2.65cqi,17px); overflow-wrap:anywhere; }
+.screen-terminal,.screen-dossier { display:flex; flex:1; flex-direction:column; min-height:0; }
+.screen-scroll { position:relative; flex:1; min-height:0; overflow:auto; padding:15px var(--screen-pad); scrollbar-color:#819b85 transparent; overscroll-behavior:contain; font-size:clamp(13px,2.65cqi,17px); overflow-wrap:anywhere; }
+.dossier-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px var(--screen-pad); border-bottom:1px solid var(--border); background:#233b2f; color:#dcebd6; font:700 clamp(11px,2.4cqi,14px)/1.3 var(--mono); }
+.dossier-bar :is(a,button) { display:inline-flex; align-items:center; gap:.45em; min-height:40px; padding:4px 7px; border:1px solid var(--border); border-radius:2px; background:#13251e; color:inherit; font:inherit; white-space:nowrap; text-decoration:none; }
+.dossier-bar :is(a,button):hover { border-color:var(--orange); }
+#dossier-title { margin:0 0 11px; color:#e6efd9; font:700 clamp(22px,5cqi,32px)/1.12 var(--mono); letter-spacing:-.045em; }
+#dossier-content a { color:var(--green); }
+.dossier-projects { margin-bottom:16px; border:1px solid var(--border); border-radius:3px; background:#14291fcc; }
+.dossier-project+.dossier-project { border-top:1px solid var(--border); }
+.dossier-project summary { min-height:40px; padding:8px 11px; cursor:pointer; font-weight:700; }
+.dossier-project[open] { padding-bottom:10px; }
+.dossier-project[open]>summary { color:var(--orange); }
+.dossier-project :is(p,a) { margin-inline:11px; }
+.dossier-project-tags { margin-block:5px; color:var(--dim); font-size:.86em; }
+@container (max-width:480px) {
+    #dossier-path { display:none; }
+}
 .terminal-intro,.command-echo { margin-bottom:8px; color:var(--dim); }
 .terminal-intro code,.help-grid code,.prompt,.command-echo { color:var(--green); }
 .input-line { display:flex; align-items:center; gap:8px; padding:7px var(--screen-pad); border-top:1px solid var(--border); background:#13251e; }
@@ -112,7 +127,7 @@ code { font-family:var(--mono); }
 .command-output a { color:var(--green); }
 .help-grid { display:grid; grid-template-columns:max-content 1fr; gap:4px 14px; }
 
-/* CV content shared by the terminal and the reading dialog. */
+/* CV content shared by the terminal, file viewer and reading dialog. */
 .section-title { margin:0 0 8px; color:var(--cyan); font:700 .83em/1.4 var(--mono); letter-spacing:.075em; text-transform:uppercase; }
 :is(.timeline-item,.skill-groups,.project-grid,.profile-links,.other-projects,.interest-grid)+.section-title { margin-top:20px; }
 .skill-groups { display:grid; gap:10px; }
@@ -178,6 +193,8 @@ code { font-family:var(--mono); }
 .spatial .chin { display:none; }
 .spatial :is(#terminal-wrap,#keyboard,#mouse) { position:absolute; top:0; left:0; transform:var(--projection,none); transform-origin:0 0; }
 .spatial #terminal-wrap { width:640px; height:480px; min-height:0; border:0; border-radius:16px; }
+.spatial.reading #terminal-wrap { --scanline:#06150e0d; }
+.spatial.reading :is(#keyboard,#mouse) { visibility:hidden; }
 .spatial .keyboard { display:flex; flex-direction:column; width:700px; height:210px; gap:5px; padding:0; margin:0; border:0; border-radius:0; background:none; box-shadow:none; }
 .spatial .key-row { display:flex; flex:1; gap:5px; margin:0; }
 .spatial .key { margin:0; height:auto; border:0; padding:0; border-radius:3px; background:transparent; box-shadow:none; color:#312e25; font:bold 15px/1 var(--mono); }

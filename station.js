@@ -13,24 +13,33 @@ const rows = [
 ];
 const labels = { Escape:'Échap', Home:'Début', End:'Fin', Delete:'Suppr', Backspace:'⌫', Enter:'Entrée', Shift:'Maj', ArrowLeft:'←', ArrowRight:'→', ' ':'Espace' };
 const names = { Backspace:'Effacer', ArrowLeft:'Curseur à gauche', ArrowRight:'Curseur à droite' };
-const homeScreen = document.getElementById('screen-home');
-const terminalScreen = document.getElementById('screen-terminal');
+const screens = {
+    home: document.getElementById('screen-home'),
+    dossier: document.getElementById('screen-dossier'),
+    terminal: document.getElementById('screen-terminal')
+};
+const screenLabels = {home:'BUREAU', dossier:'DOSSIERS', terminal:'TERMINAL'};
+let activeScreen = 'home';
 const screenMode = document.getElementById('screen-mode');
 const screenTabs = document.querySelectorAll('[data-screen]');
 
 function showScreen(mode) {
-    const terminal = mode === 'terminal';
-    if (homeScreen.hidden !== terminal) {
-        homeScreen.hidden = terminal;
-        terminalScreen.hidden = !terminal;
-        screenMode.textContent = terminal ? 'TERMINAL' : 'BUREAU';
+    if (mode !== activeScreen) {
+        screens[activeScreen].hidden = true;
+        screens[mode].hidden = false;
+        activeScreen = mode;
+        screenMode.textContent = screenLabels[mode];
         screenTabs.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.screen === mode)));
     }
-    if (terminal) input.focus({preventScroll:true});
+    if (mode === 'terminal') input.focus({preventScroll:true});
     else stopMatrix();
 }
 
 screenTabs.forEach(button => button.addEventListener('click', () => showScreen(button.dataset.screen)));
+
+function isPlainClick(event) {
+    return event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey;
+}
 
 for (const row of rows) {
     const line = document.createElement('div');
@@ -123,7 +132,9 @@ const mouseButtons = ['left','wheel','right'].map(name => mouse.querySelector('.
 let drag = null;
 let moved = false;
 let x = .5, y = .5;
-const scrollArea = () => terminalScreen.hidden ? homeScreen : terminalBody;
+const dossierScroll = document.getElementById('dossier-scroll');
+const scrollAreas = {home:screens.home, dossier:dossierScroll, terminal:terminalBody};
+const scrollArea = () => scrollAreas[activeScreen];
 function showPointer() {
     pointer.hidden = false;
     pointer.style.left = (x*screenFrame.clientWidth)+'px';
@@ -164,7 +175,7 @@ mouse.addEventListener('click', e => {
     } else if (e.target === mouseButtons[0]) {
         showPointer();
         const rect = pointer.getBoundingClientRect();
-        const hit = document.elementFromPoint(rect.left, rect.top)?.closest('a,button,input');
+        const hit = document.elementFromPoint(rect.left, rect.top)?.closest('a,button,input,summary');
         if (screenFrame.contains(hit)) {
             if (hit === input) input.focus({preventScroll:true});
             else hit.click();
@@ -205,6 +216,59 @@ const projectGroups = Object.entries(collectionNames).map(([collection,title]) =
 cv.projects = projectGroups.map(({title,cards}) =>
     `<h4 class="section-title">${title}</h4><div class="project-grid">${cards}</div>`
 ).join('') + cv.otherProjects;
+
+function dossierProject({name, description, tags, url}) {
+    return `<details class="dossier-project">
+        <summary>${cvEscape(name)}</summary>
+        <p>${cvEscape(description)}</p>
+        <p class="dossier-project-tags">${cvEscape(tags.join(' · '))}</p>
+        ${url ? `<a href="${cvEscape(url)}" target="_blank" rel="noopener noreferrer">Dépôt GitHub ↗</a>` : ''}
+    </details>`;
+}
+
+const dossiers = {
+    parcours: cv.xp + cv.education,
+    projets: projectGroups.map(({title, items}) =>
+        `${cvSection(title)}<div class="dossier-projects">${items.map(dossierProject).join('')}</div>`
+    ).join('') + cv.otherProjects,
+    competences: cv.skills + cv.certifications,
+    contact: cvContact
+};
+const dossierTitle = document.getElementById('dossier-title');
+const dossierPath = document.getElementById('dossier-path');
+const dossierContent = document.getElementById('dossier-content');
+const dossierLink = document.getElementById('dossier-link');
+let dossierLauncher;
+
+for (const launcher of screens.home.querySelectorAll('a[data-dossier]')) {
+    launcher.setAttribute('aria-controls', 'screen-dossier');
+    launcher.addEventListener('click', event => {
+        if (!isPlainClick(event)) return;
+        event.preventDefault();
+        dossierLauncher = launcher;
+        const key = launcher.dataset.dossier;
+        dossierTitle.textContent = launcher.textContent.trim();
+        dossierPath.textContent = `C:\\CV\\${key.toUpperCase()}`;
+        dossierLink.href = launcher.href;
+        dossierContent.innerHTML = dossiers[key];
+        showScreen('dossier');
+        screenFrame.dispatchEvent(new Event('cv:read-screen'));
+        dossierScroll.scrollTop = 0;
+        dossierTitle.focus({preventScroll:true});
+    });
+}
+
+function closeDossier() {
+    showScreen('home');
+    dossierLauncher.focus({preventScroll:true});
+}
+
+document.getElementById('dossier-back').addEventListener('click', closeDossier);
+screens.dossier.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    closeDossier();
+});
 
 const archiveDialog = document.getElementById('portfolio-archive');
 document.addEventListener('click', event => {
@@ -278,10 +342,10 @@ const guide = document.getElementById('site-guide');
 const guideButton = document.getElementById('open-guide');
 const resume = document.getElementById('resume-dialog');
 const resumeContent = resume.querySelector('.resume-content');
-document.getElementById('resume-timeline').innerHTML = cv.xp + cv.education;
+document.getElementById('resume-timeline').innerHTML = dossiers.parcours;
 document.getElementById('resume-projects').innerHTML = cv.projects;
-document.getElementById('resume-skills').innerHTML = cv.skills + cv.certifications;
-document.getElementById('resume-contact-details').innerHTML = cvContact;
+document.getElementById('resume-skills').innerHTML = dossiers.competences;
+document.getElementById('resume-contact-details').innerHTML = dossiers.contact;
 
 const guideKey = 'cv-noel:guide-v1';
 let guideSeen = false;
@@ -302,7 +366,7 @@ document.addEventListener('click', event => {
     const trigger = event.target.closest('[data-resume]');
     if (!trigger || typeof resume.showModal !== 'function') return;
     if (trigger instanceof HTMLAnchorElement) {
-        if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        if (!isPlainClick(event)) return;
         event.preventDefault();
     }
     if (guide.open) {
