@@ -9,22 +9,23 @@ Pour reconstruire le bundle depuis ce dossier, exécuter `npm ci` puis `npm run 
 Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteur 2D donne accès au même écran, au terminal et au CV express.
 
 - **Guide** explique les trois accès dès la première visite : explorer en 3D, ouvrir le PC seul ou lire le CV express. Le guide et le mode choisi sont mémorisés dans `localStorage`, sans compte.
-  Le CV express ouvert depuis le guide ne charge pas la scène pendant la lecture.
+  Si aucun mode n’a été choisi, fermer le guide laisse le PC seul affiché. La première visite ne charge la scène qu’en choisissant le bureau 3D.
 - Le moniteur démarre sur l’accueil NOËL OS. Les dossiers se lisent dans le PC, avec des fiches dépliables dans **Projets**. **Échap** revient à l’accueil et **Version texte** ouvre la rubrique correspondante hors de la scène. Le terminal reste accessible depuis la barre du PC.
 - Le terminal accepte les commandes françaises (`aide`, `compétences`, `projets`, `thème bleu`), avec ou sans accents, ainsi que les commandes anglaises existantes. Les flèches **↑** et **↓**, physiques ou virtuelles, retrouvent les cinquante dernières commandes de la page et rendent le brouillon à la fin de l’historique.
 - **CV express** et **CV PDF** sont accessibles sans manipuler la scène. Le PC peut passer en gros plan à l’ouverture d’un dossier ou du terminal. En paysage sur un écran court, le mode lecture conserve les dossiers et la barre visibles. **Agrandir** et **Bureau** changent la vue manuellement. Sur mobile, les projets restent accessibles sous la scène en vue du bureau.
+- Le **CV express** présente le résumé professionnel et un lien de contact direct au-dessus des rubriques.
 - **PC seul** et **Bureau 3D** basculent entre les deux vues sans fermer le dossier courant. La 3D déjà chargée est mise en pause en mode PC seul. Si le moteur ne répond pas ou si le contexte WebGL est perdu, le même écran reste lisible en 2D.
 - **Version à partager** ouvre `../cv.html`, une page de lecture indépendante du bureau et utilisable sans JavaScript.
 - **Fiche à partager** ouvre directement le projet dans `../cv.html#projet-…`. Toutes les miniatures ont une adresse stable, y compris les projets sans dépôt public.
 
-L’écran spatial est dessiné sur un plan de 640 × 480 pixels CSS. La scène en déduit les dimensions de la vitre ; la même matrice de caméra projette l’interface, le clavier et la souris sur leurs surfaces 3D.
+La vitre est dessinée sur un plan de 640 × 480 pixels CSS, en retrait derrière l’ouverture biseautée du moniteur. La scène en déduit les dimensions de la vitre ; la même matrice de caméra projette l’interface, le clavier et la souris sur leurs surfaces 3D.
 
 ## Mettre à jour le CV texte et PDF
 
 Les faits du CV sont dans `../cv-data.js` et les fiches projets dans `../projects.js`. Depuis ce dossier, `npm run build:cv` génère ensemble `../cv.html` et `../CV_Victor_NOEL.pdf` en utilisant `../cv.css`, y compris sa mise en page A4.
 La version web affiche le catalogue complet ; l’impression ne conserve que la sélection `featuredProjects` du PDF A4.
 
-`../cv-apercu.jpg` (1200 × 630) est la capture réelle du bureau utilisée par l’aperçu Open Graph de la page interactive.
+`../cv-apercu.jpg` (1200 × 630) est la capture réelle du bureau utilisée dans le guide sur ordinateur et dans l’aperçu Open Graph.
 
 La commande utilise `chromium` ou le binaire donné par `CHROME`. L’option `npm run build:cv -- --no-sandbox` est réservée aux environnements isolés qui n’offrent pas de sandbox Chromium, pour imprimer ces fichiers locaux de confiance.
 

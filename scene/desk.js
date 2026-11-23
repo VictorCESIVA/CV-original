@@ -158,23 +158,39 @@ function buildDesk(renderer) {
     box(3.2,.05,1.5,.02,dark,0,.565,-.52);
     cyl(.5,.54,.10,dark,0,.565,-.52);
     // The visible phosphor, its rim and the camera all share the same 4:3 glass.
-    const glassWidth=3.60, glassY=2.36, glassZ=.462;
+    const glassWidth=3.60, glassY=2.36, glassZ=.406;
     const glassScale=glassWidth/frame.offsetWidth;
     const glassHeight=frame.offsetHeight*glassScale;
     box(4.14,3.26,1.88,.20,edge,0,2.18,-.94);
     box(4.42,3.33,.75,.16,plastic,0,2.26,-.025);
     box(4.25,3.20,.095,.12,graphite,0,2.24,.32);
-    box(glassWidth+.28,glassHeight+.27,.15,.12,metal,0,glassY,.33);
-    box(glassWidth+.12,glassHeight+.12,.12,.09,dark,0,glassY,.395);
-    badge('V I C T O R   /   N O Ë L',1.12,.11,-1.40,.84,.373,'#293635','#f2dfb7');
-    for(let i=0;i<15;i++)box(.022,.090,.015,.008,dark,1.11+i*.045,.86,.379);
-    box(.08,.08,.025,.018,led,1.91,.86,.379);
+    // A real opening in the bevel, with clearance for the projected glass at oblique angles.
+    function roundedProfile(profile,w,h,r){
+        const x=w/2, y=h/2;
+        profile.moveTo(-x+r,-y);
+        profile.lineTo(x-r,-y); profile.quadraticCurveTo(x,-y,x,-y+r);
+        profile.lineTo(x,y-r); profile.quadraticCurveTo(x,y,x-r,y);
+        profile.lineTo(-x+r,y); profile.quadraticCurveTo(-x,y,-x,y-r);
+        profile.lineTo(-x,-y+r); profile.quadraticCurveTo(-x,-y,-x+r,-y);
+        return profile;
+    }
+    const rim=roundedProfile(new T.Shape(),glassWidth+.36,glassHeight+.22,.17);
+    rim.holes.push(roundedProfile(new T.Path(),glassWidth+.21,glassHeight+.20,.15));
+    mesh(new T.ExtrudeGeometry(rim,{
+        depth:.06, bevelThickness:.022, bevelSize:.023, bevelSegments:3, curveSegments:10
+    }),metal,0,glassY,.389);
+    box(glassWidth+.22,glassHeight+.21,.052,.125,dark,0,glassY,glassZ-.028);
+    const chinY=.776, chinZ=.43;
+    box(4.05,.236,.136,.035,graphite,0,chinY,chinZ-.068);
+    badge('V I C T O R   /   N O Ë L',1.12,.11,-1.40,chinY,chinZ+.002,'#293635','#f2dfb7');
+    for(let i=0;i<15;i++)box(.022,.090,.015,.008,dark,1.11+i*.045,chinY,chinZ+.007);
+    box(.08,.08,.025,.018,led,1.91,chinY,chinZ+.012);
     for(let i=0;i<15;i++)box(.022,.18,.036,.008,dark,2.07,2.95,-1.62+i*.078);
     const dialMaterial=mat(0x65716e,.45,.34);
     for(const x of [.51,.79]){
-        const dial=cyl(.071,.077,.065,dialMaterial,x,.86,.393);
+        const dial=cyl(.071,.077,.065,dialMaterial,x,chinY,chinZ+.014);
         dial.rotation.x=Math.PI/2;
-        box(.011,.044,.007,.002,paper,x,.884,.429);
+        box(.011,.044,.007,.002,paper,x,chinY+.024,chinZ+.049);
     }
     box(.29,.15,.052,.026,dark,-1.98,.30,.816);
     box(.22,.105,.055,.016,orange,-1.98,.30,.843);
@@ -389,7 +405,7 @@ function buildDesk(renderer) {
     }
     decal(clawdMark,693*pixel,527*pixel,0,527*pixel/2,depth/2+.001,mascot);
     contact(2.52,.56,.98,.54);
-    const hug=decal(huggingFace,.27,.25,-.65,.85,.368,world);
+    const hug=decal(huggingFace,.22,.20,-.65,chinY,chinZ+.003,world);
     hug.rotation.z=-.16;
 
     // The grid sheet is tucked under the notebook elastic, beside the pencil.

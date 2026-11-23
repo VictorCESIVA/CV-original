@@ -353,6 +353,8 @@ const guide = document.getElementById('site-guide');
 const guideButton = document.getElementById('open-guide');
 const resume = document.getElementById('resume-dialog');
 const resumeContent = resume.querySelector('.resume-content');
+document.getElementById('resume-summary').textContent = cvData.summary;
+document.getElementById('resume-email').href = `mailto:${cvData.email}`;
 document.getElementById('resume-timeline').innerHTML = dossiers.parcours;
 document.getElementById('resume-projects').innerHTML = cv.projects;
 document.getElementById('resume-skills').innerHTML = dossiers.competences;
@@ -361,13 +363,13 @@ document.getElementById('resume-contact-details').innerHTML = dossiers.contact;
 const guideKey = 'cv-noel:guide-v1';
 const viewKey = 'cv-noel:view';
 const viewToggle = document.getElementById('view-mode');
-let viewMode = '3d';
+let viewMode = 'pc';
 let deskState = 'idle';
 let setDeskActive;
 let guideSeen = false;
 try {
     guideSeen = localStorage.getItem(guideKey) === '1';
-    if (localStorage.getItem(viewKey) === 'pc') viewMode = 'pc';
+    if (localStorage.getItem(viewKey) === '3d') viewMode = '3d';
 } catch { /* The guide remains usable when storage is blocked. */ }
 
 function deskUnavailable() {
@@ -382,7 +384,7 @@ function syncDesk() {
     if (want3d && deskState === 'idle' && !guide.open && !resume.open) {
         deskState = 'loading';
         const script = document.createElement('script');
-        script.src = 'desk.bundle.js?v=clavier';
+        script.src = 'desk.bundle.js?v=vitre';
         script.addEventListener('error', deskUnavailable, {once:true});
         script.addEventListener('load', () => {
             if (deskState === 'loading') deskUnavailable();
