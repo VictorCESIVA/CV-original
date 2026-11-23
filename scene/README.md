@@ -1,6 +1,6 @@
 # Bureau 3D
 
-La page charge le fichier précompilé `desk.bundle.js`. La scène Three.js et la texture du plateau sont incluses dans ce fichier pour que le CV fonctionne aussi en ouverture locale.
+Le fichier précompilé `desk.bundle.js` n’est chargé que pour la vue **Bureau 3D**. Il inclut Three.js et la texture du plateau pour fonctionner aussi en ouverture locale.
 
 Pour reconstruire le bundle depuis ce dossier, exécuter `npm ci` puis `npm run build`.
 
@@ -8,9 +8,11 @@ Pour reconstruire le bundle depuis ce dossier, exécuter `npm ci` puis `npm run 
 
 Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteur 2D donne accès au même écran, au terminal et au CV express.
 
-- Le guide s’ouvre à la première visite et reste accessible via **Guide**. La fermeture est mémorisée dans `localStorage`, sans compte.
+- **Guide** explique les trois accès dès la première visite : explorer en 3D, ouvrir le PC seul ou lire le CV express. Le guide et le mode choisi sont mémorisés dans `localStorage`, sans compte.
+  Le CV express ouvert depuis le guide ne charge pas la scène pendant la lecture.
 - Le moniteur démarre sur l’accueil NOËL OS. Les dossiers se lisent dans le PC, avec des fiches dépliables dans **Projets**. **Échap** revient à l’accueil et **Version texte** ouvre la rubrique correspondante hors de la scène. Le terminal reste accessible depuis la barre du PC.
 - **CV express** et **CV PDF** sont accessibles sans manipuler la scène. Si le moniteur est petit, il passe en gros plan à l’ouverture d’un dossier. **Agrandir** et **Bureau** permettent aussi de changer de vue manuellement. Sur mobile, les projets restent accessibles sous la scène en vue du bureau.
+- **PC seul** et **Bureau 3D** basculent entre les deux vues sans fermer le dossier courant. La 3D déjà chargée est mise en pause en mode PC seul. Si le moteur ne répond pas ou si le contexte WebGL est perdu, le même écran reste lisible en 2D.
 - **Version à partager** ouvre `../cv.html`, une page de lecture indépendante du bureau et utilisable sans JavaScript.
 
 L’écran spatial est dessiné sur un plan de 640 × 480 pixels CSS. La scène en déduit les dimensions de la vitre ; la même matrice de caméra projette l’interface, le clavier et la souris sur leurs surfaces 3D.

@@ -24,7 +24,8 @@ code { font-family:var(--mono); }
 .spatial .site-bar { position:fixed; inset:0 0 auto; pointer-events:none; }
 .site-actions,.desk-actions { display:flex; align-items:center; gap:2px; padding:3px; background:#17231eef; border:1px solid #ffffff38; border-radius:7px; box-shadow:0 4px 12px #0003; pointer-events:auto; }
 .site-bar :is(button,a) { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:34px; padding:0 10px; border:0; border-radius:4px; background:none; color:#f3ecdc; font:600 13px/1.2 system-ui,sans-serif; text-decoration:none; white-space:nowrap; }
-.site-bar :is(button,a):hover { background:#415448; }
+.site-bar :is(button,a):hover:where(:not([aria-disabled="true"])) { background:#415448; }
+#view-mode[aria-disabled="true"] { color:#b5bfb6; cursor:default; }
 .site-actions [data-resume] { color:#222e26; background:#eadab2; }
 .site-actions [data-resume]:hover { background:#f8e7bb; }
 .desk-actions>div { display:flex; }
@@ -42,6 +43,7 @@ code { font-family:var(--mono); }
     display:flex;
     flex-direction:column;
     container-type:inline-size;
+    width:100%;
     aspect-ratio:4/3;
     min-height:390px;
     overflow:hidden;
@@ -52,6 +54,7 @@ code { font-family:var(--mono); }
     font:16px/1.5 var(--mono);
     --screen-pad:clamp(12px,5cqi,32px);
 }
+body:not(.spatial) #terminal-wrap { box-shadow:0 -2px 2px #8b8170,0 2px 1px #f1ecdd; }
 #terminal-wrap::after {
     content:"";
     position:absolute;
@@ -241,14 +244,12 @@ code { font-family:var(--mono); }
 .site-dialog :is(.dialog-actions,.resume-nav,.resume-bar) :is(button,a):hover,#portfolio-archive header button:hover,#project-sheet header button:hover { border-color:currentColor; }
 .site-dialog .dialog-actions .primary-action { color:#faf5e4; background:#2d4e3d; border-color:#2d4e3d; }
 .dialog-actions { display:flex; flex-wrap:wrap; gap:8px; }
-#site-guide { width:min(550px,calc(100% - 28px)); padding:clamp(17px,5vw,32px); background:#192b23; color:#f2eddc; border-color:#9aba92; --focus:#ffc08e; }
+#site-guide { width:min(600px,calc(100% - 28px)); padding:clamp(17px,5vw,32px); background:#192b23; color:#f2eddc; border-color:#9aba92; --focus:#ffc08e; }
 .dialog-kicker { display:flex; flex-wrap:wrap; justify-content:space-between; gap:5px 12px; padding-bottom:12px; border-bottom:1px solid #b2c8b349; color:#ccdfcc; font:700 11px/1.4 var(--mono); letter-spacing:.14em; }
 #site-guide h2 { margin:15px 0 8px; font:700 clamp(28px,6vw,41px)/1.05 Georgia,serif; letter-spacing:-.033em; }
 #guide-summary,.guide-steps dd { color:#d8e2d6; }
 .guide-steps { display:grid; gap:10px; margin:17px 0 20px; padding-left:12px; border-left:2px solid #b6cca287; font-size:14px; }
 .guide-steps dt { font-weight:700; color:#f1e3ba; }
-.guide-steps .requires-3d { display:none; }
-.spatial .guide-steps .requires-3d { display:block; }
 .guide-steps code { color:#c8e7c5; }
 #site-guide .dialog-actions .primary-action { color:#18291f; background:#eddbad; border-color:#eddbad; }
 #site-guide .dialog-actions .primary-action:hover { background:#ffe7b1; }
@@ -296,7 +297,7 @@ code { font-family:var(--mono); }
     .site-bar { justify-content:center; padding-inline:9px; }
     .site-bar :is(button,a) { min-height:42px; padding-inline:8px; }
     .desk-actions,.desk-actions .project-nav { display:none; }
-    .spatial .desk-actions { display:flex; }
+    .desk-actions:has(#view-mode:not([hidden])) { display:flex; }
     .view-controls { border:0; padding:0; }
     .spatial .station { height:clamp(230px,43svh,420px); }
     .spatial .station>canvas { touch-action:pan-y; }
@@ -312,6 +313,11 @@ code { font-family:var(--mono); }
     .spatial.reading :is(.station>canvas,#keyboard,#mouse,.project-index) { display:none; }
 }
 @media(max-width:480px) {
+    .site-bar { gap:5px; padding-inline:8px; }
+    .site-bar :is(button,a) { padding-inline:7px; }
+    .view-controls button[aria-controls] { min-width:34px; }
+    .view-controls button[aria-controls] span { display:none; }
+    .view-controls svg { width:16px; height:16px; }
     .resume-identity .dialog-actions .primary-action { flex:1 0 100%; justify-content:center; }
     .resume-identity .dialog-actions a:not(.primary-action) { padding-inline:8px; }
     .resume-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }

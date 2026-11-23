@@ -9,7 +9,7 @@
     <meta property="og:description" content="Un PC rétro, sept projets à explorer et un CV express. Découvrez le parcours de Victor Noël.">
     <meta name="theme-color" content="#101b17">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101b17'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='34' font-weight='700' fill='%23ff9500' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
-    <link rel="stylesheet" href="station.css">
+    <link rel="stylesheet" href="station.css?v=mode">
 </head>
 <body>
 
@@ -25,12 +25,13 @@
             <button type="button" data-archive="cesi">Projets CESI</button>
         </div>
         <div class="view-controls" hidden>
-            <button type="button" aria-label="Agrandir l’écran" aria-controls="terminal-wrap" aria-expanded="false">
+            <button type="button" title="Agrandir l’écran" aria-label="Agrandir l’écran" aria-controls="terminal-wrap" aria-expanded="false">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2H2v4m8-4h4v4M2 10v4h4m8-4v4h-4"/></svg>
                 <span>Agrandir</span>
             </button>
             <button type="button" title="Recentrer le bureau" aria-label="Recentrer le bureau">↺</button>
         </div>
+        <button type="button" id="view-mode" aria-controls="terminal-wrap" hidden>Bureau 3D</button>
     </nav>
 </header>
 
@@ -113,15 +114,16 @@
 <dialog class="site-dialog" id="site-guide" aria-labelledby="guide-title" aria-describedby="guide-summary">
     <p class="dialog-kicker"><span class="os-name">NOËL OS</span> <span>GUIDE DE VISITE / 01</span></p>
     <h2 id="guide-title">Bienvenue sur mon bureau.</h2>
-    <p id="guide-summary">Je suis Victor Noël, élève ingénieur au CESI Lille. Ici, mon CV prend la forme d’un ordinateur rétro.</p>
+    <p id="guide-summary">Je suis Victor Noël, élève ingénieur au CESI Lille. Mon CV se lit dans les dossiers d’un PC rétro.</p>
     <dl class="guide-steps">
-        <div><dt>Sur le PC</dt><dd>Ouvrez un dossier pour lire mon CV dans l’écran. Le terminal est aussi accessible : tapez <code>help</code> pour voir ses commandes.</dd></div>
-        <div class="requires-3d"><dt>Autour du PC</dt><dd>Faites glisser le bureau pour changer d’angle. Les miniatures ouvrent mes projets. <strong>Agrandir</strong> rapproche l’écran.</dd></div>
+        <div><dt>PC seul</dt><dd>Ouvrez les dossiers à taille de lecture ou lancez le terminal et tapez <code>help</code>. Aucune 3D n’est nécessaire.</dd></div>
+        <div data-3d-option><dt>Bureau 3D</dt><dd>Faites glisser la scène pour changer de point de vue. Chaque miniature ouvre une fiche projet.</dd></div>
     </dl>
-    <div class="dialog-actions">
-        <form method="dialog"><button type="submit" class="primary-action" autofocus>Explorer le bureau</button></form>
+    <form class="dialog-actions" method="dialog">
+        <button type="submit" value="3d" class="primary-action" data-3d-option autofocus>Explorer en 3D</button>
+        <button type="submit" value="pc">Ouvrir le PC seul</button>
         <a href="cv.html" data-resume="profil">Lire le CV express</a>
-    </div>
+    </form>
 </dialog>
 
 <dialog class="site-dialog" id="resume-dialog" aria-labelledby="resume-title">
@@ -393,7 +395,6 @@ function startMatrix() {
     matrixTimeout = setTimeout(stopMatrix, 4200);
 }
 </script>
-<script src="station.js"></script>
-<script src="desk.bundle.js" defer></script>
+<script src="station.js?v=mode"></script>
 </body>
 </html>

@@ -18,9 +18,10 @@ function buildDesk(renderer) {
     const frame = document.querySelector('#terminal-wrap');
     const board = document.querySelector('#keyboard');
     const mouse = document.querySelector('#mouse');
+    const canvas=renderer.domElement;
     document.body.classList.add('spatial');
-    stage.prepend(renderer.domElement);
-    renderer.domElement.setAttribute('aria-label','Bureau de Victor en 3D avec un PC rétro, la mascotte Clawd, un casque et un carnet de notes sur l’IA');
+    stage.prepend(canvas);
+    canvas.setAttribute('aria-label','Bureau de Victor en 3D avec un PC rétro, la mascotte Clawd, un casque et un carnet de notes sur l’IA');
     const renderSize = () => stage.getBoundingClientRect();
     const compactView=matchMedia('(max-width:760px)');
     const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -899,6 +900,7 @@ function buildDesk(renderer) {
 
     const homeYaw=.035,homePitch=.455;
     let yaw=homeYaw, pitch=homePitch, orbit=null, focus=false, pending=false;
+    let deskActive=true;
     const cameraControls=document.querySelector('.view-controls');
     cameraControls.hidden=false;
     const zoom=cameraControls.querySelector('button');
@@ -906,11 +908,11 @@ function buildDesk(renderer) {
     const tan=Math.tan(T.MathUtils.degToRad(camera.fov/2));
 
     function invalidate() {
-        if(!pending) { pending=true;requestAnimationFrame(render); }
+        if(deskActive && !pending) { pending=true;requestAnimationFrame(render); }
     }
     function render(){
         pending=false;
-        if(focus&&compactView.matches)return;
+        if(!deskActive || !canvas.isConnected || (focus&&compactView.matches))return;
         aim.set(0,focus?glassY:1.40,focus?glassZ:.40);
         const distance=focus
             ?Math.max((glassHeight/2+.30)/tan,(glassWidth/2+.25)/(tan*camera.aspect))
@@ -932,6 +934,7 @@ function buildDesk(renderer) {
         }
     }
     function resize(){
+        if(!deskActive || !canvas.isConnected)return;
         const {width,height}=renderSize();
         camera.aspect=width/height;
         camera.updateProjectionMatrix();
@@ -951,7 +954,8 @@ function buildDesk(renderer) {
         focus=next;document.body.classList.toggle('reading',next);
         setHovered(null);
         zoom.lastElementChild.textContent=next?'Bureau':'Agrandir';
-        zoom.setAttribute('aria-label',next?'Revenir à la vue du bureau':'Agrandir l’écran');
+        zoom.title=next?'Revenir à la vue du bureau':'Agrandir l’écran';
+        zoom.setAttribute('aria-label',zoom.title);
         zoom.setAttribute('aria-expanded',String(next));
         invalidate();
     }
@@ -959,9 +963,8 @@ function buildDesk(renderer) {
     cameraControls.lastElementChild.onclick=()=>{yaw=homeYaw;pitch=homePitch;setFocus(false);};
     frame.addEventListener('cv:read-screen',()=>{
         // Small projected text becomes readable only after choosing a file.
-        if(!focus && frame.getBoundingClientRect().width<560)setFocus(true);
+        if(deskActive && !focus && frame.getBoundingClientRect().width<560)setFocus(true);
     });
-    const canvas=renderer.domElement;
     const projectTip=document.getElementById('project-tip');
     const raycaster=new T.Raycaster();
     const pointerNdc=new T.Vector2();
@@ -1032,28 +1035,59 @@ function buildDesk(renderer) {
     canvas.addEventListener('lostpointercapture',e=>{if(orbit?.id===e.pointerId)orbit=null;});
     window.addEventListener('blur',()=>setHovered(null));
     document.addEventListener('pointermove',e=>{
-        if(e.pointerType==='touch'||focus||reducedMotion.matches||document.querySelector('dialog[open]'))return;
+        if(!deskActive||!canvas.isConnected||e.pointerType==='touch'||focus||reducedMotion.matches||document.querySelector('dialog[open]'))return;
         const nextX=2.87+(e.clientX/innerWidth-.5)*.11;
         const nextZ=1.85+(e.clientY/innerHeight-.5)*.08;
         if(Math.abs(nextX-mouseRig.position.x)+Math.abs(nextZ-mouseRig.position.z)<.003)return;
         mouseRig.position.x=nextX;mouseRig.position.z=nextZ;
         invalidate();
     });
-    new MutationObserver(invalidate).observe(board,{attributes:true,attributeFilter:['class'],subtree:true});
-    new MutationObserver(invalidate).observe(mouse,{attributes:true,attributeFilter:['class'],subtree:true});
-    new ResizeObserver(resize).observe(stage);
+    function setActive(next){
+        if(next===deskActive)return;
+        deskActive=next;
+        canvas.hidden=!next;
+        cameraControls.hidden=!next;
+        document.body.classList.toggle('spatial',next);
+        document.body.classList.toggle('reading',next&&focus);
+        if(next)resize();
+        else {
+            orbit=null;
+            setHovered(null);
+        }
+    }
+
+    const keyObserver=new MutationObserver(invalidate);
+    const mouseObserver=new MutationObserver(invalidate);
+    const stageObserver=new ResizeObserver(resize);
+    keyObserver.observe(board,{attributes:true,attributeFilter:['class'],subtree:true});
+    mouseObserver.observe(mouse,{attributes:true,attributeFilter:['class'],subtree:true});
+    stageObserver.observe(stage);
+    canvas.addEventListener('webglcontextlost',()=>{
+        // Keep the same DOM display and reading state when the GPU drops out.
+        setActive(false);
+        keyObserver.disconnect();
+        mouseObserver.disconnect();
+        stageObserver.disconnect();
+        canvas.remove();
+        composer.dispose();
+        renderer.dispose();
+        window.dispatchEvent(new Event('cv:desk-unavailable'));
+    },{once:true});
     resize();
     render();
+    return setActive;
 }
 
 let renderer;
 try {
     renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'low-power'});
-    buildDesk(renderer);
+    const setActive=buildDesk(renderer);
+    window.dispatchEvent(new CustomEvent('cv:desk-ready',{detail:setActive}));
 } catch(error) {
     renderer?.domElement.remove();
     renderer?.dispose();
     document.body.classList.remove('spatial');
     document.querySelector('.view-controls').hidden=true;
     console.warn('Rendu 3D indisponible.',error);
+    window.dispatchEvent(new Event('cv:desk-unavailable'));
 }

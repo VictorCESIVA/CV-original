@@ -348,19 +348,80 @@ document.getElementById('resume-skills').innerHTML = dossiers.competences;
 document.getElementById('resume-contact-details').innerHTML = dossiers.contact;
 
 const guideKey = 'cv-noel:guide-v1';
+const viewKey = 'cv-noel:view';
+const viewToggle = document.getElementById('view-mode');
+let viewMode = '3d';
+let deskState = 'idle';
+let setDeskActive;
 let guideSeen = false;
 try {
     guideSeen = localStorage.getItem(guideKey) === '1';
+    if (localStorage.getItem(viewKey) === 'pc') viewMode = 'pc';
 } catch { /* The guide remains usable when storage is blocked. */ }
 
-guideButton.addEventListener('click', () => guide.showModal());
+function deskUnavailable() {
+    setDeskActive = undefined;
+    deskState = 'unavailable';
+    guide.querySelectorAll('[data-3d-option]').forEach(option => { option.hidden = true; });
+    syncDesk();
+}
+
+function syncDesk() {
+    const want3d = viewMode === '3d';
+    if (want3d && deskState === 'idle' && !guide.open && !resume.open) {
+        deskState = 'loading';
+        const script = document.createElement('script');
+        script.src = 'desk.bundle.js?v=mode';
+        script.addEventListener('error', deskUnavailable, {once:true});
+        script.addEventListener('load', () => {
+            if (deskState === 'loading') deskUnavailable();
+        }, {once:true});
+        document.body.append(script);
+    }
+    setDeskActive?.(want3d);
+
+    const unavailable = deskState === 'unavailable';
+    const loading = deskState === 'loading';
+    viewToggle.setAttribute('aria-disabled', String(unavailable || loading));
+    viewToggle.textContent = unavailable ? '3D indisponible' : loading ? 'Chargement 3D…'
+        : want3d && deskState === 'ready' ? 'PC seul' : 'Bureau 3D';
+}
+
+function chooseView(mode) {
+    viewMode = mode;
+    try {
+        localStorage.setItem(viewKey, mode);
+    } catch { /* The choice still works without storage. */ }
+    syncDesk();
+}
+
+window.addEventListener('cv:desk-ready', event => {
+    setDeskActive = event.detail;
+    deskState = 'ready';
+    syncDesk();
+}, {once:true});
+window.addEventListener('cv:desk-unavailable', deskUnavailable, {once:true});
+
+viewToggle.hidden = false;
+viewToggle.addEventListener('click', () => {
+    if (viewToggle.getAttribute('aria-disabled') === 'true') return;
+    chooseView(viewMode === '3d' && deskState === 'ready' ? 'pc' : '3d');
+});
+
+guideButton.addEventListener('click', () => {
+    guide.returnValue = '';
+    guide.showModal();
+});
 guide.addEventListener('close', () => {
     try {
         localStorage.setItem(guideKey, '1');
     } catch { /* Storage is optional for the local copy. */ }
     if (!guideSeen && !resume.open) guideButton.focus({preventScroll:true});
     guideSeen = true;
+    if (guide.returnValue === '3d' || guide.returnValue === 'pc') chooseView(guide.returnValue);
+    else syncDesk();
 });
+resume.addEventListener('close', syncDesk);
 
 document.addEventListener('click', event => {
     const trigger = event.target.closest('[data-resume]');
@@ -384,3 +445,4 @@ if (typeof guide.showModal === 'function') {
     document.querySelectorAll('a[data-resume]').forEach(link => link.setAttribute('aria-haspopup', 'dialog'));
     if (!guideSeen) guide.showModal();
 }
+syncDesk();
