@@ -320,7 +320,7 @@ function buildDesk(renderer) {
     box(3.02,.42,.05,.01,walnut,0,-.56,2.0);
     cyl(.05,.05,.06,dark,0,-.56,2.03).rotation.x=Math.PI/2;
     box(13.4,1.0,.09,.02,walnut,0,-1.38,-3.06);
-    const lamp=group(-3.63,0,-.43);
+    const lamp=group(-4.71,0,-2.60);
     cyl(.53,.58,.135,red,0,.09,0,lamp);
     function strut(a,b,r,m,g) {
         const v=new T.Vector3(...a), u=new T.Vector3(...b), axis=u.clone().sub(v);
@@ -338,16 +338,16 @@ function buildDesk(renderer) {
     const enamel=mat(0xb64c2d,.32,.38);enamel.side=T.DoubleSide;
     mesh(new T.LatheGeometry([[.07,.16],[.19,.11],[.28,-.02],[.43,-.30],[.46,-.32]].map(([x,y])=>new T.Vector2(x,y)),64),enamel,0,0,0,shade);
     cyl(.432,.425,.018,new T.MeshStandardMaterial({color:0xffe2ac,emissive:0xffc078,emissiveIntensity:1.3}),0,-.309,0,shade);
-    const lampLight=new T.PointLight(0xffb569,12,6);lampLight.position.set(-3.03,2.02,-.35);world.add(lampLight);
+    const lampLight=new T.PointLight(0xffb569,12,6);lampLight.position.set(.60,2.02,.08);lamp.add(lampLight);
     box(.14,.05,.20,.012,dark,0,.17,.42,lamp);
-    contact(-3.63,-.43,1.64,1.45);
+    contact(-4.71,-2.60,1.64,1.45);
     // Ceramic mug with a glazed lip, coffee surface and a loop handle.
-    const mug=group(-2.99,0,1.33), glaze=mat(0x6c8d80,.24);
+    const mug=group(-2.98,0,1.65), glaze=mat(0x6c8d80,.24);
     mesh(new T.LatheGeometry([[.01,.025],[.236,.025],[.27,.06],[.304,.55],[.302,.586],[.286,.59],[.278,.55],[.24,.12]].map(([x,y])=>new T.Vector2(x,y)),64),glaze,0,0,0,mug);
     cyl(.28,.28,.015,mat(0x2a170e,.17),0,.518,0,mug);
     path([[-.26,.47,0],[-.45,.48,0],[-.49,.32,0],[-.43,.19,0],[-.26,.19,0]],.044,glaze,mug);
-    contact(-3,1.33,.87,.78);
-    const book=group(3.65,0,-.63);book.rotation.y=-.24;
+    contact(-2.98,1.65,.87,.78);
+    const book=group(4.53,0,1.97);book.rotation.y=-.12;book.scale.setScalar(.85);
     box(1.47,.12,1.96,.023,paper,0,.083,0,book);
     const cover=mat(0x3b5149,.91);
     for(const y of [.02,.152])box(1.52,.025,2.01,.021,cover,0,y,0,book);
@@ -406,7 +406,7 @@ function buildDesk(renderer) {
     pencil.rotation.z=-.04;
 
     // Over-ear headphones resting on their cushions, tucked beside the task lamp.
-    const headphones=group(-4.90,0,-.48);
+    const headphones=group(-4.33,0,1.83);
     headphones.rotation.y=.46;
     const rubber=mat(0x222527,.88), navy=mat(0x35434a,.43), aluminium=mat(0x889094,.35,.72);
     const band=[];
@@ -422,7 +422,7 @@ function buildDesk(renderer) {
         const ring=mesh(new T.TorusGeometry(.096,.008,8,36),aluminium,side*.445,.260,.23,headphones);
         ring.rotation.x=flat;
     }
-    contact(-4.90,-.48,1.72,1.49);
+    contact(-4.33,1.83,1.72,1.49);
     // Seven project miniatures replace the old floppy shortcuts. Each one is a
     // small physical diorama with a printed label, and opens its fiche on click.
     const projectTargets=[];
@@ -703,34 +703,36 @@ function buildDesk(renderer) {
 
     const builders={cleaner:buildCleaner,meter:buildMeter,cotalyse:buildCotalyse,life:buildLife,web:buildWeb,prosit:buildProsit,station:buildStation};
     const projectMeta=window.CV_PROJECTS||[];
-    const shelfDepth=3.63;
-    const spacing=1.10;
-    const collections=[
-        {id:'perso',left:-3.58,title:'PROJETS PERSO'},
-        {id:'cesi',left:.12,title:'PROJETS CESI'}
-    ];
+    // Leave the typing area and the whole front edge of the desk clear.
+    // Only the back pair on each side is raised, so its labels clear the front models.
+    const rearZ=-1.15,frontZ=.34,ledgeHeight=.44;
+    const locations={
+        opencleaner:  {x:-3.91,z:frontZ,turn:.12},
+        sardochemetre:{x:-4.77,z:rearZ,turn:.19},
+        cotalyse:     {x:-3.31,z:rearZ,turn:.10},
+        '3ww':       {x:4.72,z:rearZ,turn:-.18},
+        web4all:     {x:3.26,z:rearZ,turn:-.12},
+        conway:      {x:3.46,z:frontZ,turn:-.10},
+        prosit5:     {x:4.88,z:frontZ+.16,turn:-.19}
+    };
+    for(const [x,title] of [[-4.04,'PROJETS PERSO'],[3.99,'PROJETS CESI']]){
+        const width=2.61;
+        box(width,ledgeHeight,.83,.045,walnut,x,ledgeHeight/2,rearZ);
+        badge(title,1.13,.115,x+.44,.27,rearZ+.417,'#3a332a','#efe7d5');
+    }
     const pickMaterial=new T.MeshBasicMaterial({visible:false});
-    for(const collection of collections){
-        const items=projectMeta.filter(p=>p.collection===collection.id && builders[p.model]);
-        // Put the weather mast at the outside edge, clear of the interactive keyboard.
-        items.sort((a,b)=>Number(a.model==='station')-Number(b.model==='station'));
-        if(!items.length) continue;
-        const width=items.length*spacing;
-        const center=collection.left+width/2-.5*spacing;
-        box(width,.185,.89,.038,projBase,center,.103,shelfDepth+.04);
-        const edge=mat(projAccent[collection.id]);
-        box(width-.07,.024,.024,.006,edge,center,.185,shelfDepth+.487);
-        badge(collection.title,1.34,.105,center,.094,shelfDepth+.49,'#26312d','#eee8d4');
-        items.forEach((project,i)=>{
-            const x=collection.left+i*spacing;
-            const station=projectPlinth(project,x,shelfDepth,0,.197);
-            const model=group(0,.067,0,station);
-            model.scale.setScalar(1.32);
-            builders[project.model](model);
-            const hit=box(1.02,project.id==='3ww'?1:.81,.77,0,pickMaterial,0,.40,.02,station);
-            hit.castShadow=false;hit.receiveShadow=false;
-            projectTargets.push(hit);
-        });
+    for(const project of projectMeta){
+        const location=locations[project.id],build=builders[project.model];
+        if(!location||!build)continue;
+        const {x,z,turn}=location;
+        const height=z===rearZ?ledgeHeight:0;
+        const station=projectPlinth(project,x,z,turn,height);
+        const model=group(0,.067,0,station);
+        model.scale.setScalar(1.32);
+        build(model);
+        const hit=box(1.02,project.id==='3ww'?1:.81,.77,0,pickMaterial,0,.40,.02,station);
+        hit.castShadow=false;hit.receiveShadow=false;
+        projectTargets.push(hit);
     }
 
     // A taped two-colour generative print, drawn directly on warm paper.
@@ -871,7 +873,7 @@ function buildDesk(renderer) {
     box(.05,.03,.05,.01,new T.MeshStandardMaterial({color:0xff6a5a,emissive:0xd43f2f,emissiveIntensity:1.1}),1.26,.12,.12,strip);
     path([[-1.10,.10,-1.78],[-1.30,.055,-2.50],[-1.35,.045,-3.25],[-1.40,.03,-3.60],[-1.45,-1.30,-3.80],[-1.45,-2.80,-3.70],[-1.0,-2.90,-3.55],[.95,-2.92,-3.55]],.024,dark);
     path([[1.55,1.10,-1.95],[2.20,.50,-2.50],[2.45,.09,-3.00],[2.50,.05,-3.42],[2.55,.02,-3.70],[2.60,-1.40,-3.80],[2.60,-2.80,-3.70],[2.00,-2.90,-3.55],[1.78,-2.92,-3.52]],.026,dark);
-    path([[-3.63,.07,-1.02],[-3.80,.05,-2.30],[-3.90,.04,-3.30],[-3.95,.02,-3.68],[-4.00,-1.40,-3.78],[-4.00,-2.80,-3.70],[-2.60,-2.90,-3.58],[.30,-2.92,-3.52]],.024,dark);
+    path([[-4.71,.07,-2.80],[-4.38,.05,-3.04],[-3.90,.04,-3.30],[-3.95,.02,-3.68],[-4.00,-1.40,-3.78],[-4.00,-2.80,-3.70],[-2.60,-2.90,-3.58],[.30,-2.92,-3.52]],.024,dark);
     // Shelf brackets and a small potted plant.
     for(const x of [3.25,6.55]) box(.09,.40,.34,.02,metal,x,shelfTop-.33,-3.83);
     const pot=new T.LatheGeometry([[.01,0],[.12,0],[.145,.04],[.16,.26],[.172,.28],[.148,.28],[.13,.05]].map(([x,y])=>new T.Vector2(x,y)),32);
@@ -884,7 +886,7 @@ function buildDesk(renderer) {
         leaf.rotation.set(0,-a,.55+(i%3)*.12,'YXZ');
     }
 
-    const homeYaw=.06,homePitch=.43;
+    const homeYaw=.035,homePitch=.455;
     let yaw=homeYaw, pitch=homePitch, orbit=null, focus=false, pending=false;
     const cameraControls=document.querySelector('.view-controls');
     cameraControls.hidden=false;
@@ -898,10 +900,10 @@ function buildDesk(renderer) {
         const {width,height}=renderSize();
         camera.aspect=width/height;camera.updateProjectionMatrix();
         const compact=compactView.matches;
-        const aim=new T.Vector3(0,focus?2.24:1.22,focus?.46:1.13);
+        const aim=new T.Vector3(0,focus?2.24:1.30,focus?.46:.40);
         const tan=Math.tan(T.MathUtils.degToRad(camera.fov/2));
         const distance=focus?Math.max(1.40/tan,2.10/(tan*camera.aspect)):
-            Math.max(11.05, (compact?5.35:5.25)/(tan*camera.aspect));
+            Math.max(11.1, (compact?5.82:5.65)/(tan*camera.aspect));
         const a=focus?.022:yaw, p=focus?.055:pitch;
         camera.position.copy(aim).add(new T.Vector3(Math.sin(a)*Math.cos(p),Math.sin(p),Math.cos(a)*Math.cos(p)).multiplyScalar(distance));
         camera.lookAt(aim);camera.updateMatrixWorld();
