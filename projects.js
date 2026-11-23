@@ -8,7 +8,14 @@ const cvProjects = [
         collection: 'perso',
         tags: ['C#', '.NET', 'Open source'],
         description: 'Un utilitaire Windows gratuit et open source pour repérer les fichiers inutiles, consulter ce qui occupe le disque et choisir quoi nettoyer.',
-        url: 'https://github.com/VictorCESIVA/OpenCleaner'
+        url: 'https://github.com/VictorCESIVA/OpenCleaner',
+        proof: {
+            detail: 'L’analyse ne supprime aucun fichier. Les résultats sont vérifiables avant le nettoyage ; une sauvegarde locale chiffrée peut être créée et contrôlée avant suppression.',
+            links: [
+                ['Versions Windows', 'https://github.com/VictorCESIVA/OpenCleaner/releases/latest'],
+                ['Documentation technique', 'https://github.com/VictorCESIVA/OpenCleaner/blob/master/docs/TECHNICAL.md']
+            ]
+        }
     },
     {
         id: 'sardochemetre',
@@ -38,7 +45,14 @@ const cvProjects = [
         collection: 'cesi',
         tags: ['C', 'STM32', 'PlatformIO'],
         description: 'Une station météo sur carte STM32. Le dépôt rassemble le programme en C, les essais sur le montage et les livrables du projet.',
-        url: 'https://github.com/VictorCESIVA/Worldwide-Weather-Watcher'
+        url: 'https://github.com/VictorCESIVA/Worldwide-Weather-Watcher',
+        proof: {
+            detail: 'L’écriture d’une mesure sur carte SD a été vérifiée sur le montage final. Le compte rendu distingue les essais réalisés des points restant à valider.',
+            links: [
+                ['Compte rendu des essais', 'https://github.com/VictorCESIVA/Worldwide-Weather-Watcher/blob/codex/3ww/docs/VALIDATION.md'],
+                ['Livrable d’architecture (PDF)', 'https://github.com/VictorCESIVA/Worldwide-Weather-Watcher/blob/codex/3ww/output/pdf/LIVRABLE_2_ARCHITECTURE.pdf']
+            ]
+        }
     },
     {
         id: 'conway',

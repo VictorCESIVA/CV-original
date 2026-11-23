@@ -199,44 +199,52 @@ window.addEventListener('blur', () => {
     keys.forEach((button,key) => button.classList.toggle('on',key === 'Shift' && shift));
 });
 
-const projects = window.CV_PROJECTS || [];
-const collectionNames = { perso:'Projets perso', cesi:'Projets CESI' };
+const projects = window.CV_PROJECTS;
+const collectionNames = { perso:'Projets personnels', cesi:'Projets CESI' };
+const projectRoute = id => `projet-${id}`;
+const projectPage = id => `cv.html#${projectRoute(id)}`;
+const projectsByRoute = new Map(projects.map(project => [projectRoute(project.id), project]));
+const projectGroups = Object.entries(collectionNames).map(([collection, title]) => ({
+    title, items: projects.filter(project => project.collection === collection)
+}));
 
-function projectArticle(project) {
-    return `<article class="catalog-card">
-        <button type="button" class="open-sheet" data-project="${project.id}">${project.name}</button>
-        <p>${project.description}</p><small>${project.tags.join(' · ')}</small>
-    </article>`;
+function projectCatalog(onScreen) {
+    return projectGroups.map(({title, items}) => `${cvSection(title)}<div class="project-grid">${items.map(project => {
+        const key = cvEscape(projectRoute(project.id));
+        const target = onScreen ? `href="#${key}" data-dossier="${key}"` : `href="${cvEscape(projectPage(project.id))}"`;
+        return `<article class="catalog-card"><a class="catalog-title" ${target}>${cvEscape(project.name)}</a>
+            <p>${cvEscape(project.description)}</p><small>${cvEscape(project.tags.join(' · '))}</small></article>`;
+    }).join('')}</div>`).join('') + cv.otherProjects;
+}
+cv.projects = projectCatalog(true);
+
+function projectRow({id, name, tags}) {
+    const key = cvEscape(projectRoute(id));
+    return `<li><a href="#${key}" data-dossier="${key}">
+        <span>${cvEscape(name)}</span><small>${cvEscape(tags[0])}</small>
+    </a></li>`;
 }
 
-const projectGroups = Object.entries(collectionNames).map(([collection,title]) => {
-    const items = projects.filter(project => project.collection === collection);
-    const cards = items.map(projectArticle).join('');
-    document.querySelector(`#portfolio-archive [data-collection="${collection}"]`).innerHTML = cards;
-    return {title, items, cards};
-});
-cv.projects = projectGroups.map(({title,cards}) =>
-    `<h4 class="section-title">${title}</h4><div class="project-grid">${cards}</div>`
-).join('') + cv.otherProjects;
-
-const projectPage = id => `cv.html#projet-${id}`;
-
-function dossierProject({id, name, description, tags, url}) {
-    return `<details class="dossier-project">
-        <summary>${cvEscape(name)}</summary>
+function projectFile({id, collection, description, tags, url, proof}) {
+    const external = (href, label) => `<a href="${cvEscape(href)}" target="_blank" rel="noopener noreferrer">${cvEscape(label)} <span aria-hidden="true">↗</span></a>`;
+    return `<p class="project-file-path">C:\\CV\\PROJETS\\${cvEscape(id.toUpperCase())}.NFO</p>
+        ${proof ? `<section class="project-proof">
+            <h3 class="section-title">Preuves et documentation</h3>
+            <div class="project-file-links">${proof.links.map(([label, href]) => external(href, label)).join('')}</div>
+            <p>${cvEscape(proof.detail)}</p>
+        </section>` : ''}
         <p>${cvEscape(description)}</p>
-        <p class="dossier-project-tags">${cvEscape(tags.join(' · '))}</p>
-        <div class="dossier-project-links">
-            <a href="${cvEscape(projectPage(id))}">Fiche à partager</a>
-            ${url ? `<a href="${cvEscape(url)}" target="_blank" rel="noopener noreferrer">Dépôt GitHub ↗</a>` : ''}
-        </div>
-    </details>`;
+        <p class="project-file-tags">${cvEscape([collection === 'cesi' ? 'Projet CESI' : 'Projet personnel', ...tags].join(' · '))}</p>
+        <nav class="project-file-links" aria-label="Navigation de la fiche">
+            <a href="#projets" data-dossier="projets"><span aria-hidden="true">←</span> Tous les projets</a>
+            ${url ? external(url, 'Code source') : ''}
+        </nav>`;
 }
 
 const dossiers = {
     parcours: cv.xp + cv.education,
     projets: projectGroups.map(({title, items}) =>
-        `${cvSection(title)}<div class="dossier-projects">${items.map(dossierProject).join('')}</div>`
+        `${cvSection(title)}<ul class="dossier-projects">${items.map(projectRow).join('')}</ul>`
     ).join('') + cv.otherProjects,
     competences: cv.skills + cv.certifications,
     contact: cvContact
@@ -250,6 +258,7 @@ const dossierContent = document.getElementById('dossier-content');
 const dossierLink = document.getElementById('dossier-link');
 const dossierFiles = new Map();
 let currentFile;
+let currentDossierKey;
 let dossierOpener;
 
 for (const launcher of screens.home.querySelectorAll('.home-launchers a[data-dossier]')) {
@@ -267,21 +276,25 @@ for (const launcher of screens.home.querySelectorAll('.home-launchers a[data-dos
 }
 
 function showRoute(key, moveFocus, trigger) {
-    const file = dossierFiles.get(key);
+    const project = projectsByRoute.get(key);
+    const file = dossierFiles.get(project ? 'projets' : key);
     if (file) {
         dossierOpener = trigger && screens.home.contains(trigger) ? trigger : file.launcher;
-        const newFile = currentFile !== file;
-        if (newFile) {
-            currentFile?.item.removeAttribute('aria-current');
-            file.item.setAttribute('aria-current', 'page');
-            currentFile = file;
-            dossierTitle.textContent = file.name;
-            dossierCurrent.textContent = file.name;
-            dossierLink.href = file.textHref;
-            dossierContent.innerHTML = dossiers[key];
+        const newRoute = currentDossierKey !== key;
+        if (newRoute) {
+            if (currentFile !== file) {
+                currentFile?.item.removeAttribute('aria-current');
+                file.item.setAttribute('aria-current', 'page');
+                currentFile = file;
+                dossierCurrent.textContent = file.name;
+            }
+            currentDossierKey = key;
+            dossierTitle.textContent = project ? project.name : file.name;
+            dossierLink.href = project ? projectPage(project.id) : file.textHref;
+            dossierContent.innerHTML = project ? projectFile(project) : dossiers[key];
         }
         showScreen('dossier');
-        if (newFile) dossierScroll.scrollTop = 0;
+        if (newRoute) dossierScroll.scrollTop = 0;
         dossierMenu.open = false;
         screenFrame.dispatchEvent(new Event('cv:read-screen'));
         if (moveFocus) dossierTitle.focus({preventScroll:true});
@@ -309,11 +322,14 @@ function navigateScreen(key, trigger) {
     showRoute(key, true, trigger);
 }
 
-screenFrame.addEventListener('click', event => {
+document.addEventListener('click', event => {
     const launcher = event.target.closest('a[data-dossier]');
     if (!launcher || !isPlainClick(event)) return;
     event.preventDefault();
+    if (guide.contains(launcher)) guide.close();
+    const fromIndex = Boolean(launcher.closest('.project-index'));
     navigateScreen(launcher.dataset.dossier, launcher);
+    if (fromIndex) window.scrollTo(0, 0);
 });
 dossierMenu.addEventListener('focusout', ({relatedTarget}) => {
     if (relatedTarget && !dossierMenu.contains(relatedTarget)) dossierMenu.open = false;
@@ -327,61 +343,19 @@ screens.dossier.addEventListener('keydown', event => {
     if (dossierMenu.open) {
         dossierMenu.open = false;
         dossierSummary.focus({preventScroll:true});
+    } else if (projectsByRoute.has(currentDossierKey)) {
+        const projectKey = currentDossierKey;
+        navigateScreen('projets');
+        dossierContent.querySelector(`a[data-dossier="${projectKey}"]`).focus();
     } else {
         navigateScreen('home');
     }
 });
 window.addEventListener('hashchange', () => showRoute(location.hash.slice(1), true));
 
-const archiveDialog = document.getElementById('portfolio-archive');
-document.addEventListener('click', event => {
-    const trigger = event.target.closest('button[data-archive]');
-    if (!trigger) return;
-    const collection = trigger.dataset.archive;
-    archiveDialog.querySelectorAll('[data-collection]').forEach(section => {
-        section.hidden = section.dataset.collection !== collection;
-    });
-    document.getElementById('archive-title').textContent = collectionNames[collection];
-    archiveDialog.showModal();
-    archiveDialog.scrollTop = 0;
-});
-
-// A project miniature on the desk opens this fiche through a custom event.
-const projectSheet = document.getElementById('project-sheet');
-const sheetKicker = document.getElementById('project-sheet-kicker');
-const sheetTitle = document.getElementById('project-sheet-title');
-const sheetDescription = document.getElementById('project-sheet-description');
-const sheetTags = document.getElementById('project-sheet-tags');
-const sheetLink = document.getElementById('project-sheet-link');
-const sheetShare = document.getElementById('project-sheet-share');
-
-function openProject(id) {
-    const project = projects.find(item => item.id === id);
-    if (!project) return;
-    sheetKicker.textContent = `PROJET ${project.collection === 'cesi' ? 'CESI' : 'PERSO'}`;
-    sheetKicker.dataset.collection = project.collection;
-    sheetTitle.textContent = project.name;
-    sheetDescription.textContent = project.description;
-    sheetTags.replaceChildren(...project.tags.map(tag => {
-        const chip = document.createElement('span');
-        chip.textContent = tag;
-        return chip;
-    }));
-    sheetShare.href = projectPage(id);
-    if (project.url) {
-        sheetLink.hidden = false;
-        sheetLink.href = project.url;
-    } else {
-        sheetLink.hidden = true;
-        sheetLink.removeAttribute('href');
-    }
-    if (!projectSheet.open) projectSheet.showModal();
-}
-
-window.addEventListener('cv:open-project', event => openProject(event.detail));
-document.addEventListener('click', event => {
-    const button = event.target.closest('button[data-project]');
-    if (button) openProject(button.dataset.project);
+window.addEventListener('cv:open-project', ({detail}) => {
+    const key = projectRoute(detail);
+    if (projectsByRoute.has(key)) navigateScreen(key);
 });
 const projectIndex = document.querySelector('.project-index');
 for (const {title,items} of projectGroups) {
@@ -390,20 +364,25 @@ for (const {title,items} of projectGroups) {
     heading.textContent = title;
     group.append(heading);
     for (const project of items) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.dataset.project = project.id;
-        button.textContent = project.name;
+        const link = document.createElement('a');
+        link.dataset.dossier = projectRoute(project.id);
+        link.href = `#${link.dataset.dossier}`;
+        link.textContent = project.name;
         const tech = document.createElement('small');
         tech.textContent = project.tags[0];
-        button.append(tech);
-        group.append(button);
+        link.append(tech);
+        group.append(link);
     }
     projectIndex.append(group);
 }
 
 const guide = document.getElementById('site-guide');
 const guideButton = document.getElementById('open-guide');
+document.getElementById('home-project-count').textContent = `${projects.length} réalisations`;
+for (const link of document.querySelectorAll('.desk-projects,.guide-example')) {
+    link.href = `#${link.dataset.dossier}`;
+    link.setAttribute('aria-controls', 'screen-dossier');
+}
 const resume = document.getElementById('resume-dialog');
 const resumeContent = resume.querySelector('.resume-content');
 const {date:missionDate, title:missionTitle, tags:missionTags} = cvData.experience[0];
@@ -418,7 +397,7 @@ document.getElementById('resume-mission-tags').textContent = missionTags.join(' 
 document.getElementById('resume-summary').textContent = cvData.summary;
 document.getElementById('resume-email').href = `mailto:${cvData.email}`;
 document.getElementById('resume-timeline').innerHTML = dossiers.parcours;
-document.getElementById('resume-projects').innerHTML = cv.projects;
+document.getElementById('resume-projects').innerHTML = projectCatalog(false);
 document.getElementById('resume-skills').innerHTML = dossiers.competences;
 document.getElementById('resume-contact-details').innerHTML = dossiers.contact;
 
@@ -446,7 +425,7 @@ function syncDesk() {
     if (want3d && deskState === 'idle' && !guide.open && !resume.open) {
         deskState = 'loading';
         const script = document.createElement('script');
-        script.src = 'desk.bundle.js?v=moniteur';
+        script.src = 'desk.bundle.js?v=fiches';
         script.addEventListener('error', deskUnavailable, {once:true});
         script.addEventListener('load', () => {
             if (deskState === 'loading') deskUnavailable();
@@ -495,7 +474,7 @@ guide.addEventListener('close', () => {
     try {
         localStorage.setItem(guideKey, '1');
     } catch { /* Storage is optional for the local copy. */ }
-    if (!guideSeen && !resume.open) guideButton.focus({preventScroll:true});
+    if (!guideSeen && !resume.open && activeScreen === 'home') guideButton.focus({preventScroll:true});
     guideSeen = true;
     if (guide.returnValue === '3d' || guide.returnValue === 'pc') chooseView(guide.returnValue);
     else syncDesk();
@@ -520,7 +499,7 @@ document.addEventListener('click', event => {
 });
 
 const initialRoute = location.hash.slice(1);
-const directRoute = initialRoute === 'terminal' || dossierFiles.has(initialRoute);
+const directRoute = initialRoute === 'terminal' || dossierFiles.has(initialRoute) || projectsByRoute.has(initialRoute);
 if (directRoute) showRoute(initialRoute, false);
 if (typeof guide.showModal === 'function') {
     guideButton.hidden = false;

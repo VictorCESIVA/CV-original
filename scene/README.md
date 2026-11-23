@@ -9,22 +9,22 @@ Pour reconstruire le bundle depuis ce dossier, exécuter `npm ci` puis `npm run 
 Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteur 2D donne accès au même écran, au terminal et au CV express.
 
 - **Guide** explique les trois accès dès la première visite : explorer en 3D, ouvrir le PC seul ou lire le CV express. Le guide et le mode choisi sont mémorisés dans `localStorage`, sans compte.
-  Le PDF se télécharge directement depuis le guide. Si aucun mode n’a été choisi, fermer le guide laisse le PC seul affiché, sans charger la scène.
-- Le moniteur démarre sur l’accueil NOËL OS. **À la une** ouvre l’expérience professionnelle la plus récente. Le menu `C:\CV` permet de changer de dossier sans revenir à l’accueil. **Échap** ferme le menu, puis revient à l’accueil. **Version texte** ouvre la même rubrique hors de la scène.
+  **Voir un exemple** ouvre la fiche OpenCleaner dans le moniteur, sans charger la 3D lors d’une première visite. Le PDF se télécharge aussi directement depuis le guide. Fermer le guide laisse le mode déjà choisi ou, à défaut, le PC seul.
+- Le moniteur démarre sur l’accueil NOËL OS. **À la une** ouvre l’expérience professionnelle la plus récente. Le menu `C:\CV` permet de changer de dossier sans revenir à l’accueil. **Version texte** ouvre la même rubrique hors de la scène.
   Les liens `../index.html#parcours`, `#projets`, `#competences` et `#contact` ouvrent le dossier sans afficher le guide ; **Précédent** et **Suivant** suivent la navigation. Le terminal reste accessible depuis la barre du PC et à l’adresse `#terminal`.
 - Le terminal accepte les commandes françaises (`aide`, `compétences`, `projets`, `thème bleu`), avec ou sans accents, ainsi que les commandes anglaises existantes. Les flèches **↑** et **↓**, physiques ou virtuelles, retrouvent les cinquante dernières commandes de la page et rendent le brouillon à la fin de l’historique.
 - Cliquer sur la coque ou sur une zone libre de la vitre ouvre le gros plan. **Lire l’écran** et **Vue du bureau** permettent aussi de basculer au clavier. Sur mobile, le bureau est cadré plus près du PC ; le gros plan utilise le châssis 2D, sans rendu WebGL, et les projets restent accessibles sous la vue du bureau.
 - Le **CV express** présente le résumé, le contact et la dernière mission professionnelle avec ses outils. Le **CV PDF** est accessible sans manipuler la scène.
 - **PC seul** et **Bureau 3D** basculent entre les deux vues sans fermer le dossier courant. La 3D déjà chargée est mise en pause en mode PC seul. Si le moteur ne répond pas ou si le contexte WebGL est perdu, le même écran reste lisible en 2D.
 - **Version à partager** ouvre `../cv.html`, une page de lecture indépendante du bureau et utilisable sans JavaScript.
-- **Fiche à partager** ouvre directement le projet dans `../cv.html#projet-…`. Toutes les miniatures ont une adresse stable, y compris les projets sans dépôt public.
+- Dans le dossier **Projets**, les miniatures et les liens de la liste ouvrent des fiches `.NFO` à l’intérieur du moniteur. **Échap** ferme le menu ou remonte de la fiche vers la liste, puis de la liste vers l’accueil. Chaque fiche a un lien direct `../index.html#projet-…` et une version sans JavaScript `../cv.html#projet-…`, même pour un dépôt privé.
 
 La vitre est dessinée sur un plan de 640 × 480 pixels CSS, en retrait derrière l’ouverture biseautée du moniteur. La scène en déduit les dimensions de la vitre ; la même matrice de caméra projette l’interface, le clavier et la souris sur leurs surfaces 3D.
 
 ## Mettre à jour le CV texte et PDF
 
 Les faits du CV sont dans `../cv-data.js` et les fiches projets dans `../projects.js`. Depuis ce dossier, `npm run build:cv` génère ensemble `../cv.html` et `../CV_Victor_NOEL.pdf` en utilisant `../cv.css`, y compris sa mise en page A4.
-La version web affiche le catalogue complet ; l’impression ne conserve que la sélection `featuredProjects` du PDF A4.
+La version web affiche le catalogue complet et les liens de preuve des projets documentés. L’impression conserve la sélection `featuredProjects` et ses descriptions courtes sur une page A4.
 
 `../cv-apercu.jpg` (1200 × 630) est la capture réelle du bureau utilisée dans le guide sur ordinateur et dans l’aperçu Open Graph.
 
@@ -36,6 +36,6 @@ La texture photographique du bois provient de [Wood Table 001, Poly Haven](https
 
 La pièce complète est modélisée en primitives : plateau et piètement tourné avec tiroir central, chaise de bureau, sol parqueté avec tapis kilim et plinthe, fenêtre à store semi-levé derrière le moniteur, multiprise et câbles d'alimentation, étagère murale à équerres avec serre-livres et plante.
 
-Sept miniatures de projets sont posées sur le bureau : OpenCleaner, SardocheMètre, Cotalyse, la station météo 3WW, le jeu de la vie, Web4All et Prosit 5. Chaque miniature est cliquable et ouvre sa fiche ; les noms, descriptions et liens sont centralisés dans `../projects.js`.
+Sept miniatures représentent OpenCleaner, SardocheMètre, Cotalyse, la station météo 3WW, le jeu de la vie, Web4All et Prosit 5. Les noms, descriptions et liens sont centralisés dans `../projects.js`.
 
 La face de Clawd utilise [le visuel diffusé sur claude.dev](https://claude.dev/shared/img/clawd-mark.png). Son contour est extrudé dans la scène. L’autocollant utilise le [logo Hugging Face](https://huggingface.co/brand). La fiche murale renvoie à [Attention Is All You Need](https://arxiv.org/abs/1706.03762).

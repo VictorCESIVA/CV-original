@@ -1030,7 +1030,7 @@ function buildDesk(renderer) {
         } else if(target){
             const meta=projectMeta.find(project=>project.id===target.parent.userData.projectId);
             tipTitle.textContent=meta.name;
-            tipHint.textContent=(meta.collection==='cesi'?'Projet CESI':'Projet perso')+' · cliquer pour ouvrir la fiche';
+            tipHint.textContent=(meta.collection==='cesi'?'Projet CESI':'Projet perso')+' · ouvrir sur le PC';
         }
         if(previousRing||ring)invalidate();
     }

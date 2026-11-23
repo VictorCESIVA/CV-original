@@ -24,13 +24,18 @@ function rows(items) {
 
 const featured = cv.featuredProjects.map(id => projects.find(project => project.id === id));
 const others = projects.filter(project => !cv.featuredProjects.includes(project.id));
-const catalog = [...featured, ...others].map(({id, url, name, description, tags, collection}, index) => {
+const catalog = [...featured, ...others].map(({id, url, name, description, tags, collection, proof}, index) => {
     const extra = index < featured.length ? '' : ' cv-project-extra';
+    const documentation = proof ? `
+                <div class="cv-project-proof">
+                    <p>${esc(proof.detail)}</p>
+                    <div class="cv-project-links">${proof.links.map(([label, href]) => link(href, label)).join('')}</div>
+                </div>` : '';
     return `            <li class="cv-project${extra}" id="projet-${esc(id)}">
                 <h3>${url ? link(url, name) : esc(name)}</h3>
                 <span class="cv-project-category">${collection === 'cesi' ? 'Projet CESI' : 'Projet personnel'}</span>
                 <span class="entry-note">(${esc(tags.join(' · '))})</span>
-                <p>${esc(description)}</p>
+                <p>${esc(description)}</p>${documentation}
             </li>`;
 }).join('\n');
 
@@ -42,7 +47,7 @@ const html = `<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="CV de ${esc(cv.name)} : parcours, compétences en automatisation et IA appliquée, et portfolio.">
     <title>${esc(cv.name)} — CV</title>
-    <link rel="stylesheet" href="cv.css?v=portfolio">
+    <link rel="stylesheet" href="cv.css?v=fiches">
 </head>
 <body>
 <nav class="cv-nav" aria-label="Formats du CV">
