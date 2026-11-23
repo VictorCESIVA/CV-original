@@ -9,8 +9,9 @@ Pour reconstruire le bundle depuis ce dossier, exécuter `npm ci` puis `npm run 
 Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteur 2D donne accès au même écran, au terminal et au CV express.
 
 - **Guide** explique les trois accès dès la première visite : explorer en 3D, ouvrir le PC seul ou lire le CV express. Le guide et le mode choisi sont mémorisés dans `localStorage`, sans compte.
-  Si aucun mode n’a été choisi, fermer le guide laisse le PC seul affiché. La première visite ne charge la scène qu’en choisissant le bureau 3D.
-- Le moniteur démarre sur l’accueil NOËL OS. Les dossiers se lisent dans le PC, avec des fiches dépliables dans **Projets**. **Échap** revient à l’accueil et **Version texte** ouvre la rubrique correspondante hors de la scène. Le terminal reste accessible depuis la barre du PC.
+  Le PDF se télécharge directement depuis le guide. Si aucun mode n’a été choisi, fermer le guide laisse le PC seul affiché, sans charger la scène.
+- Le moniteur démarre sur l’accueil NOËL OS. Le menu `C:\CV` permet de changer de dossier sans revenir à l’accueil. **Échap** ferme le menu, puis revient à l’accueil. **Version texte** ouvre la même rubrique hors de la scène.
+  Les liens `../index.html#parcours`, `#projets`, `#competences` et `#contact` ouvrent le dossier sans afficher le guide ; **Précédent** et **Suivant** suivent la navigation. Le terminal reste accessible depuis la barre du PC et à l’adresse `#terminal`.
 - Le terminal accepte les commandes françaises (`aide`, `compétences`, `projets`, `thème bleu`), avec ou sans accents, ainsi que les commandes anglaises existantes. Les flèches **↑** et **↓**, physiques ou virtuelles, retrouvent les cinquante dernières commandes de la page et rendent le brouillon à la fin de l’historique.
 - **CV express** et **CV PDF** sont accessibles sans manipuler la scène. Le PC peut passer en gros plan à l’ouverture d’un dossier ou du terminal. En paysage sur un écran court, le mode lecture conserve les dossiers et la barre visibles. **Agrandir** et **Bureau** changent la vue manuellement. Sur mobile, les projets restent accessibles sous la scène en vue du bureau.
 - Le **CV express** présente le résumé professionnel et un lien de contact direct au-dessus des rubriques.

@@ -10,13 +10,13 @@
     <meta property="og:type" content="website">
     <meta property="og:locale" content="fr_FR">
     <meta property="og:url" content="https://victorcesiva.github.io/CV-original/">
-    <meta property="og:image" content="https://victorcesiva.github.io/CV-original/cv-apercu.jpg?v=vitre">
+    <meta property="og:image" content="https://victorcesiva.github.io/CV-original/cv-apercu.jpg?v=dossiers">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Le bureau 3D de Victor Noël : un moniteur rétro affiche les dossiers du CV, entouré des miniatures des projets.">
     <meta name="theme-color" content="#101b17">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101b17'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='34' font-weight='700' fill='%23ff9500' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
-    <link rel="stylesheet" href="station.css?v=vitre">
+    <link rel="stylesheet" href="station.css?v=dossiers">
 </head>
 <body>
 
@@ -44,38 +44,41 @@
 
 <main class="station">
   <section class="monitor" aria-label="Moniteur du CV">
+    <div class="display-bezel">
     <div class="screen" id="terminal-wrap">
       <canvas id="matrix-canvas" aria-hidden="true" hidden></canvas>
       <div id="topbar"><span class="os-name">NOËL OS</span><span id="screen-mode">BUREAU</span></div>
       <section class="screen-home" id="screen-home" aria-labelledby="home-title">
-        <p class="home-kicker">SYSTÈME PRÊT <span aria-hidden="true">/</span> CESI LILLE</p>
+        <p class="home-kicker">CV PRÊT <span aria-hidden="true">/</span> CESI LILLE</p>
         <h1 id="home-title">Victor Noël<span aria-hidden="true">.</span></h1>
         <p class="home-role">Élève ingénieur informatique<br>Automatisation &amp; IA appliquée</p>
-        <p class="home-hint"><span aria-hidden="true">C:\CV&gt;</span> Choisissez un dossier.</p>
+        <p class="home-hint"><span aria-hidden="true">C:\CV&gt;</span> Ouvrir un dossier</p>
         <div class="home-launchers" role="group" aria-label="Dossiers du CV">
           <a href="cv.html#parcours" data-dossier="parcours">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 12h8m-8 4h8"/></svg>
-            <span>Parcours</span>
+            <span class="file-label"><strong>Parcours</strong><small>Emploi, études</small></span>
           </a>
           <a href="cv.html#projets" data-dossier="projets">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 3h9v11H3zm0 3h9"/></svg>
-            <span>Projets</span>
+            <span class="file-label"><strong>Projets</strong><small>Portfolio</small></span>
           </a>
           <a href="cv.html#competences" data-dossier="competences">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-2-14-4 18"/></svg>
-            <span>Compétences</span>
+            <span class="file-label"><strong>Compétences</strong><small>Tech et langues</small></span>
           </a>
           <a href="cv.html#contact" data-dossier="contact">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zm0 1 9 7 9-7"/></svg>
-            <span>Contact</span>
+            <span class="file-label"><strong>Contact</strong><small>E-mail, réseaux</small></span>
           </a>
         </div>
         <noscript>Les dossiers restent consultables. Activez JavaScript pour le terminal et le bureau 3D.</noscript>
       </section>
       <section class="screen-dossier" id="screen-dossier" aria-labelledby="dossier-title" hidden>
         <div class="dossier-bar">
-          <button type="button" id="dossier-back"><span aria-hidden="true">←</span> Dossiers</button>
-          <span id="dossier-path" aria-hidden="true"></span>
+          <details class="dossier-menu" id="dossier-menu">
+            <summary aria-label="Changer de dossier" aria-describedby="dossier-current"><span class="dossier-drive" aria-hidden="true">C:\CV\</span><span id="dossier-current"></span></summary>
+            <nav aria-label="Dossiers du CV"></nav>
+          </details>
           <a id="dossier-link" href="cv.html">Version texte <span aria-hidden="true">↗</span></a>
         </div>
         <div class="screen-scroll" id="dossier-scroll" tabindex="0" role="region" aria-labelledby="dossier-title">
@@ -106,7 +109,8 @@
       </nav>
       <span id="screen-pointer" hidden aria-hidden="true">↖</span>
     </div>
-    <footer class="chin"><b>NOËL <i>Personal Computer</i></b><span class="vents" aria-hidden="true"></span><span class="power" title="Sous tension"></span></footer>
+    <footer class="chin"><b>NOËL <i>/ PC</i></b><span class="vents" aria-hidden="true"></span><span class="power" title="Sous tension"></span></footer>
+    </div>
   </section>
   <div class="stand" aria-hidden="true"></div>
   <div class="peripherals">
@@ -128,25 +132,28 @@
     <div class="guide-layout">
         <div class="guide-copy">
             <h2 id="guide-title">Bienvenue sur mon bureau.</h2>
-            <p id="guide-summary">Je suis Victor Noël, élève ingénieur au CESI Lille. Mes expériences et mes projets se découvrent dans les dossiers d’un PC rétro.</p>
+            <p id="guide-summary">Je suis Victor Noël, élève ingénieur au CESI Lille. Entrez dans mon bureau rétro ou ouvrez directement les dossiers de mon CV.</p>
             <form class="guide-routes" method="dialog">
                 <button type="submit" value="3d" data-3d-option autofocus>
                     <strong>Explorer en 3D</strong>
-                    <span>Faites pivoter le bureau et cliquez sur les miniatures de mes projets.</span>
+                    <span>Faites glisser le bureau pour le tourner. Chaque miniature ouvre un projet.</span>
                 </button>
                 <button type="submit" value="pc">
                     <strong>Ouvrir le PC seul</strong>
-                    <span>Les mêmes dossiers et le terminal, sans la scène 3D.</span>
+                    <span>Ouvrez les dossiers à l’écran, avec ou sans le terminal.</span>
                 </button>
                 <a href="cv.html" data-resume="profil">
                     <strong>Lire le CV express</strong>
-                    <span>Accédez au parcours, au contact et au PDF sans explorer le bureau.</span>
+                    <span>Parcours et contact dans une page conçue pour une lecture rapide.</span>
                 </a>
             </form>
-            <p class="guide-keyboard"><kbd>Tab</kbd> pour naviguer · <kbd>Échap</kbd> pour fermer</p>
+            <div class="guide-footer">
+                <p class="guide-keyboard"><kbd>Tab</kbd> pour naviguer · <kbd>Échap</kbd> pour fermer</p>
+                <a href="CV_Victor_NOEL.pdf" download>Télécharger le PDF <span aria-hidden="true">↓</span></a>
+            </div>
         </div>
         <figure class="guide-preview" data-3d-option>
-            <img src="cv-apercu.jpg?v=vitre" width="1200" height="630" alt="Le PC rétro au centre du bureau, entouré de miniatures représentant mes projets." loading="lazy">
+            <img src="cv-apercu.jpg?v=dossiers" width="1200" height="630" alt="Le PC rétro au centre du bureau, entouré de miniatures représentant mes projets." loading="lazy">
             <figcaption>Aperçu du bureau 3D</figcaption>
         </figure>
     </div>
@@ -463,6 +470,6 @@ function startMatrix() {
     matrixTimeout = setTimeout(stopMatrix, 4200);
 }
 </script>
-<script src="station.js?v=vitre"></script>
+<script src="station.js?v=dossiers"></script>
 </body>
 </html>

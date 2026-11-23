@@ -22,6 +22,7 @@ const screenLabels = {home:'BUREAU', dossier:'DOSSIERS', terminal:'TERMINAL'};
 let activeScreen = 'home';
 const screenMode = document.getElementById('screen-mode');
 const screenTabs = document.querySelectorAll('[data-screen]');
+const homeTab = document.querySelector('[data-screen="home"]');
 
 function showScreen(mode) {
     if (mode !== activeScreen) {
@@ -31,14 +32,10 @@ function showScreen(mode) {
         screenMode.textContent = screenLabels[mode];
         screenTabs.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.screen === mode)));
     }
-    if (mode === 'terminal') input.focus({preventScroll:true});
-    else stopMatrix();
+    if (mode !== 'terminal') stopMatrix();
 }
 
-screenTabs.forEach(button => button.addEventListener('click', () => {
-    if (button.dataset.screen === 'terminal') screenFrame.dispatchEvent(new Event('cv:read-screen'));
-    showScreen(button.dataset.screen);
-}));
+screenTabs.forEach(button => button.addEventListener('click', () => navigateScreen(button.dataset.screen)));
 
 function isPlainClick(event) {
     return event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey;
@@ -74,7 +71,7 @@ for (const row of rows) {
 }
 
 function typeKey(key) {
-    showScreen('terminal');
+    navigateScreen('terminal');
     let start = input.selectionStart;
     const end = input.selectionEnd;
     if (key === 'Escape') {
@@ -185,7 +182,7 @@ mouse.addEventListener('click', e => {
             if (hit === input) input.focus({preventScroll:true});
             else hit.click();
         }
-    } else if (e.target === mouseButtons[2]) showScreen('terminal');
+    } else if (e.target === mouseButtons[2]) navigateScreen('terminal');
 });
 let wheelTimer;
 mouse.addEventListener('wheel', e => {
@@ -245,40 +242,94 @@ const dossiers = {
     contact: cvContact
 };
 const dossierTitle = document.getElementById('dossier-title');
-const dossierPath = document.getElementById('dossier-path');
+const dossierMenu = document.getElementById('dossier-menu');
+const dossierSummary = dossierMenu.querySelector('summary');
+const dossierNav = dossierMenu.querySelector('nav');
+const dossierCurrent = document.getElementById('dossier-current');
 const dossierContent = document.getElementById('dossier-content');
 const dossierLink = document.getElementById('dossier-link');
-let dossierLauncher;
+const dossierFiles = new Map();
+let currentFile;
 
 for (const launcher of screens.home.querySelectorAll('a[data-dossier]')) {
+    const key = launcher.dataset.dossier;
+    const name = launcher.querySelector('strong').textContent;
+    const textHref = launcher.href;
+    launcher.href = `#${key}`;
     launcher.setAttribute('aria-controls', 'screen-dossier');
-    launcher.addEventListener('click', event => {
-        if (!isPlainClick(event)) return;
-        event.preventDefault();
-        dossierLauncher = launcher;
-        const key = launcher.dataset.dossier;
-        dossierTitle.textContent = launcher.textContent.trim();
-        dossierPath.textContent = `C:\\CV\\${key.toUpperCase()}`;
-        dossierLink.href = launcher.href;
-        dossierContent.innerHTML = dossiers[key];
+    const item = document.createElement('a');
+    item.href = launcher.href;
+    item.dataset.dossier = key;
+    item.textContent = name;
+    dossierFiles.set(key, {name, textHref, item, launcher});
+    dossierNav.append(item);
+}
+
+function showRoute(key, moveFocus) {
+    const file = dossierFiles.get(key);
+    if (file) {
+        const newFile = currentFile !== file;
+        if (newFile) {
+            currentFile?.item.removeAttribute('aria-current');
+            file.item.setAttribute('aria-current', 'page');
+            currentFile = file;
+            dossierTitle.textContent = file.name;
+            dossierCurrent.textContent = file.name;
+            dossierLink.href = file.textHref;
+            dossierContent.innerHTML = dossiers[key];
+        }
         showScreen('dossier');
+        if (newFile) dossierScroll.scrollTop = 0;
+        dossierMenu.open = false;
         screenFrame.dispatchEvent(new Event('cv:read-screen'));
-        dossierScroll.scrollTop = 0;
-        dossierTitle.focus({preventScroll:true});
-    });
+        if (moveFocus) dossierTitle.focus({preventScroll:true});
+    } else if (key === 'terminal') {
+        const entering = activeScreen !== 'terminal';
+        showScreen('terminal');
+        if (entering) screenFrame.dispatchEvent(new Event('cv:read-screen'));
+        if (moveFocus) input.focus({preventScroll:true});
+    } else {
+        const previous = activeScreen;
+        showScreen('home');
+        if (!moveFocus) return;
+        if (previous === 'dossier') currentFile.launcher.focus({preventScroll:true});
+        if (previous === 'terminal') homeTab.focus({preventScroll:true});
+    }
 }
 
-function closeDossier() {
-    showScreen('home');
-    dossierLauncher.focus({preventScroll:true});
+function navigateScreen(key) {
+    const hash = key === 'home' ? '' : `#${key}`;
+    if (location.hash !== hash) {
+        const url = new URL(location.href);
+        url.hash = hash;
+        history.pushState(null, '', url);
+    }
+    showRoute(key, true);
 }
 
-document.getElementById('dossier-back').addEventListener('click', closeDossier);
+screenFrame.addEventListener('click', event => {
+    const launcher = event.target.closest('a[data-dossier]');
+    if (!launcher || !isPlainClick(event)) return;
+    event.preventDefault();
+    navigateScreen(launcher.dataset.dossier);
+});
+dossierMenu.addEventListener('focusout', ({relatedTarget}) => {
+    if (relatedTarget && !dossierMenu.contains(relatedTarget)) dossierMenu.open = false;
+});
+document.addEventListener('click', ({target}) => {
+    if (dossierMenu.open && !dossierMenu.contains(target)) dossierMenu.open = false;
+});
 screens.dossier.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
     event.preventDefault();
-    closeDossier();
+    if (dossierMenu.open) {
+        dossierMenu.open = false;
+        dossierSummary.focus({preventScroll:true});
+    } else {
+        navigateScreen('home');
+    }
 });
+window.addEventListener('hashchange', () => showRoute(location.hash.slice(1), true));
 
 const archiveDialog = document.getElementById('portfolio-archive');
 document.addEventListener('click', event => {
@@ -406,12 +457,16 @@ function chooseView(mode) {
         localStorage.setItem(viewKey, mode);
     } catch { /* The choice still works without storage. */ }
     syncDesk();
+    if (mode === '3d' && deskState === 'ready' && activeScreen !== 'home') {
+        screenFrame.dispatchEvent(new Event('cv:read-screen'));
+    }
 }
 
 window.addEventListener('cv:desk-ready', event => {
     setDeskActive = event.detail;
     deskState = 'ready';
     syncDesk();
+    if (activeScreen !== 'home') screenFrame.dispatchEvent(new Event('cv:read-screen'));
 }, {once:true});
 window.addEventListener('cv:desk-unavailable', deskUnavailable, {once:true});
 
@@ -453,9 +508,12 @@ document.addEventListener('click', event => {
     resumeContent.scrollTop = target.offsetTop - 16;
 });
 
+const initialRoute = location.hash.slice(1);
+const directRoute = initialRoute === 'terminal' || dossierFiles.has(initialRoute);
+if (directRoute) showRoute(initialRoute, false);
 if (typeof guide.showModal === 'function') {
     guideButton.hidden = false;
     document.querySelectorAll('a[data-resume]').forEach(link => link.setAttribute('aria-haspopup', 'dialog'));
-    if (!guideSeen) guide.showModal();
+    if (!guideSeen && !directRoute) guide.showModal();
 }
 syncDesk();
