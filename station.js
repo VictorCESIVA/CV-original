@@ -162,3 +162,16 @@ window.addEventListener('blur', () => {
     down.clear();
     keys.forEach((button,key) => button.classList.toggle('on',key === 'Shift' && shift));
 });
+
+const archiveDialog = document.getElementById('portfolio-archive');
+document.addEventListener('click', event => {
+    const trigger = event.target.closest('button[data-archive]');
+    if (!trigger) return;
+    const collection = trigger.dataset.archive;
+    archiveDialog.querySelectorAll('[data-collection]').forEach(section => {
+        section.hidden = section.dataset.collection !== collection;
+    });
+    document.getElementById('archive-title').textContent = collection === 'cesi' ? 'Projets CESI' : 'Projets perso';
+    archiveDialog.showModal();
+    archiveDialog.scrollTop = 0;
+});

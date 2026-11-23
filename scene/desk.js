@@ -420,18 +420,30 @@ function buildDesk(renderer) {
         ring.rotation.x=flat;
     }
     contact(-4.02,1.42,1.72,1.49);
-    // A three-and-a-half inch archive disk beside the computer.
-    const disk=group(-3.03,.05,2.38);disk.rotation.y=-.27;
-    box(.68,.057,.70,.027,dark,0,0,0,disk);
-    box(.43,.013,.20,.009,metal,.025,.033,-.239,disk);
-    box(.083,.014,.130,.004,dark,.142,.040,-.253,disk);
-    const diskLabel=canvasTexture(480,300,c=>{
-        c.fillStyle='#e2d7b2';c.fillRect(0,0,480,300);
-        c.fillStyle='#9e4a2c';c.fillRect(0,0,480,58);c.fillStyle='#403b30';
-        c.font='italic 49px Georgia';c.fillText('CV  /  Victor',22,142);
-        for(let y=162;y<295;y+=52)c.fillRect(16,y,444,2);
-    });
-    const sticker=mesh(new T.PlaneGeometry(.53,.31),new T.MeshStandardMaterial({map:diskLabel}),0,.035,.104,disk);sticker.rotation.x=flat;
+    // Two labelled floppies share a mesh and a native, keyboard-accessible hit surface.
+    function projectDisk(id,title,subtitle,x,z,angle,color) {
+        const shell=group(x,.45,z);
+        shell.rotation.set(-.36,angle,0,'YXZ');
+        box(1.04,.92,.07,.039,mat(color,.67),0,0,0,shell);
+        box(.63,.26,.013,.013,metal,.035,.312,.039,shell);
+        box(.098,.166,.018,.004,dark,.214,.319,.047,shell);
+        box(.82,.09,.37,.024,dark,x,.05,z);
+        const button=document.createElement('button');
+        button.className='archive-disk';
+        button.dataset.archive=id;
+        button.setAttribute('aria-label','Ouvrir les '+title.toLowerCase());
+        const label=document.createElement('span');
+        label.textContent=title;
+        const detail=document.createElement('small');
+        detail.textContent=subtitle;
+        label.append(detail);button.append(label);
+        const plane=surface(button,overlays,x,.45,z,0,1.04/220);
+        plane.rotation.copy(shell.rotation);
+        plane.translateZ(.054);
+    }
+    projectDisk('perso','Projets perso','OpenCleaner…',-3.09,2.25,.16,0x3a4242);
+    projectDisk('cesi','Projets CESI','Station météo…',3.56,.86,.05,0x31585a);
+
     // A taped two-colour generative print, drawn directly on warm paper.
     const print=canvasTexture(512,640,c=>{
         c.fillStyle='#ede6d3';c.fillRect(0,0,512,640);
@@ -453,7 +465,7 @@ function buildDesk(renderer) {
         }
         c.restore();c.fillStyle='#24384b';c.font='bold 53px sans-serif';c.fillText('Espace latent',25,571);
     });
-    const poster=group(2.94,2.27,-3.975);poster.rotation.z=-.027;
+    const poster=group(2.94,1.77,-3.975);poster.rotation.z=-.027;
     mesh(new T.PlaneGeometry(1.28,1.60),new T.MeshStandardMaterial({map:print,roughness:1}),0,0,0,poster);
     const tape=mat(0xd2c6a4,.94);
     for(const side of [-1,1]){
@@ -478,16 +490,32 @@ function buildDesk(renderer) {
     const reading=group(-6.03,2.64,-3.97);reading.rotation.z=.075;
     mesh(new T.PlaneGeometry(1.37,1.66),new T.MeshStandardMaterial({map:transformerNotes}),0,0,0,reading);
     box(.39,.10,.007,.002,tape,0,.814,.009,reading);
-    // Wooden shelf and a few bound volumes behind the work surface.
-    box(5.2,.13,.77,.024,walnut,4.7,3.75,-3.53);
-    const spines=[0x856546,0xa4906c,0x394b46,0x976749,0xaca28a,0x40514c];
-    const volumes=[];
-    for(let i=0;i<12;i++){
-        const h=.75+(i%4)*.09;
-        volumes.push(box(.18+(i%2)*.035,h,.53,.018,mat(spines[i%6]),2.48+i*.225,3.82+h/2,-3.52));
-    }
-    volumes[9].rotation.z=-.16;
-    volumes[9].position.x+=.02;volumes[9].position.y+=.02;
+    // Lay the books horizontally so the titles face the visitor.
+    const shelfTop=2.85;
+    box(4.35,.13,.77,.024,walnut,3.98,shelfTop-.065,-3.53);
+    const library=[
+        {title:'Deep Learning',width:2.09,height:.245,color:'#344b48',ink:'#fff2cb',font:'bold 60px Georgia'},
+        {title:'Dive into Deep Learning',width:2.04,height:.225,color:'#e8d4ae',ink:'#253b45',font:'bold 55px sans-serif'},
+        {title:'Human Compatible',width:1.94,height:.210,color:'#973f27',ink:'#fff1dc',font:'bold 60px Georgia'}
+    ];
+    let restingHeight=shelfTop;
+    library.forEach(({title,width,height,color,ink,font},index)=>{
+        const volume=group(3.09+index*.025,restingHeight,-3.48);
+        volume.rotation.y=[-.025,.035,-.06][index];
+        const cloth=mat(color,.9);
+        const depth=.73;
+        box(width-.04,height-.044,depth-.045,.012,paper,0,height/2,0,volume);
+        for(const y of [.011,height-.011]) box(width,.022,depth,.009,cloth,0,y,0,volume);
+        box(width,height,.052,.018,cloth,0,height/2,depth/2-.013,volume);
+        const jacket=canvasTexture(720,80,c=>{
+            c.fillStyle=color;c.fillRect(0,0,720,80);
+            c.fillStyle=ink;c.fillRect(14,12,3,56);c.fillRect(21,12,2,56);
+            c.textBaseline='middle';c.font=font;c.fillText(title,39,42,642);
+        });
+        jacket.anisotropy=grain.anisotropy;
+        mesh(new T.PlaneGeometry(width-.045,height-.025),new T.MeshStandardMaterial({map:jacket,roughness:.9}),0,height/2,depth/2+.014,volume);
+        restingHeight+=height;
+    });
 
     // Daylight window with a half-raised blind, framed behind the monitor.
     const casement=group(-2.9,0,-3.9);
@@ -555,12 +583,10 @@ function buildDesk(renderer) {
     path([[-1.10,.10,-1.78],[-1.30,.055,-2.50],[-1.35,.045,-3.25],[-1.40,.03,-3.60],[-1.45,-1.30,-3.80],[-1.45,-2.80,-3.70],[-1.0,-2.90,-3.55],[.95,-2.92,-3.55]],.024,dark);
     path([[1.55,1.10,-1.95],[2.20,.50,-2.50],[2.45,.09,-3.00],[2.50,.05,-3.42],[2.55,.02,-3.70],[2.60,-1.40,-3.80],[2.60,-2.80,-3.70],[2.00,-2.90,-3.55],[1.78,-2.92,-3.52]],.026,dark);
     path([[-3.63,.07,-1.02],[-3.80,.05,-2.30],[-3.90,.04,-3.30],[-3.95,.02,-3.68],[-4.00,-1.40,-3.78],[-4.00,-2.80,-3.70],[-2.60,-2.90,-3.58],[.30,-2.92,-3.52]],.024,dark);
-    // Shelf brackets, a steel bookend and a small potted plant.
-    for(const x of [3.1,6.35]) box(.09,.40,.34,.02,metal,x,3.485,-3.83);
-    box(.06,.50,.40,.01,dark,5.35,4.06,-3.52);
-    box(.26,.05,.40,.01,dark,5.24,3.84,-3.52);
+    // Shelf brackets and a small potted plant.
+    for(const x of [2.3,5.6]) box(.09,.40,.34,.02,metal,x,shelfTop-.33,-3.83);
     const pot=new T.LatheGeometry([[.01,0],[.12,0],[.145,.04],[.16,.26],[.172,.28],[.148,.28],[.13,.05]].map(([x,y])=>new T.Vector2(x,y)),32);
-    const plant=group(6.15,3.815,-3.46);
+    const plant=group(4.65,shelfTop,-3.46);
     mesh(pot,mat(0x9c5a3c,.8),0,0,0,plant);
     cyl(.125,.125,.02,mat(0x241a12,.95),0,.25,0,plant);
     for(let i=0;i<7;i++){
