@@ -933,8 +933,9 @@ function buildDesk(renderer) {
     batchStaticMeshes(world,{keep:animated});
 
     const homeYaw=.035,homePitch=.455;
-    let yaw=homeYaw, pitch=homePitch, orbit=null, focus=false, pending=false;
+    let yaw=homeYaw, pitch=homePitch, orbit=null, focus=false, pending=false, frameRequest=0;
     let deskActive=true;
+    const frameSize={width:0,height:0,ratio:0};
     const cameraControls=document.querySelector('.view-controls');
     cameraControls.hidden=false;
     const zoom=document.getElementById('read-monitor');
@@ -942,10 +943,12 @@ function buildDesk(renderer) {
     const tan=Math.tan(T.MathUtils.degToRad(camera.fov/2));
 
     function invalidate() {
-        if(deskActive && !pending && !(focus&&compactView.matches)) { pending=true;requestAnimationFrame(render); }
+        if(deskActive && !pending && !(focus&&compactView.matches)) { pending=true;frameRequest=requestAnimationFrame(render); }
     }
     function render(){
         pending=false;
+        // A direct paint absorbs the frame that resize() already queued.
+        if(frameRequest){cancelAnimationFrame(frameRequest);frameRequest=0;}
         if(!deskActive || !canvas.isConnected || (focus&&compactView.matches))return;
         const narrow=compactView.matches && camera.aspect<1.30;
         aim.set(0,focus?glassY:narrow?1.86:1.40,focus?glassZ:.40);
@@ -966,11 +969,17 @@ function buildDesk(renderer) {
     function resize(){
         if(!deskActive || !canvas.isConnected || (focus&&compactView.matches))return;
         const {width,height}=renderSize();
+        const ratio=pixelRatio();
+        occlusion.enabled=!compactView.matches;
+        // The observer also reports the initial size, and switching to PC seul
+        // keeps the same box. Rebuilding the canvas and the post-process target
+        // chain for an unchanged size only costs GPU work.
+        if(width===frameSize.width && height===frameSize.height && ratio===frameSize.ratio)return;
+        frameSize.width=width;frameSize.height=height;frameSize.ratio=ratio;
         camera.aspect=width/height;
         camera.updateProjectionMatrix();
         // From clip space to CSS pixels, keeping the perspective divide (W).
         viewport.set(width/2,0,0,width/2,0,-height/2,0,height/2,0,0,1,0,0,0,0,1);
-        const ratio=pixelRatio();
         if(renderer.getPixelRatio()!==ratio){
             renderer.setPixelRatio(ratio);
             composer.setPixelRatio(ratio);
@@ -987,7 +996,7 @@ function buildDesk(renderer) {
         zoom.lastElementChild.textContent=label;
         zoom.title=label;
         zoom.setAttribute('aria-expanded',String(next));
-        if(!next&&compactView.matches)resize();
+        if(!next&&compactView.matches){resize();invalidate();}
         else invalidate();
     }
     zoom.onclick=()=>setFocus(!focus);
@@ -1095,7 +1104,7 @@ function buildDesk(renderer) {
         cameraControls.hidden=!next;
         document.body.classList.toggle('spatial',next);
         document.body.classList.toggle('reading',next&&focus);
-        if(next)resize();
+        if(next){resize();invalidate();}
         else {
             orbit=null;
             setHovered(null);

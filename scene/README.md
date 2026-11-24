@@ -30,6 +30,17 @@ Les reflets et les lignes de balayage sont atténués dans les dossiers et le te
 Restent séparés les éléments qui bougent ou répondent au pointeur : les touches du clavier, la souris et la coque du moniteur. Les matériaux transparents, les objets masqués et les cibles de survol ne sont jamais fusionnés, donc les reflets, les ombres portées et les infobulles restent identiques.
 La fusion ajoute quelques dizaines de millisecondes au chargement ; en échange, les deux bruits procéduraux du plâtre et du plastique sont remplis pixel par pixel sans allocation intermédiaire, ce qui en récupère une partie.
 
+### Ordonnancement des images
+
+La scène ne rend qu’à la demande : `invalidate()` regroupe les demandes dans une seule image. Deux travaux restaient inutiles et sont supprimés sans changer le rendu.
+
+- La construction appelait `resize()`, qui programmait déjà une image, puis peignait immédiatement : l’image programmée rejouait la même scène. `render()` absorbe maintenant la demande en attente (`cancelAnimationFrame`) avant de peindre.
+- `resize()` mémorise la taille et le ratio de pixels. Le premier rapport du `ResizeObserver` et chaque retour de **PC seul** vers **Bureau 3D** décrivaient la même zone : ils refaisaient pourtant `setSize()` sur le canevas et toute la chaîne de post-traitement, puis une image identique. Une zone inchangée ne fait plus rien ; le retour en 3D demande explicitement une image.
+
+Mesuré dans Chromium 150, ANGLE/Vulkan sur Intel, à 1440 × 900, ratio 1, en terminant chaque image composée par `gl.finish()` : au démarrage la scène passe de 3 à 2 images composées et de 1 638 à 1 181 appels de dessin (-28 %) ; le basculement **PC seul → Bureau 3D** passe de 2 à 1 image et de 914 à 457 appels (-50 %). La deuxième image restante appartient au chargement d’une texture, postérieur à la première peinture ; la supprimer retarderait l’affichage initial. Une visite avec l’onglet caché et une visite avec un dialogue modal ouvert mesurent 0 image, car le rendu est déjà à la demande : aucune pause supplémentaire n’a été ajoutée.
+
+Les captures accueil, orbite et gros plan restent au niveau du bruit de rendu : PSNR de 44,1/44,1/50,4 dB contre la référence, à comparer à 44,2/44,2/50,6 dB entre deux rendus identiques (écart moyen 0,446 contre 0,439/255). Orbite, lecture de l’écran, ouverture d’un dossier, retour depuis **PC seul** et bascule de lecture sur mobile restent vérifiés. Le bundle gagne 181 octets (109 octets gzip).
+
 ### Poids et décodage de la texture
 
 La photo du plateau est une texture WebP 768 × 768 (qualité 92) au lieu du JPEG 1024 × 1024. Le motif et le cadrage sont inchangés ; la résolution reste adaptée au cadrage de bureau, où le plateau est vu de loin. Le fichier passe de 216 à 128 ko, le bundle de 958,8 à 844,3 Kio (403,4 à 316,1 ko gzip), et la texture du bois de 5,33 à 3,00 Mo en mémoire GPU.
