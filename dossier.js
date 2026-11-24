@@ -6,14 +6,13 @@
     const esc = typeof cvEscape === 'undefined' ? null : cvEscape;
     const dossier = document.getElementById('dossier');
     const printButton = document.getElementById('dossier-print');
-    const selectionKey = 'cv-noel:selection-v1';
+    const selection = projects?.selection;
     const params = new URLSearchParams(location.search);
     const selectionParam = params.get('selection');
-    const byId = new Map((Array.isArray(projects) ? projects : []).map(project => [project.id, project]));
 
     printButton.addEventListener('click', () => window.print());
 
-    if (!Array.isArray(projects) || !data || typeof esc !== 'function') {
+    if (!Array.isArray(projects) || !selection || !data || typeof esc !== 'function') {
         printButton.disabled = true;
         printButton.textContent = 'Dossier indisponible';
         dossier.innerHTML = `<section class="dossier-empty">
@@ -28,23 +27,7 @@
         return;
     }
 
-    function parseSelection(value) {
-        const ids = [];
-        let invalid = 0;
-        if (!value) return {ids, invalid};
-        const seen = new Set();
-        for (const candidate of value.split(',')) {
-            const id = candidate.trim();
-            if (!id) continue;
-            if (!byId.has(id)) {
-                invalid++;
-            } else if (!seen.has(id)) {
-                seen.add(id);
-                ids.push(id);
-            }
-        }
-        return {ids, invalid};
-    }
+    const {storageKey: selectionKey, byId, parse: parseSelection} = selection;
 
     let selectedIds = [];
     let notice = '';

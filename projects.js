@@ -86,5 +86,31 @@ const cvProjects = [
     }
 ];
 
+const selectionById = new Map(cvProjects.map(project => [project.id, project]));
+
+// One parser for ?selection= links and the locally stored shortlist. It keeps
+// the catalog order, drops duplicates and counts unknown identifiers.
+cvProjects.selection = {
+    storageKey: 'cv-noel:selection-v1',
+    byId: selectionById,
+    parse(value) {
+        const ids = [];
+        let invalid = 0;
+        if (value) {
+            const seen = new Set();
+            for (const candidate of value.split(',')) {
+                const id = candidate.trim();
+                if (!id) continue;
+                if (!selectionById.has(id)) invalid++;
+                else if (!seen.has(id)) {
+                    seen.add(id);
+                    ids.push(id);
+                }
+            }
+        }
+        return {ids, invalid};
+    }
+};
+
 if (typeof module === 'object' && module.exports) module.exports = cvProjects;
 else window.CV_PROJECTS = cvProjects;

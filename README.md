@@ -7,7 +7,7 @@ Bureau rétro en HTML/CSS/JS : un moniteur CRT affiche les dossiers du CV, un cl
 - `index.html` : poste de travail, dialogues (CV express, guide, partage, sélection, recherche) et contenus générés côté client.
 - `station.css` : apparence du bureau, du moniteur, des périphériques et des dialogues.
 - `station.js` : navigation entre écrans, terminal, dossiers projets, sélection partageable, dossier imprimable, recherche et comportement du bureau 3D.
-- `projects.js` : source unique des projets affichés sur le bureau et dans les fiches.
+- `projects.js` : source unique des projets affichés sur le bureau et dans les fiches, avec la carte des identifiants, la clé de sélection locale et le parseur commun aux liens `?selection=…`.
 - `cv-data.js` : parcours, formations, compétences, langues et coordonnées utilisés par le terminal, le CV express et les pages générées.
 - `dossier.html`, `dossier.css`, `dossier.js` : dossier A4 des projets sélectionnés, avec coordonnées, preuves et sources.
 - `cv.html` : version texte à partager, générée depuis `cv-data.js` et `projects.js`.
@@ -23,7 +23,7 @@ Le bouton **Sélection** compose une shortlist de projets pour un recruteur. Coc
 
 Le lien prend la forme `https://victorcesiva.github.io/CV-original/?selection=opencleaner,3ww#selection`. À l’ouverture, la sélection s’affiche directement dans l’écran **Dossiers** : chaque projet mène à sa fiche complète et à ses preuves. Aucun compte n’est nécessaire.
 
-Si un identifiant du lien n’existe plus, les projets reconnus restent affichés et un avertissement indique les entrées ignorées. Une sélection vide propose de la recomposer. La sélection en cours est aussi mémorisée localement pour la prochaine visite ; le paramètre `selection` reste prioritaire.
+Si un identifiant du lien n’existe plus, les projets reconnus restent affichés et un avertissement indique les entrées ignorées. Une sélection vide propose de la recomposer. La sélection en cours est aussi mémorisée localement pour la prochaine visite ; le paramètre `selection` reste prioritaire. Le bureau et le dossier imprimable lisent les doublons, les identifiants inconnus et la clé `cv-noel:selection-v1` avec le même parseur, défini dans `projects.js`.
 
 ### Dossier de projets imprimable
 

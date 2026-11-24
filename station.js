@@ -460,28 +460,9 @@ const selectionPrint = document.getElementById('selection-print');
 const selectionShareButton = document.getElementById('selection-share');
 const selectionClear = document.getElementById('selection-clear');
 const selectionSupported = typeof selectionDialog.showModal === 'function';
-const selectionKey = 'cv-noel:selection-v1';
-const projectsById = new Map(projects.map(project => [project.id, project]));
+const {storageKey: selectionKey, byId: projectsById, parse: parseSelection} = projects.selection;
 let selectionIds = [];
 let selectionNotice = '';
-
-function parseSelection(value) {
-    const ids = [];
-    let invalid = 0;
-    if (!value) return {ids, invalid};
-    const seen = new Set();
-    for (const candidate of value.split(',')) {
-        const id = candidate.trim();
-        if (!id) continue;
-        if (!projectsById.has(id)) {
-            invalid++;
-        } else if (!seen.has(id)) {
-            seen.add(id);
-            ids.push(id);
-        }
-    }
-    return {ids, invalid};
-}
 
 const selectionParam = new URL(location.href).searchParams.get('selection');
 const parsedSelection = parseSelection(selectionParam);
