@@ -432,6 +432,309 @@ document.getElementById('share-copy').addEventListener('click', async () => {
     shareFeedback.textContent = copied ? 'Lien copié.' : 'Copie automatique indisponible. Copiez le lien sélectionné.';
 });
 
+/* Index du bureau : recherche instantanée dans les contenus du CV. */
+const searchDialog = document.getElementById('search-dialog');
+const searchButton = document.getElementById('open-search');
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
+const searchResults = document.getElementById('search-results');
+const searchStatus = document.getElementById('search-status');
+const searchSupported = typeof searchDialog.showModal === 'function';
+const SEARCH_LIMIT = 12;
+const searchItems = [];
+let searchMatches = [];
+let activeSearchIndex = -1;
+
+function searchFold(value) {
+    return String(value).normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+}
+
+function addSearchItem(id, group, label, detail, keywords, run) {
+    searchItems.push({
+        id, group, label, detail, run,
+        labelKey: searchFold(label),
+        haystack: searchFold(`${label} ${detail} ${keywords}`)
+    });
+}
+
+function openResumeAt(section) {
+    if (typeof resume.showModal !== 'function') return;
+    if (!resume.open) resume.showModal();
+    const target = document.getElementById(`resume-${section}`);
+    if (!target) return;
+    target.focus({preventScroll:true});
+    resumeContent.scrollTop = target.offsetTop - 16;
+}
+
+function addSearchContent() {
+    const dossierDetails = {
+        parcours: 'Expériences professionnelles et formations',
+        projets: 'Projets personnels et CESI, fiches et preuves',
+        competences: 'Technologies, langues et exemples concrets',
+        contact: 'E-mail, LinkedIn et GitHub'
+    };
+    for (const [key, file] of dossierFiles) {
+        addSearchItem(`dossier-${key}`, 'Dossier', file.name, dossierDetails[key] || '', key,
+            () => navigateScreen(key));
+    }
+    for (const project of projects) {
+        addSearchItem(`projet-${project.id}`, 'Projet', project.name,
+            `${project.description} · ${project.tags.join(' · ')}`,
+            `${project.id} ${project.collection} ${project.tags.join(' ')} ${project.proof ? project.proof.detail : ''}`,
+            () => navigateScreen(projectRoute(project.id)));
+    }
+    cvData.experience.forEach((entry, index) => {
+        addSearchItem(`experience-${index}`, 'Parcours', entry.title, `${entry.date} · ${entry.detail}`,
+            entry.tags.join(' '), () => navigateScreen('parcours'));
+    });
+    cvData.education.forEach((entry, index) => {
+        addSearchItem(`formation-${index}`, 'Parcours', entry.title, `${entry.date} · ${entry.detail}`,
+            entry.tags.join(' '), () => navigateScreen('parcours'));
+    });
+    cvData.skills.forEach(([label, detail, examples = []], index) => {
+        addSearchItem(`competence-${index}`, 'Compétence', label, detail,
+            examples.map(([, text]) => text).join(' '), () => navigateScreen('competences'));
+    });
+    const languageDetail = cvData.languages.map(([language, level]) => `${language} · ${level}`).join(' · ');
+    addSearchItem('competence-langues', 'Compétence', 'Langues et TOEIC', languageDetail,
+        'anglais français toeic', () => navigateScreen('competences'));
+    addSearchItem('action-cv-express', 'Action', 'CV express',
+        'Profil, parcours, projets, compétences et contact en une page',
+        'résumé rapide recruteur lecture', () => openResumeAt('profil'));
+    addSearchItem('action-pdf', 'Action', 'Télécharger le CV PDF', 'CV_Victor_NOEL.pdf',
+        'pdf imprimer télécharger document', () => document.getElementById('cv-pdf').click());
+    addSearchItem('action-email', 'Action', 'Écrire un e-mail', cvData.email,
+        'contact mail email recruter', () => { location.href = `mailto:${cvData.email}`; });
+    addSearchItem('action-linkedin', 'Action', 'Profil LinkedIn', cvData.linkedin,
+        'contact réseaux professionnels', () => window.open(cvData.linkedin, '_blank', 'noopener,noreferrer'));
+    addSearchItem('action-github', 'Action', 'GitHub', cvData.github,
+        'contact code dépôts open source', () => window.open(cvData.github, '_blank', 'noopener,noreferrer'));
+    addSearchItem('action-texte', 'Action', 'Version texte', 'cv.html · page CV à partager',
+        'lecture accessibilité résumé', () => { location.href = 'cv.html'; });
+    addSearchItem('action-guide', 'Action', 'Guide de visite', 'Découvrir le bureau et ses commandes',
+        'aide tutoriel visite', () => {
+            guide.returnValue = '';
+            guide.showModal();
+        });
+}
+
+const searchSuggestionIds = [
+    'action-cv-express', 'dossier-competences', 'projet-opencleaner', 'action-email', 'action-pdf', 'action-guide'
+];
+
+function searchSuggestions() {
+    return searchSuggestionIds.map(id => searchItems.find(item => item.id === id)).filter(Boolean);
+}
+
+function rankSearch(terms) {
+    return searchItems
+        .filter(item => terms.every(term => item.haystack.includes(term)))
+        .map(item => {
+            let score = 0;
+            for (const term of terms) {
+                if (item.labelKey === term) score += 12;
+                else if (item.labelKey.startsWith(term)) score += 8;
+                else if (item.labelKey.includes(term)) score += 5;
+                else score += 1;
+            }
+            /* Un projet concret répond mieux à une techno qu'une rubrique de compétences. */
+            return {item, score: score + (item.group === 'Projet' ? 2 : 0)};
+        })
+        .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label, 'fr'))
+        .map(({item}) => item);
+}
+
+function appendSearchHighlight(element, text, terms) {
+    if (!terms.length) {
+        element.textContent = text;
+        return;
+    }
+    let folded = '';
+    const positions = [];
+    for (let index = 0; index < text.length; index++) {
+        const normalized = text[index].normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+        for (const character of normalized) {
+            folded += character;
+            positions.push(index);
+        }
+    }
+    const ranges = [];
+    for (const term of terms) {
+        let start = folded.indexOf(term);
+        while (start !== -1) {
+            ranges.push([positions[start], positions[start + term.length - 1] + 1]);
+            start = folded.indexOf(term, start + term.length);
+        }
+    }
+    if (!ranges.length) {
+        element.textContent = text;
+        return;
+    }
+    ranges.sort((a, b) => a[0] - b[0]);
+    const merged = [];
+    for (const range of ranges) {
+        const previous = merged[merged.length - 1];
+        if (previous && range[0] <= previous[1]) previous[1] = Math.max(previous[1], range[1]);
+        else merged.push([range[0], range[1]]);
+    }
+    let cursor = 0;
+    for (const [start, end] of merged) {
+        if (start > cursor) element.append(document.createTextNode(text.slice(cursor, start)));
+        const mark = document.createElement('mark');
+        mark.textContent = text.slice(start, end);
+        element.append(mark);
+        cursor = end;
+    }
+    if (cursor < text.length) element.append(document.createTextNode(text.slice(cursor)));
+}
+
+function updateSearchActive() {
+    Array.from(searchResults.children).forEach((option, index) => {
+        option.setAttribute('aria-selected', String(index === activeSearchIndex));
+    });
+    const active = searchResults.children[activeSearchIndex];
+    if (active) {
+        searchInput.setAttribute('aria-activedescendant', active.id);
+        active.scrollIntoView({block:'nearest'});
+    } else {
+        searchInput.removeAttribute('aria-activedescendant');
+    }
+}
+
+function renderSearch(query) {
+    const trimmed = query.trim();
+    const terms = searchFold(trimmed).split(/\s+/).filter(Boolean);
+    const ranked = terms.length ? rankSearch(terms) : searchSuggestions();
+    searchMatches = ranked.slice(0, SEARCH_LIMIT);
+    activeSearchIndex = searchMatches.length ? 0 : -1;
+    searchResults.replaceChildren();
+    searchMatches.forEach((item, index) => {
+        const option = document.createElement('li');
+        option.className = 'search-result';
+        option.id = `search-option-${index}`;
+        option.dataset.index = String(index);
+        option.setAttribute('role', 'option');
+        option.setAttribute('aria-selected', String(index === activeSearchIndex));
+        const type = document.createElement('span');
+        type.className = 'search-result-type';
+        type.textContent = item.group;
+        const label = document.createElement('strong');
+        label.className = 'search-result-label';
+        appendSearchHighlight(label, item.label, terms);
+        const enter = document.createElement('span');
+        enter.className = 'search-result-enter';
+        enter.setAttribute('aria-hidden', 'true');
+        enter.textContent = '↵';
+        const detail = document.createElement('span');
+        detail.className = 'search-result-detail';
+        appendSearchHighlight(detail, item.detail, terms);
+        option.append(type, label, enter, detail);
+        searchResults.append(option);
+    });
+    if (!terms.length) {
+        searchStatus.textContent = 'Suggestions — tapez un mot pour filtrer.';
+    } else if (!ranked.length) {
+        searchStatus.textContent = `Aucun résultat pour « ${trimmed} ». Essayez « Python », « STM32 » ou « contact ».`;
+    } else if (ranked.length > searchMatches.length) {
+        searchStatus.textContent = `${searchMatches.length} premiers résultats sur ${ranked.length} pour « ${trimmed} ».`;
+    } else {
+        searchStatus.textContent = `${ranked.length} résultat${ranked.length > 1 ? 's' : ''} pour « ${trimmed} ».`;
+    }
+    searchClear.hidden = !searchInput.value;
+    searchInput.setAttribute('aria-expanded', 'true');
+    updateSearchActive();
+}
+
+function moveSearchActive(delta) {
+    if (!searchMatches.length) return;
+    activeSearchIndex = (activeSearchIndex + delta + searchMatches.length) % searchMatches.length;
+    updateSearchActive();
+}
+
+function setSearchActive(index) {
+    if (!searchMatches.length) return;
+    activeSearchIndex = Math.max(0, Math.min(searchMatches.length - 1, index));
+    updateSearchActive();
+}
+
+function activateSearchItem(index) {
+    const item = searchMatches[index];
+    if (!item) return;
+    searchDialog.close();
+    searchInput.value = '';
+    item.run();
+}
+
+function openSearch() {
+    if (!searchSupported) return;
+    if (guide.open || resume.open || shareDialog.open) return;
+    searchInput.value = '';
+    renderSearch('');
+    if (!searchDialog.open) searchDialog.showModal();
+    searchInput.focus({preventScroll:true});
+    syncDesk();
+}
+
+if (searchSupported) {
+    searchButton.hidden = false;
+    addSearchContent();
+    searchButton.addEventListener('click', openSearch);
+    searchClear.addEventListener('click', () => {
+        searchInput.value = '';
+        renderSearch('');
+        searchInput.focus({preventScroll:true});
+    });
+    searchInput.addEventListener('input', () => renderSearch(searchInput.value));
+    searchInput.addEventListener('keydown', event => {
+        if (event.isComposing) return;
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            if (!searchMatches.length) return;
+            event.preventDefault();
+            moveSearchActive(event.key === 'ArrowDown' ? 1 : -1);
+        } else if (event.key === 'Home' || event.key === 'End') {
+            if (!searchMatches.length) return;
+            event.preventDefault();
+            setSearchActive(event.key === 'Home' ? 0 : searchMatches.length - 1);
+        } else if (event.key === 'Enter') {
+            event.preventDefault();
+            activateSearchItem(activeSearchIndex);
+        } else if (event.key === 'Escape') {
+            /* Safari/WebKit vide le champ type=search au lieu de fermer le dialogue. */
+            event.preventDefault();
+            searchDialog.close();
+        }
+    });
+    searchResults.addEventListener('click', event => {
+        const option = event.target.closest('.search-result');
+        if (option) activateSearchItem(Number(option.dataset.index));
+    });
+    searchResults.addEventListener('pointermove', event => {
+        const option = event.target.closest('.search-result');
+        if (!option) return;
+        const index = Number(option.dataset.index);
+        if (index === activeSearchIndex) return;
+        activeSearchIndex = index;
+        updateSearchActive();
+    });
+    searchDialog.addEventListener('click', event => {
+        if (event.target === searchDialog) searchDialog.close();
+    });
+    searchDialog.addEventListener('close', () => {
+        searchInput.setAttribute('aria-expanded', 'false');
+        searchInput.removeAttribute('aria-activedescendant');
+        syncDesk();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key.toLowerCase() !== 'k' || !(event.ctrlKey || event.metaKey) || event.altKey) return;
+        if (guide.open || resume.open || shareDialog.open) return;
+        event.preventDefault();
+        if (searchDialog.open) searchInput.focus({preventScroll:true});
+        else openSearch();
+    });
+} else {
+    searchButton.hidden = true;
+}
+
 const guideKey = 'cv-noel:guide-v1';
 const viewKey = 'cv-noel:view';
 const viewToggle = document.getElementById('view-mode');
@@ -453,7 +756,7 @@ function deskUnavailable() {
 
 function syncDesk() {
     const want3d = viewMode === '3d';
-    if (want3d && deskState === 'idle' && !guide.open && !resume.open) {
+    if (want3d && deskState === 'idle' && !guide.open && !resume.open && !searchDialog.open) {
         deskState = 'loading';
         const script = document.createElement('script');
         script.src = 'desk.bundle.js?v=fiches';

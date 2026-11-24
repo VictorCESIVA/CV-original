@@ -17,12 +17,16 @@
     <meta name="theme-color" content="#101b17">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101b17'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='34' font-weight='700' fill='%23ff9500' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="scene/assets/vt323-latin.css">
-    <link rel="stylesheet" href="station.css?v=competences">
+    <link rel="stylesheet" href="station.css?v=recherche">
 </head>
 <body>
 
 <header class="site-bar">
     <nav class="site-actions" aria-label="Accès rapides">
+        <button type="button" id="open-search" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K" title="Rechercher dans le CV (Ctrl K)" hidden>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.4"/><path d="m10.3 10.3 3.2 3.2"/></svg>
+            <span>Rechercher</span>
+        </button>
         <a href="cv.html" data-resume="profil">CV express</a>
         <a id="cv-pdf" href="CV_Victor_NOEL.pdf" download>CV PDF <span aria-hidden="true">↓</span></a>
         <button type="button" id="open-guide" data-guide aria-haspopup="dialog" hidden>Guide</button>
@@ -172,7 +176,7 @@
                 <a class="guide-example" href="cv.html#projet-opencleaner" data-dossier="projet-opencleaner">Voir un exemple <span aria-hidden="true">→</span></a>
                 <a href="CV_Victor_NOEL.pdf" download>Télécharger le PDF <span aria-hidden="true">↓</span></a>
             </div>
-            <p class="guide-keyboard"><kbd>Tab</kbd> pour naviguer · <kbd>Échap</kbd> pour fermer</p>
+            <p class="guide-keyboard"><kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>K</kbd> pour rechercher · <kbd>Tab</kbd> pour naviguer · <kbd>Échap</kbd> pour fermer</p>
         </div>
     </div>
 </dialog>
@@ -225,6 +229,24 @@
         <input id="share-url" type="url" readonly spellcheck="false">
         <p id="share-feedback" role="status"></p>
         <div class="dialog-actions"><button type="button" class="primary-action" id="share-copy" autofocus>Copier le lien</button></div>
+    </div>
+</dialog>
+
+<dialog class="site-dialog" id="search-dialog" aria-labelledby="search-title">
+    <header class="resume-bar">
+        <h2 id="search-title">Index du bureau</h2>
+        <form method="dialog"><button type="submit" aria-label="Fermer la recherche" title="Fermer la recherche">×</button></form>
+    </header>
+    <div class="search-panel">
+        <div class="search-field">
+            <span class="search-prompt" aria-hidden="true">&gt;</span>
+            <input id="search-input" type="search" role="combobox" aria-expanded="false" aria-controls="search-results" aria-autocomplete="list" aria-describedby="search-help search-status" aria-label="Rechercher dans le CV" placeholder="Projet, techno, expérience…" autocomplete="off" spellcheck="false" enterkeyhint="search">
+            <button type="button" class="search-clear" id="search-clear" aria-label="Effacer la recherche" title="Effacer la recherche" hidden>×</button>
+            <kbd class="search-key" aria-hidden="true">Ctrl K</kbd>
+        </div>
+        <p class="search-hint" id="search-help"><kbd>↑</kbd> <kbd>↓</kbd> parcourir · <kbd>Entrée</kbd> ouvrir · <kbd>Échap</kbd> fermer</p>
+        <p class="search-status" id="search-status" role="status" aria-live="polite"></p>
+        <ul class="search-results" id="search-results" role="listbox" aria-label="Résultats de recherche"></ul>
     </div>
 </dialog>
 
@@ -496,6 +518,6 @@ function startMatrix() {
     matrixTimeout = setTimeout(stopMatrix, 4200);
 }
 </script>
-<script src="station.js?v=competences"></script>
+<script src="station.js?v=recherche"></script>
 </body>
 </html>
