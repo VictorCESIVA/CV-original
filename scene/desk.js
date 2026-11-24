@@ -62,14 +62,18 @@ function buildDesk(renderer) {
         const obj=new T.Mesh(geo,m);
         obj.position.set(x,y,z); obj.castShadow=obj.receiveShadow=true; parent.add(obj); return obj;
     }
-    const shapes=new Map();
+    const shapes=new Map(), cylinders=new Map();
+    const unitSphere=new T.SphereGeometry(1,40,24);
     function box(w,h,d,r,m,x,y,z,parent) {
         const id=[w,h,d,r].join('/');
         if (!shapes.has(id)) shapes.set(id,r ? new RoundedBoxGeometry(w,h,d,3,r) : new T.BoxGeometry(w,h,d));
         return mesh(shapes.get(id),m,x,y,z,parent);
     }
     function cyl(top,bottom,h,m,x,y,z,parent) {
-        return mesh(new T.CylinderGeometry(top,bottom,h,48),m,x,y,z,parent);
+        const id=`${top}/${bottom}/${h}`;
+        let geometry=cylinders.get(id);
+        if (!geometry) cylinders.set(id,geometry=new T.CylinderGeometry(top,bottom,h,48));
+        return mesh(geometry,m,x,y,z,parent);
     }
     function group(x,y,z,parent=world) {
         const g=new T.Group(); g.position.set(x,y,z); parent.add(g); return g;
@@ -227,7 +231,7 @@ function buildDesk(renderer) {
     keyBadge.rotation.x=-Math.PI/2;
     const unit=4.28/board.offsetWidth;
     surface(board,keyRig,0,.229,0,flat,unit);
-    const caps=[];
+    const capsByButton=new Map();
     const keyMat=mat(0xe1dccf), modifier=mat(0x495d61);
     board.querySelectorAll('.key').forEach(button=>{
         const w=button.offsetWidth*unit, d=button.offsetHeight*unit;
@@ -247,14 +251,14 @@ function buildDesk(renderer) {
             }
             cap.geometry.computeVertexNormals();cap.geometry.userData.sculpted=true;
         }
-        caps.push([cap,button]);
+        capsByButton.set(button,cap);
     });
     contact(-.04,1.92,5.55,2.05);
     box(1.69,.026,1.49,.065,mat(0x344742,.98),2.93,.02,1.81);
     const mouseRig=group(2.87,.055,1.85);
     mouseRig.rotation.y=-.14;
     const egg=(w,h,d,m,x,y,z,g)=>{
-        const o=mesh(new T.SphereGeometry(1,40,24),m,x,y,z,g);o.scale.set(w,h,d);return o;
+        const o=mesh(unitSphere,m,x,y,z,g);o.scale.set(w,h,d);return o;
     };
     // Cross-sections of a single moulded shell, split into hinged front buttons and palm rest.
     const mouseShell=mat(0xbfc9bd,.43);
@@ -938,11 +942,6 @@ function buildDesk(renderer) {
         const a=focus?.022:yaw, p=focus?.055:pitch;
         camera.position.set(Math.sin(a)*Math.cos(p),Math.sin(p),Math.cos(a)*Math.cos(p)).multiplyScalar(distance).add(aim);
         camera.lookAt(aim);camera.updateMatrixWorld();
-        caps.forEach(([cap,b])=>{cap.position.y=b.matches('.on,.pressed')?.129:.166;});
-        left.position.y=mouse.querySelector('.left.on')?-.005:.014;
-        right.position.y=mouse.querySelector('.right.on')?-.005:.014;
-        wheel.material=mouse.querySelector('.wheel.on')?orange:dark;
-        shiftLed.emissiveIntensity=board.querySelector('[data-key="Shift"]')?.classList.contains('on')?1.6:.12;
         composer.render();
         projection.copy(viewport).multiply(camera.projectionMatrix).multiply(camera.matrixWorldInverse);
         for(const {element,anchor,local} of surfaces){
@@ -1090,8 +1089,61 @@ function buildDesk(renderer) {
         }
     }
 
-    const keyObserver=new MutationObserver(invalidate);
-    const mouseObserver=new MutationObserver(invalidate);
+    // Mirror the DOM interaction classes onto their meshes only when an
+    // observed button changes, instead of querying the DOM on every frame.
+    const shiftButton=board.querySelector('[data-key="Shift"]');
+    const leftButton=mouse.querySelector('.left');
+    const rightButton=mouse.querySelector('.right');
+    const wheelButton=mouse.querySelector('.wheel');
+    const mouseButtons=[leftButton,rightButton,wheelButton];
+    function syncCap(button){
+        const cap=capsByButton.get(button);
+        if(!cap)return false;
+        const y=(button.classList.contains('on')||button.classList.contains('pressed')) ? .129 : .166;
+        if(cap.position.y===y)return false;
+        cap.position.y=y;
+        return true;
+    }
+    function syncShift(){
+        const glow=shiftButton?.classList.contains('on') ? 1.6 : .12;
+        if(shiftLed.emissiveIntensity===glow)return false;
+        shiftLed.emissiveIntensity=glow;
+        return true;
+    }
+    function syncMouseButton(button){
+        if(button===leftButton||button===rightButton){
+            const patch=button===leftButton ? left : right;
+            const y=button.classList.contains('on') ? -.005 : .014;
+            if(patch.position.y===y)return false;
+            patch.position.y=y;
+            return true;
+        }
+        if(button===wheelButton){
+            const material=button.classList.contains('on') ? orange : dark;
+            if(wheel.material===material)return false;
+            wheel.material=material;
+            return true;
+        }
+        return false;
+    }
+    for(const button of capsByButton.keys())syncCap(button);
+    syncShift();
+    for(const button of mouseButtons)syncMouseButton(button);
+    const keyObserver=new MutationObserver(records=>{
+        let changed=false;
+        for(const record of records){
+            if(capsByButton.has(record.target)&&syncCap(record.target))changed=true;
+            if(record.target===shiftButton&&syncShift())changed=true;
+        }
+        if(changed)invalidate();
+    });
+    const mouseObserver=new MutationObserver(records=>{
+        let changed=false;
+        for(const record of records){
+            if(syncMouseButton(record.target))changed=true;
+        }
+        if(changed)invalidate();
+    });
     const stageObserver=new ResizeObserver(resize);
     keyObserver.observe(board,{attributes:true,attributeFilter:['class'],subtree:true});
     mouseObserver.observe(mouse,{attributes:true,attributeFilter:['class'],subtree:true});
