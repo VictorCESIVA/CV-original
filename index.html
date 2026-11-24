@@ -17,12 +17,17 @@
     <meta name="theme-color" content="#101b17">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101b17'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='34' font-weight='700' fill='%23ff9500' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="scene/assets/vt323-latin.css">
-    <link rel="stylesheet" href="station.css?v=recherche">
+    <link rel="stylesheet" href="station.css?v=selection">
 </head>
 <body>
 
 <header class="site-bar">
     <nav class="site-actions" aria-label="Accès rapides">
+        <button type="button" id="open-selection" aria-haspopup="dialog" title="Composer une sélection de projets à partager" hidden>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 2.8h7v2h-7zm-2 4.4h9m-9 3.9h6.2M2.8 5.4l.9.9 1.6-1.7M2.8 9.3l.9.9 1.6-1.7"/></svg>
+            <span>Sélection</span>
+            <span id="selection-badge" aria-hidden="true" hidden></span>
+        </button>
         <button type="button" id="open-search" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K" title="Rechercher dans le CV (Ctrl K)" hidden>
             <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.4"/><path d="m10.3 10.3 3.2 3.2"/></svg>
             <span>Rechercher</span>
@@ -229,6 +234,23 @@
         <input id="share-url" type="url" readonly spellcheck="false">
         <p id="share-feedback" role="status"></p>
         <div class="dialog-actions"><button type="button" class="primary-action" id="share-copy" autofocus>Copier le lien</button></div>
+    </div>
+</dialog>
+
+<dialog class="site-dialog" id="selection-dialog" aria-labelledby="selection-title" aria-describedby="selection-help">
+    <header class="resume-bar">
+        <h2 id="selection-title">Sélection de projets</h2>
+        <form method="dialog"><button type="submit" aria-label="Fermer la sélection" title="Fermer la sélection">×</button></form>
+    </header>
+    <div class="selection-panel">
+        <p class="selection-intro" id="selection-help">Cochez les projets à présenter, puis partagez un lien unique. Le recruteur retrouvera cette shortlist à l’ouverture, sans compte ni recherche.</p>
+        <div class="selection-groups" id="selection-groups" role="group" aria-label="Projets disponibles"></div>
+        <p class="selection-status" id="selection-status" role="status" aria-live="polite"></p>
+        <div class="dialog-actions">
+            <button type="button" class="primary-action" id="selection-view">Afficher la sélection</button>
+            <button type="button" id="selection-share">Partager le lien</button>
+            <button type="button" id="selection-clear">Tout décocher</button>
+        </div>
     </div>
 </dialog>
 
@@ -518,6 +540,6 @@ function startMatrix() {
     matrixTimeout = setTimeout(stopMatrix, 4200);
 }
 </script>
-<script src="station.js?v=recherche"></script>
+<script src="station.js?v=selection"></script>
 </body>
 </html>

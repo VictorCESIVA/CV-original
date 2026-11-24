@@ -4,9 +4,9 @@ Bureau rétro en HTML/CSS/JS : un moniteur CRT affiche les dossiers du CV, un cl
 
 ## Fichiers
 
-- `index.html` : poste de travail, dialogues (CV express, guide, partage, recherche) et contenus générés côté client.
+- `index.html` : poste de travail, dialogues (CV express, guide, partage, sélection, recherche) et contenus générés côté client.
 - `station.css` : apparence du bureau, du moniteur, des périphériques et des dialogues.
-- `station.js` : navigation entre écrans, terminal, dossiers projets, recherche et comportement du bureau 3D.
+- `station.js` : navigation entre écrans, terminal, dossiers projets, sélection partageable, recherche et comportement du bureau 3D.
 - `projects.js` : source unique des projets affichés sur le bureau et dans les fiches.
 - `cv-data.js` : parcours, formations, compétences, langues et coordonnées utilisés par le terminal, le CV express et les pages générées.
 - `cv.html` : version texte à partager, générée depuis `cv-data.js` et `projects.js`.
@@ -16,11 +16,19 @@ Bureau rétro en HTML/CSS/JS : un moniteur CRT affiche les dossiers du CV, un cl
 
 Le bouton **Rechercher** (ou `Ctrl`/`⌘` + `K`) ouvre l’**Index du bureau**. La recherche couvre les dossiers, les projets, les expériences, les formations, les compétences, les langues et les actions du bureau (CV express, PDF, guide, contact). Les résultats se parcourent avec les flèches, s’ouvrent avec `Entrée` et se ferment avec `Échap`. Les correspondances sont annoncées dans une zone live et signalées visuellement dans les résultats.
 
+## Sélection de projets à partager
+
+Le bouton **Sélection** compose une shortlist de projets pour un recruteur. Cochez les projets voulus, puis **Afficher la sélection** pour la relire dans le moniteur ou **Partager le lien** pour copier une URL autonome.
+
+Le lien prend la forme `https://victorcesiva.github.io/CV-original/?selection=opencleaner,3ww#selection`. À l’ouverture, la sélection s’affiche directement dans l’écran **Dossiers** : chaque projet mène à sa fiche complète et à ses preuves. Aucun compte n’est nécessaire.
+
+Si un identifiant du lien n’existe plus, les projets reconnus restent affichés et un avertissement indique les entrées ignorées. Une sélection vide propose de la recomposer. La sélection en cours est aussi mémorisée localement pour la prochaine visite ; le paramètre `selection` reste prioritaire.
+
 ## Raccourcis
 
 - `Ctrl`/`⌘` + `K` : ouvrir la recherche.
 - `Tab` : parcourir les commandes et les liens.
-- `Échap` : fermer la recherche, le guide ou le CV express.
+- `Échap` : fermer la recherche, le guide, le CV express ou la sélection.
 - Terminal : `aide` pour la liste des commandes, `↑`/`↓` pour l’historique.
 - Le clavier virtuel AZERTY alimente directement le terminal.
 

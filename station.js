@@ -291,7 +291,8 @@ function showRoute(key, moveFocus, trigger) {
             currentDossierKey = key;
             dossierTitle.textContent = project ? project.name : file.name;
             dossierLink.href = project ? projectPage(project.id) : file.textHref;
-            dossierContent.innerHTML = project ? projectFile(project) : dossiers[key];
+            dossierContent.innerHTML = project ? projectFile(project)
+                : (key === 'selection' ? selectionFile() : dossiers[key]);
         }
         showScreen('dossier');
         if (newRoute) dossierScroll.scrollTop = 0;
@@ -314,11 +315,15 @@ function showRoute(key, moveFocus, trigger) {
 
 function navigateScreen(key, trigger) {
     const hash = key === 'home' ? '' : `#${key}`;
-    if (location.hash !== hash) {
-        const url = new URL(location.href);
-        url.hash = hash;
-        history.pushState(null, '', url);
+    const url = new URL(location.href);
+    if (key === 'selection') {
+        if (selectionIds.length) url.searchParams.set('selection', selectionIds.join(','));
+        else url.searchParams.delete('selection');
+    } else {
+        url.searchParams.delete('selection');
     }
+    url.hash = hash;
+    if (url.href !== location.href) history.pushState(null, '', url);
     showRoute(key, true, trigger);
 }
 
@@ -408,14 +413,26 @@ const shareTitle = document.getElementById('share-title');
 const shareUrl = document.getElementById('share-url');
 const shareFeedback = document.getElementById('share-feedback');
 shareButton.hidden = typeof shareDialog.showModal !== 'function';
+
+function openShare(url, title) {
+    shareTitle.textContent = title;
+    shareUrl.value = url;
+    shareFeedback.textContent = '';
+    if (!shareDialog.open) shareDialog.showModal();
+}
+
 shareButton.addEventListener('click', () => {
+    if (currentDossierKey === 'selection') {
+        if (!selectionIds.length) {
+            openSelectionDialog();
+            return;
+        }
+        openShare(selectionShareUrl(), 'Partager : Sélection de projets');
+        return;
+    }
     const url = new URL(cvData.portfolio);
     url.hash = currentDossierKey;
-    shareTitle.textContent = `Partager : ${dossierTitle.textContent}`;
-    shareUrl.value = url.href;
-    shareFeedback.textContent = '';
-    shareButton.focus({preventScroll:true});
-    shareDialog.showModal();
+    openShare(url.href, `Partager : ${dossierTitle.textContent}`);
 });
 document.getElementById('share-copy').addEventListener('click', async () => {
     const url = shareUrl.value;
@@ -430,6 +447,244 @@ document.getElementById('share-copy').addEventListener('click', async () => {
         shareUrl.select();
     }
     shareFeedback.textContent = copied ? 'Lien copié.' : 'Copie automatique indisponible. Copiez le lien sélectionné.';
+});
+
+/* Sélection de projets : shortlist autonome partageable via ?selection=identifiant,identifiant */
+const selectionDialog = document.getElementById('selection-dialog');
+const selectionButton = document.getElementById('open-selection');
+const selectionBadge = document.getElementById('selection-badge');
+const selectionGroups = document.getElementById('selection-groups');
+const selectionStatus = document.getElementById('selection-status');
+const selectionView = document.getElementById('selection-view');
+const selectionShareButton = document.getElementById('selection-share');
+const selectionClear = document.getElementById('selection-clear');
+const selectionSupported = typeof selectionDialog.showModal === 'function';
+const selectionKey = 'cv-noel:selection-v1';
+const projectsById = new Map(projects.map(project => [project.id, project]));
+let selectionIds = [];
+let selectionNotice = '';
+
+function parseSelection(value) {
+    const ids = [];
+    let invalid = 0;
+    if (!value) return {ids, invalid};
+    const seen = new Set();
+    for (const candidate of value.split(',')) {
+        const id = candidate.trim();
+        if (!id) continue;
+        if (!projectsById.has(id)) {
+            invalid++;
+        } else if (!seen.has(id)) {
+            seen.add(id);
+            ids.push(id);
+        }
+    }
+    return {ids, invalid};
+}
+
+const selectionParam = new URL(location.href).searchParams.get('selection');
+const parsedSelection = parseSelection(selectionParam);
+if (selectionParam === null) {
+    try {
+        selectionIds = parseSelection(localStorage.getItem(selectionKey)).ids;
+    } catch { /* The selection still works for this visit when storage is blocked. */ }
+} else {
+    selectionIds = parsedSelection.ids;
+    if (parsedSelection.invalid) {
+        selectionNotice = `${parsedSelection.invalid} projet${parsedSelection.invalid > 1 ? 's' : ''} de ce lien n’existe${parsedSelection.invalid > 1 ? 'nt' : ''} plus.`;
+    } else if (!selectionIds.length) {
+        selectionNotice = 'Ce lien ne contient aucun projet sélectionné.';
+    }
+}
+
+function saveSelection() {
+    try {
+        localStorage.setItem(selectionKey, selectionIds.join(','));
+    } catch { /* Storage is optional; the current selection remains usable. */ }
+}
+
+function selectionShareUrl() {
+    const url = new URL(cvData.portfolio);
+    if (selectionIds.length) url.searchParams.set('selection', selectionIds.join(','));
+    url.hash = 'selection';
+    return url.href;
+}
+
+function selectionSummary() {
+    const count = selectionIds.length;
+    return count ? `${count} projet${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}.` : 'Aucun projet sélectionné.';
+}
+
+function updateSelectionChrome() {
+    const count = selectionIds.length;
+    selectionBadge.textContent = String(count);
+    selectionBadge.hidden = !count;
+    selectionButton.setAttribute('aria-label', count
+        ? `Sélection de projets, ${count} projet${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`
+        : 'Sélection de projets');
+    selectionStatus.textContent = [selectionSummary(), selectionNotice].filter(Boolean).join(' ');
+    selectionView.disabled = !count;
+    selectionShareButton.disabled = !count;
+    selectionClear.disabled = !count;
+}
+
+function selectionProjectCard(project) {
+    const route = cvEscape(projectRoute(project.id));
+    const proof = project.proof?.links?.[0];
+    return `<li class="selection-project">
+        <h3><a href="#${route}" data-dossier="${route}">${cvEscape(project.name)}</a></h3>
+        <p>${cvEscape(project.description)}</p>
+        <small>${cvEscape(project.tags.join(' · '))}</small>
+        <div class="selection-project-links">
+            ${proof ? `<a href="${cvEscape(proof[1])}" target="_blank" rel="noopener noreferrer">${cvEscape(proof[0])} <span aria-hidden="true">↗</span></a>` : ''}
+            ${project.url ? `<a href="${cvEscape(project.url)}" target="_blank" rel="noopener noreferrer">Code source <span aria-hidden="true">↗</span></a>` : ''}
+            <a href="#${route}" data-dossier="${route}">Fiche complète <span aria-hidden="true">→</span></a>
+        </div>
+    </li>`;
+}
+
+function selectionFile() {
+    const items = selectionIds.map(id => projectsById.get(id)).filter(Boolean);
+    const count = items.length;
+    return `<p class="project-file-path">C:\\CV\\SELECTION.NFO</p>
+        ${selectionNotice ? `<p class="selection-warning" role="status">${cvEscape(selectionNotice)}</p>` : ''}
+        <div class="selection-file-head">
+            <p><strong>${cvEscape(selectionSummary())}</strong></p>
+            <p>${count
+                ? 'Chaque projet ouvre sa fiche complète, avec le contexte et les preuves disponibles.'
+                : 'Composez une shortlist de projets, puis partagez le lien obtenu.'}</p>
+        </div>
+        <div class="selection-file-actions">
+            <button type="button" data-selection-action="edit">${count ? 'Modifier la sélection' : 'Composer une sélection'}</button>
+            ${count ? '<button type="button" data-selection-action="share">Partager ce lien</button>' : ''}
+        </div>
+        ${count ? `<ul class="selection-projects">${items.map(selectionProjectCard).join('')}</ul>`
+            : '<p class="selection-empty">Aucun projet reconnu dans cette sélection.</p>'}`;
+}
+
+const selectionNavItem = document.createElement('a');
+selectionNavItem.href = '#selection';
+selectionNavItem.dataset.dossier = 'selection';
+selectionNavItem.textContent = 'Sélection';
+dossierNav.append(selectionNavItem);
+dossierFiles.set('selection', {
+    name: 'Sélection',
+    textHref: 'cv.html#projets',
+    item: selectionNavItem,
+    launcher: selectionSupported ? selectionButton : homeTab
+});
+
+function buildSelectionOptions() {
+    for (const {title, items} of projectGroups) {
+        const group = document.createElement('fieldset');
+        group.className = 'selection-group';
+        const legend = document.createElement('legend');
+        legend.textContent = title;
+        group.append(legend);
+        for (const project of items) {
+            const option = document.createElement('label');
+            option.className = 'selection-option';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = project.id;
+            checkbox.addEventListener('change', () => setSelected(project.id, checkbox.checked));
+            const text = document.createElement('span');
+            text.className = 'selection-option-text';
+            const name = document.createElement('strong');
+            name.textContent = project.name;
+            const tags = document.createElement('small');
+            tags.textContent = project.tags.join(' · ');
+            text.append(name, tags);
+            option.append(checkbox, text);
+            group.append(option);
+        }
+        selectionGroups.append(group);
+    }
+}
+
+function syncSelectionInputs() {
+    const chosen = new Set(selectionIds);
+    selectionGroups.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = chosen.has(checkbox.value);
+    });
+}
+
+function setSelected(id, checked) {
+    selectionNotice = '';
+    selectionIds = selectionIds.filter(candidate => candidate !== id);
+    if (checked) selectionIds.push(id);
+    saveSelection();
+    updateSelectionChrome();
+    syncSelectionRoute();
+}
+
+function syncSelectionRoute() {
+    if (currentDossierKey !== 'selection') return;
+    dossierContent.innerHTML = selectionFile();
+    const url = new URL(location.href);
+    if (selectionIds.length) url.searchParams.set('selection', selectionIds.join(','));
+    else url.searchParams.delete('selection');
+    url.hash = 'selection';
+    if (url.href !== location.href) history.replaceState(null, '', url);
+    if (!selectionDialog.open) screenFrame.dispatchEvent(new Event('cv:read-screen'));
+}
+
+function openSelectionDialog() {
+    if (!selectionSupported || selectionDialog.open) return;
+    if (guide.open || resume.open || shareDialog.open || searchDialog.open) return;
+    syncSelectionInputs();
+    updateSelectionChrome();
+    selectionDialog.showModal();
+    const first = selectionGroups.querySelector('input:checked') || selectionGroups.querySelector('input');
+    first?.focus({preventScroll:true});
+    syncDesk();
+}
+
+if (selectionSupported) {
+    selectionButton.hidden = false;
+    buildSelectionOptions();
+    syncSelectionInputs();
+    updateSelectionChrome();
+    selectionButton.addEventListener('click', openSelectionDialog);
+    selectionDialog.addEventListener('click', event => {
+        if (event.target === selectionDialog) selectionDialog.close();
+    });
+    selectionDialog.addEventListener('close', () => {
+        updateSelectionChrome();
+        syncDesk();
+        if (currentDossierKey === 'selection') screenFrame.dispatchEvent(new Event('cv:read-screen'));
+    });
+    selectionView.addEventListener('click', () => {
+        if (!selectionIds.length) return;
+        selectionDialog.close();
+        navigateScreen('selection', selectionButton);
+        dossierScroll.scrollTop = 0;
+        dossierTitle.focus({preventScroll:true});
+    });
+    selectionShareButton.addEventListener('click', () => {
+        if (!selectionIds.length) return;
+        selectionDialog.close();
+        openShare(selectionShareUrl(), 'Partager : Sélection de projets');
+    });
+    selectionClear.addEventListener('click', () => {
+        selectionIds = [];
+        selectionNotice = '';
+        saveSelection();
+        syncSelectionInputs();
+        updateSelectionChrome();
+        syncSelectionRoute();
+        selectionGroups.querySelector('input')?.focus({preventScroll:true});
+    });
+} else {
+    selectionButton.hidden = true;
+}
+
+dossierContent.addEventListener('click', event => {
+    const action = event.target.closest('[data-selection-action]');
+    if (!action) return;
+    event.preventDefault();
+    if (action.dataset.selectionAction === 'edit') openSelectionDialog();
+    else if (action.dataset.selectionAction === 'share') openShare(selectionShareUrl(), 'Partager : Sélection de projets');
 });
 
 /* Index du bureau : recherche instantanée dans les contenus du CV. */
@@ -471,7 +726,8 @@ function addSearchContent() {
         parcours: 'Expériences professionnelles et formations',
         projets: 'Projets personnels et CESI, fiches et preuves',
         competences: 'Technologies, langues et exemples concrets',
-        contact: 'E-mail, LinkedIn et GitHub'
+        contact: 'E-mail, LinkedIn et GitHub',
+        selection: 'Shortlist de projets à partager par lien'
     };
     for (const [key, file] of dossierFiles) {
         addSearchItem(`dossier-${key}`, 'Dossier', file.name, dossierDetails[key] || '', key,
@@ -511,6 +767,9 @@ function addSearchContent() {
         'contact code dépôts open source', () => window.open(cvData.github, '_blank', 'noopener,noreferrer'));
     addSearchItem('action-texte', 'Action', 'Version texte', 'cv.html · page CV à partager',
         'lecture accessibilité résumé', () => { location.href = 'cv.html'; });
+    addSearchItem('action-selection', 'Action', 'Composer une sélection de projets',
+        'Shortlist partageable par un lien, à rouvrir chez le recruteur',
+        'shortlist recruteur partager sélection projets lien', () => openSelectionDialog());
     addSearchItem('action-guide', 'Action', 'Guide de visite', 'Découvrir le bureau et ses commandes',
         'aide tutoriel visite', () => {
             guide.returnValue = '';
@@ -667,7 +926,7 @@ function activateSearchItem(index) {
 
 function openSearch() {
     if (!searchSupported) return;
-    if (guide.open || resume.open || shareDialog.open) return;
+    if (guide.open || resume.open || shareDialog.open || selectionDialog.open) return;
     searchInput.value = '';
     renderSearch('');
     if (!searchDialog.open) searchDialog.showModal();
@@ -726,7 +985,7 @@ if (searchSupported) {
     });
     document.addEventListener('keydown', event => {
         if (event.key.toLowerCase() !== 'k' || !(event.ctrlKey || event.metaKey) || event.altKey) return;
-        if (guide.open || resume.open || shareDialog.open) return;
+        if (guide.open || resume.open || shareDialog.open || selectionDialog.open) return;
         event.preventDefault();
         if (searchDialog.open) searchInput.focus({preventScroll:true});
         else openSearch();
@@ -756,7 +1015,7 @@ function deskUnavailable() {
 
 function syncDesk() {
     const want3d = viewMode === '3d';
-    if (want3d && deskState === 'idle' && !guide.open && !resume.open && !searchDialog.open) {
+    if (want3d && deskState === 'idle' && !guide.open && !resume.open && !searchDialog.open && !selectionDialog.open) {
         deskState = 'loading';
         const script = document.createElement('script');
         script.src = 'desk.bundle.js?v=fiches';
@@ -834,11 +1093,13 @@ document.addEventListener('click', event => {
 });
 
 const initialRoute = location.hash.slice(1);
+const sharedSelection = selectionParam !== null;
 const directRoute = initialRoute === 'terminal' || dossierFiles.has(initialRoute) || projectsByRoute.has(initialRoute);
 if (directRoute) showRoute(initialRoute, false);
+else if (sharedSelection) showRoute('selection', false);
 if (typeof guide.showModal === 'function') {
     guideButtons.forEach(button => { button.hidden = false; });
     document.querySelectorAll('a[data-resume]').forEach(link => link.setAttribute('aria-haspopup', 'dialog'));
-    if (!guideSeen && !directRoute) guide.showModal();
+    if (!guideSeen && !directRoute && !sharedSelection) guide.showModal();
 }
 syncDesk();
