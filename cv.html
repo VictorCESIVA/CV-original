@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="CV de Victor Noël : parcours, compétences en automatisation et IA appliquée, et portfolio.">
     <title>Victor Noël — CV</title>
-    <link rel="stylesheet" href="cv.css?v=competences">
+    <link rel="stylesheet" href="cv.css?v=exploration">
+    <script src="cv.js?v=exploration" defer></script>
 </head>
 <body>
 <nav class="cv-nav" aria-label="Formats du CV">
@@ -81,8 +82,19 @@
     </section>
     <section class="cv-section" id="projets" aria-labelledby="projects-title">
         <h2 id="projects-title">Projets</h2>
-        <ul class="cv-projects">
-            <li class="cv-project" id="projet-opencleaner">
+        <div class="cv-explorer" id="cv-explorer" hidden>
+            <div class="cv-explorer-head">
+                <p class="cv-explorer-label" id="cv-explorer-label">Explorer par étiquette</p>
+                <button type="button" class="cv-explorer-reset" data-cv-reset hidden>Tout afficher</button>
+            </div>
+            <p class="cv-explorer-hint" id="cv-explorer-hint">Activez une ou plusieurs étiquettes : seuls les projets qui les portent toutes restent affichés. L’adresse de la page conserve le filtre.</p>
+            <div class="cv-explorer-tags" role="group" aria-labelledby="cv-explorer-label" aria-describedby="cv-explorer-hint"></div>
+            <label class="cv-explorer-code"><input type="checkbox" data-cv-public> Uniquement les projets avec dépôt public</label>
+            <p class="cv-explorer-note">Les étiquettes reprennent les métadonnées des projets ; aucun niveau de maîtrise n’est calculé.</p>
+            <p class="cv-explorer-status" role="status" aria-live="polite"></p>
+        </div>
+        <ul class="cv-projects" id="projets-liste">
+            <li class="cv-project" id="projet-opencleaner" data-tags="C#|.NET|Open source" data-code="public">
                 <h3><a href="https://github.com/VictorCESIVA/OpenCleaner">OpenCleaner</a></h3>
                 <span class="cv-project-category">Projet personnel</span>
                 <span class="entry-note">(C# · .NET · Open source)</span>
@@ -92,13 +104,13 @@
                     <div class="cv-project-links"><a href="https://github.com/VictorCESIVA/OpenCleaner/releases/latest">Versions Windows</a><a href="https://github.com/VictorCESIVA/OpenCleaner/blob/master/docs/TECHNICAL.md">Documentation technique</a></div>
                 </div>
             </li>
-            <li class="cv-project" id="projet-cotalyse">
+            <li class="cv-project" id="projet-cotalyse" data-tags="Python|FastAPI|Dépôt privé" data-code="private">
                 <h3>Cotalyse</h3>
-                <span class="cv-project-category">Projet personnel</span>
+                <span class="cv-project-category">Projet personnel</span> <span class="cv-project-code">Sans dépôt public</span>
                 <span class="entry-note">(Python · FastAPI · Dépôt privé)</span>
                 <p>Une plateforme pour suivre les cotes de football et évaluer les sélections après chaque match.</p>
             </li>
-            <li class="cv-project" id="projet-3ww">
+            <li class="cv-project" id="projet-3ww" data-tags="C|STM32|PlatformIO" data-code="public">
                 <h3><a href="https://github.com/VictorCESIVA/Worldwide-Weather-Watcher">Worldwide Weather Watcher</a></h3>
                 <span class="cv-project-category">Projet CESI</span>
                 <span class="entry-note">(C · STM32 · PlatformIO)</span>
@@ -108,25 +120,25 @@
                     <div class="cv-project-links"><a href="https://github.com/VictorCESIVA/Worldwide-Weather-Watcher/blob/codex/3ww/docs/VALIDATION.md">Compte rendu des essais</a><a href="https://github.com/VictorCESIVA/Worldwide-Weather-Watcher/blob/codex/3ww/output/pdf/LIVRABLE_2_ARCHITECTURE.pdf">Livrable d’architecture (PDF)</a></div>
                 </div>
             </li>
-            <li class="cv-project cv-project-extra" id="projet-sardochemetre">
+            <li class="cv-project cv-project-extra" id="projet-sardochemetre" data-tags="JavaScript|IA|Humour" data-code="public">
                 <h3><a href="https://github.com/VictorCESIVA/sardochemetre">SardocheMètre</a></h3>
                 <span class="cv-project-category">Projet personnel</span>
                 <span class="entry-note">(JavaScript · IA · Humour)</span>
                 <p>Un site satirique qui utilise l’IA pour commenter et noter les tweets de Sardoche.</p>
             </li>
-            <li class="cv-project cv-project-extra" id="projet-conway">
+            <li class="cv-project cv-project-extra" id="projet-conway" data-tags="C++17|SFML" data-code="public">
                 <h3><a href="https://github.com/VictorCESIVA/projet-cesi-jeux-de-la-vie">Jeu de la vie de Conway</a></h3>
                 <span class="cv-project-category">Projet CESI</span>
                 <span class="entry-note">(C++17 · SFML)</span>
                 <p>Un automate cellulaire avec deux modes d’exécution, en console ou dans une fenêtre graphique.</p>
             </li>
-            <li class="cv-project cv-project-extra" id="projet-web4all">
+            <li class="cv-project cv-project-extra" id="projet-web4all" data-tags="PHP|MySQL|PHPUnit" data-code="public">
                 <h3><a href="https://github.com/VictorCESIVA/projet-web">Web4All — CESI Stages</a></h3>
                 <span class="cv-project-category">Projet CESI</span>
                 <span class="entry-note">(PHP · MySQL · PHPUnit)</span>
                 <p>Une application web de gestion de stages construite autour d’une architecture MVC.</p>
             </li>
-            <li class="cv-project cv-project-extra" id="projet-prosit5">
+            <li class="cv-project cv-project-extra" id="projet-prosit5" data-tags="C|STM32" data-code="public">
                 <h3><a href="https://github.com/VictorCESIVA/prosit-5-pile-stm32">Prosit 5 — Pile et mémoire</a></h3>
                 <span class="cv-project-category">Projet CESI</span>
                 <span class="entry-note">(C · STM32)</span>

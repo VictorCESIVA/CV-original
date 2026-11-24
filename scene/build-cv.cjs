@@ -32,9 +32,11 @@ const catalog = [...featured, ...others].map(({id, url, name, description, tags,
                     <p>${esc(proof.detail)}</p>
                     <div class="cv-project-links">${proof.links.map(([label, href]) => link(href, label)).join('')}</div>
                 </div>` : '';
-    return `            <li class="cv-project${extra}" id="projet-${esc(id)}">
+    const code = url ? 'public' : 'private';
+    const codeBadge = url ? '' : ' <span class="cv-project-code">Sans dépôt public</span>';
+    return `            <li class="cv-project${extra}" id="projet-${esc(id)}" data-tags="${esc(tags.join('|'))}" data-code="${code}">
                 <h3>${url ? link(url, name) : esc(name)}</h3>
-                <span class="cv-project-category">${collection === 'cesi' ? 'Projet CESI' : 'Projet personnel'}</span>
+                <span class="cv-project-category">${collection === 'cesi' ? 'Projet CESI' : 'Projet personnel'}</span>${codeBadge}
                 <span class="entry-note">(${esc(tags.join(' · '))})</span>
                 <p>${esc(description)}</p>${documentation}
             </li>`;
@@ -48,7 +50,8 @@ const html = `<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="CV de ${esc(cv.name)} : parcours, compétences en automatisation et IA appliquée, et portfolio.">
     <title>${esc(cv.name)} — CV</title>
-    <link rel="stylesheet" href="cv.css?v=competences">
+    <link rel="stylesheet" href="cv.css?v=exploration">
+    <script src="cv.js?v=exploration" defer></script>
 </head>
 <body>
 <nav class="cv-nav" aria-label="Formats du CV">
@@ -86,7 +89,18 @@ ${skillRows}
     </section>
     <section class="cv-section" id="projets" aria-labelledby="projects-title">
         <h2 id="projects-title">Projets</h2>
-        <ul class="cv-projects">
+        <div class="cv-explorer" id="cv-explorer" hidden>
+            <div class="cv-explorer-head">
+                <p class="cv-explorer-label" id="cv-explorer-label">Explorer par étiquette</p>
+                <button type="button" class="cv-explorer-reset" data-cv-reset hidden>Tout afficher</button>
+            </div>
+            <p class="cv-explorer-hint" id="cv-explorer-hint">Activez une ou plusieurs étiquettes : seuls les projets qui les portent toutes restent affichés. L’adresse de la page conserve le filtre.</p>
+            <div class="cv-explorer-tags" role="group" aria-labelledby="cv-explorer-label" aria-describedby="cv-explorer-hint"></div>
+            <label class="cv-explorer-code"><input type="checkbox" data-cv-public> Uniquement les projets avec dépôt public</label>
+            <p class="cv-explorer-note">Les étiquettes reprennent les métadonnées des projets ; aucun niveau de maîtrise n’est calculé.</p>
+            <p class="cv-explorer-status" role="status" aria-live="polite"></p>
+        </div>
+        <ul class="cv-projects" id="projets-liste">
 ${catalog}
         </ul>
     </section>
@@ -107,6 +121,7 @@ try {
     const chrome = process.env.CHROME || 'chromium';
     writeFileSync(page, html);
     copyFileSync(join(root, 'cv.css'), join(workspace, 'cv.css'));
+    copyFileSync(join(root, 'cv.js'), join(workspace, 'cv.js'));
     const result = spawnSync(chrome, [
         '--headless', '--disable-gpu', '--disable-background-networking', '--no-pdf-header-footer',
         ...(process.argv.includes('--no-sandbox') ? ['--no-sandbox'] : []),

@@ -13,6 +13,15 @@ Bureau rétro en HTML/CSS/JS : un moniteur CRT affiche les dossiers du CV, un cl
 - `dossier.html`, `dossier.css`, `dossier.js` : dossier A4 des projets sélectionnés, avec coordonnées, preuves, sources et comparateur interactif.
 - `cv.html` : version texte à partager, générée depuis `cv-data.js` et `projects.js`.
 - `cv.css` : styles de la version texte.
+- `cv.js` : filtres progressifs de la version texte par étiquette et par présence d’un dépôt public.
+
+## Explorer les projets du CV texte
+
+`cv.html` reste un CV complet et lisible sans JavaScript. Avec JavaScript, la section **Projets** ajoute des boutons d’étiquettes construits depuis les tags de `projects.js` : activer plusieurs étiquettes ne conserve que les projets qui les portent toutes, et la case **Uniquement les projets avec dépôt public** écarte ceux dont le code n’est pas public.
+
+Le filtre est conservé dans l’adresse de la page et peut donc être partagé ou rechargé, par exemple `cv.html?tag=Python#projets`, `cv.html?tag=Python&tag=FastAPI#projets` ou `cv.html?code=public#projets`. Le lien `Tout afficher` retire les filtres ; les boutons fonctionnent au clavier avec `Tab`, `Entrée` et `Espace`, et le nombre de projets correspondants est annoncé dans une zone live.
+
+Aucun niveau de maîtrise n’est calculé : les étiquettes reprennent uniquement les métadonnées des projets. Les projets sans dépôt public portent la mention **Sans dépôt public**. À l’impression, les filtres et cette mention sont masqués et les projets prévus pour la version papier restent tous présents.
 
 ## Recherche instantanée
 

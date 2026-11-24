@@ -5,6 +5,7 @@ a { color:var(--green); text-underline-offset:.16em; }
 :focus-visible { outline:2px solid #8b4e2e; outline-offset:4px; }
 :target { outline:2px solid var(--line); outline-offset:5px; }
 p,h1,h2,h3,ul { margin:0; }
+[hidden] { display:none !important; }
 .cv-nav,.cv-paper { width:min(100% - 24px,820px); margin-inline:auto; }
 .cv-nav { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px 16px; margin-block:16px 12px; }
 .cv-nav a { display:inline-flex; align-items:center; min-height:44px; font-weight:650; }
@@ -26,18 +27,39 @@ h3 { font-size:1em; }
 .entry-note { font-size:.9em; }
 .cv-list { padding-left:1.15em; }
 .cv-list>li+li { margin-top:3px; }
+.cv-explorer { margin:0 0 12px; padding:10px 12px; border:1px solid var(--line); border-radius:4px; background:#f4f8f1; }
+.cv-explorer-head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px 12px; }
+.cv-explorer-label { color:var(--muted); font-size:.8em; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+.cv-explorer-reset { min-height:36px; padding:3px 10px; border:1px solid #8da697; border-radius:4px; background:#fff; color:var(--green); font:650 .84em/1.2 system-ui,sans-serif; cursor:pointer; }
+.cv-explorer-reset:hover { background:#e7f0e3; }
+.cv-explorer-hint { margin-top:4px; color:var(--muted); font-size:.86em; }
+.cv-explorer-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.cv-tag { display:inline-flex; align-items:center; gap:.4em; min-height:34px; padding:3px 9px; border:1px solid #9db1a1; border-radius:4px; background:#fff; color:var(--ink); font:650 .82em/1.2 ui-monospace,SFMono-Regular,Consolas,monospace; cursor:pointer; }
+.cv-tag:hover { border-color:var(--green); background:#edf4e9; }
+.cv-tag[aria-pressed="true"] { border-color:var(--green); background:var(--green); color:#fff; }
+.cv-tag-count { min-width:1.5em; padding:0 .28em; border:1px solid currentColor; border-radius:999px; font-size:.78em; line-height:1.5; text-align:center; opacity:.8; }
+.cv-explorer-code { display:inline-flex; align-items:center; gap:.5em; min-height:36px; margin-top:6px; color:var(--muted); font-size:.86em; cursor:pointer; }
+.cv-explorer-code input { width:1.05em; height:1.05em; accent-color:var(--green); }
+.cv-explorer-note { margin-top:3px; color:var(--muted); font-size:.8em; }
+.cv-explorer-status { min-height:1.3em; margin-top:5px; color:var(--muted); font-size:.86em; }
+.cv-explorer-status:empty { min-height:0; margin-top:0; }
 .cv-skill-examples { display:flex; flex-wrap:wrap; gap:0 14px; margin:2px 0 7px; padding:0; list-style:none; font-size:.88em; }
 .cv-skill-examples a { display:inline-flex; align-items:center; min-height:30px; font-weight:650; }
 .cv-projects { display:grid; gap:8px; padding:0; list-style:none; }
 .cv-project { min-width:0; padding:10px 12px; border:1px solid var(--line); border-radius:4px; scroll-margin-top:16px; }
 .cv-project h3 { display:inline; }
 .cv-project-category { display:inline-block; margin-left:.5em; color:var(--muted); font-size:.78em; }
+.cv-project-code { display:inline-block; margin-left:.5em; padding:0 .42em; border:1px solid #b58b60; border-radius:3px; background:#fbf3e5; color:#634322; font-size:.74em; font-weight:650; vertical-align:.08em; }
 .cv-project .entry-note { display:block; margin-bottom:3px; }
 .cv-project:target { background:#f0f6ee; outline-color:var(--green); }
 .cv-project-proof { margin-top:8px; padding:8px 10px; border-left:3px solid var(--line); background:#f0f6ee; }
 .cv-project-links { display:flex; flex-wrap:wrap; gap:0 16px; font-size:.9em; }
 .cv-project-links a { display:inline-flex; align-items:center; min-height:36px; font-weight:650; }
 .cv-footer { border-top:1px solid var(--line); padding-top:6px; margin-top:17px; color:var(--muted); font-size:.88em; }
+
+@media (pointer:coarse), (max-width:560px) {
+    .cv-tag,.cv-explorer-reset,.cv-explorer-code { min-height:44px; }
+}
 
 @page { size:A4; margin:13mm 15mm; }
 @media print {
@@ -54,7 +76,8 @@ h3 { font-size:1em; }
     .cv-projects { display:block; list-style:disc; padding-left:1.15em; }
     .cv-project { padding:0; border:0; margin-top:3px; break-inside:avoid; }
     .cv-project:target { background:none; }
-    .cv-project-extra,.cv-project-category,.cv-project-proof,.cv-skill-examples { display:none; }
+    .cv-project-extra,.cv-project-category,.cv-project-code,.cv-project-proof,.cv-skill-examples,.cv-explorer { display:none; }
+    .cv-projects>.cv-project[hidden]:not(.cv-project-extra) { display:list-item!important; }
     .cv-project .entry-note,.cv-project p { display:inline; }
     .cv-project p::before { content:" — "; }
     .entry+.entry { margin-top:4pt; }
