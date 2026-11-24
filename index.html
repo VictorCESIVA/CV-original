@@ -17,7 +17,7 @@
     <meta name="theme-color" content="#101b17">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101b17'/%3E%3Ctext x='32' y='44' font-family='monospace' font-size='34' font-weight='700' fill='%23ff9500' text-anchor='middle'%3E%3E_%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="scene/assets/vt323-latin.css">
-    <link rel="stylesheet" href="station.css?v=selection">
+    <link rel="stylesheet" href="station.css?v=dossier">
 </head>
 <body>
 
@@ -248,6 +248,7 @@
         <p class="selection-status" id="selection-status" role="status" aria-live="polite"></p>
         <div class="dialog-actions">
             <button type="button" class="primary-action" id="selection-view">Afficher la sélection</button>
+            <a id="selection-print" href="dossier.html" target="_blank" rel="noopener" hidden>Dossier imprimable</a>
             <button type="button" id="selection-share">Partager le lien</button>
             <button type="button" id="selection-clear">Tout décocher</button>
         </div>
@@ -540,6 +541,6 @@ function startMatrix() {
     matrixTimeout = setTimeout(stopMatrix, 4200);
 }
 </script>
-<script src="station.js?v=selection"></script>
+<script src="station.js?v=dossier"></script>
 </body>
 </html>

@@ -456,6 +456,7 @@ const selectionBadge = document.getElementById('selection-badge');
 const selectionGroups = document.getElementById('selection-groups');
 const selectionStatus = document.getElementById('selection-status');
 const selectionView = document.getElementById('selection-view');
+const selectionPrint = document.getElementById('selection-print');
 const selectionShareButton = document.getElementById('selection-share');
 const selectionClear = document.getElementById('selection-clear');
 const selectionSupported = typeof selectionDialog.showModal === 'function';
@@ -510,6 +511,21 @@ function selectionShareUrl() {
     return url.href;
 }
 
+function selectionDossierHref() {
+    const url = new URL('dossier.html', location.href);
+    if (selectionIds.length) url.searchParams.set('selection', selectionIds.join(','));
+    url.searchParams.set('print', '1');
+    return url.href;
+}
+
+function openSelectionDossier() {
+    if (!selectionIds.length) {
+        openSelectionDialog();
+        return;
+    }
+    window.open(selectionDossierHref(), '_blank', 'noopener');
+}
+
 function selectionSummary() {
     const count = selectionIds.length;
     return count ? `${count} projet${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}.` : 'Aucun projet sélectionné.';
@@ -524,6 +540,8 @@ function updateSelectionChrome() {
         : 'Sélection de projets');
     selectionStatus.textContent = [selectionSummary(), selectionNotice].filter(Boolean).join(' ');
     selectionView.disabled = !count;
+    selectionPrint.hidden = !count;
+    selectionPrint.href = selectionDossierHref();
     selectionShareButton.disabled = !count;
     selectionClear.disabled = !count;
 }
@@ -556,6 +574,7 @@ function selectionFile() {
         </div>
         <div class="selection-file-actions">
             <button type="button" data-selection-action="edit">${count ? 'Modifier la sélection' : 'Composer une sélection'}</button>
+            ${count ? `<a href="${cvEscape(selectionDossierHref())}" target="_blank" rel="noopener" data-selection-action="print">Dossier imprimable</a>` : ''}
             ${count ? '<button type="button" data-selection-action="share">Partager ce lien</button>' : ''}
         </div>
         ${count ? `<ul class="selection-projects">${items.map(selectionProjectCard).join('')}</ul>`
@@ -682,6 +701,7 @@ if (selectionSupported) {
 dossierContent.addEventListener('click', event => {
     const action = event.target.closest('[data-selection-action]');
     if (!action) return;
+    if (action.dataset.selectionAction === 'print') return;
     event.preventDefault();
     if (action.dataset.selectionAction === 'edit') openSelectionDialog();
     else if (action.dataset.selectionAction === 'share') openShare(selectionShareUrl(), 'Partager : Sélection de projets');
@@ -770,6 +790,9 @@ function addSearchContent() {
     addSearchItem('action-selection', 'Action', 'Composer une sélection de projets',
         'Shortlist partageable par un lien, à rouvrir chez le recruteur',
         'shortlist recruteur partager sélection projets lien', () => openSelectionDialog());
+    addSearchItem('action-dossier-print', 'Action', 'Dossier de projets imprimable',
+        'Page A4 avec les coordonnées et uniquement les projets sélectionnés',
+        'imprimer pdf dossier recruteur sélection projets coordonnées', () => openSelectionDossier());
     addSearchItem('action-guide', 'Action', 'Guide de visite', 'Découvrir le bureau et ses commandes',
         'aide tutoriel visite', () => {
             guide.returnValue = '';
