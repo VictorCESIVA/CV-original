@@ -6,7 +6,8 @@ Bureau rétro en HTML/CSS/JS : un moniteur CRT affiche les dossiers du CV, un cl
 
 - `index.html` : poste de travail, dialogues (CV express, guide, partage, sélection, recherche) et contenus générés côté client.
 - `station.css` : apparence du bureau, du moniteur, des périphériques et des dialogues.
-- `station.js` : navigation entre écrans, terminal, dossiers projets, sélection partageable, dossier imprimable, recherche et comportement du bureau 3D.
+- `station.js` : navigation entre écrans, dossiers projets, sélection partageable, dossier imprimable, recherche et comportement du bureau 3D.
+- `terminal.js` : terminal, contenus du CV express et helpers de sections, chargé en defer avant station.js.
 - `projects.js` : source unique des projets affichés sur le bureau et dans les fiches, avec la carte des identifiants, la clé de sélection locale et le parseur commun aux liens `?selection=…`.
 - `cv-data.js` : parcours, formations, compétences, langues et coordonnées utilisés par le terminal, le CV express et les pages générées.
 - `dossier.html`, `dossier.css`, `dossier.js` : dossier A4 des projets sélectionnés, avec coordonnées, preuves, sources et comparateur interactif.
