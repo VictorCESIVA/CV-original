@@ -36,19 +36,32 @@ La photo du plateau est une texture WebP 768 × 768 (qualité 92) au lieu du JPE
 
 Mesuré dans Chromium 159 à 1440 × 900, cache vide, réseau bridé à 200 ko/s avec 150 ms de latence et réponses gzip : le bundle se termine en 2,13 s avant, 1,69 s après. Les captures avant/après des zones de bois restent proches du bruit de rendu (écart moyen 0,46/255 contre 0,20 entre deux rendus identiques, PSNR 48,9 contre 51,9 dB). Le décodage de l’image passe de 9,2 à 11,1 ms au médian, compensé par le téléchargement ; le temps total jusqu’à la première image dépend surtout de la compilation des shaders et n’est pas un indicateur stable ici.
 
+### Poids initial du poste 2D
+
+Le poste 2D ne charge pas la 3D, mais son premier affichage pesait surtout le script du terminal resté dans `index.html`, la police CRT complète et la capture du guide. Trois changements mesurables :
+
+- Le terminal et les contenus du CV sont sortis dans `../terminal.js` (12,2 ko) et les quatre scripts sont chargés avec `defer` dans l’en-tête. `index.html` passe de 30,9 à 18,9 ko ; le script reste identifiable et cacheable séparément, sans modifier l’ordre d’exécution (`terminal.js` avant `station.js`).
+- `assets/vt323-latin.css` ne garde que les 171 glyphes réellement utilisés (ASCII, français, ponctuation) : le WOFF2 passe de 17 936 à 4 420 octets et le CSS encodé de 24 170 à 6 314 octets. Les captures du poste et d’un dossier restent identiques au pixel près (PSNR infini, aucun pixel différent) à 1440 × 900. Après ajout de texte affiché en police CRT, régénérer le sous-ensemble avec `fontTools` (`pyftsubset vt323.woff2 --text=… --flavor=woff2 --layout-features='*' --no-hinting --desubroutinize`) puis ré-encoder en base64.
+- Le guide utilise `../cv-apercu.webp` (1200 × 630, qualité 82, 67 ko) au lieu du JPEG de 145 ko, avec `../cv-apercu.jpg` conservé comme repli et image Open Graph. Le rendu comparé garde une PSNR de 54,6 dB sur la capture complète. La variante mobile `../cv-apercu-mobile.webp` reste inchangée.
+- Les contenus des dialogues (options de sélection, index de recherche, CV express) et les dossiers ne sont construits qu’à leur première ouverture. Le DOM initial passe de 543 à 358 nœuds (-34 %).
+
+Mesuré dans Chrome for Testing 159, à 1440 × 900, processeur bridé ×4, réseau à 200 ko/s avec 150 ms de latence et réponses gzip (médiane de 5 premières visites) : le transfert initial passe de 201,2 à 111,2 ko (-44,7 %), le LCP de 1 576 à 1 148 ms (-27,2 %), le FCP de 640 à 584 ms (-8,8 %) et le temps de script de 20,5 à 14,5 ms (-29 %). En visite répétée avec cache, le transfert est nul et le FCP/LCP passe de 76 à 52 ms. La page fait un appel de plus (`terminal.js`), compensé par le `defer` et le cache.
+
+Dans la sélection de projets, dès deux projets cochés, **Comparer les projets** ouvre `dossier.html?selection=…#comparaison` sans `print=1` ; le lien est aussi disponible dans l’écran **Sélection** et dans l’index de recherche. Avec un seul projet, le statut invite à en ajouter un second. La page et son hash sont gérés par `dossier.js`.
+
 ## Mettre à jour le CV texte et PDF
 
 Les faits du CV sont dans `../cv-data.js` et les fiches projets dans `../projects.js`. Depuis ce dossier, `npm run build:cv` génère ensemble `../cv.html` et `../CV_Victor_NOEL.pdf` en utilisant `../cv.css`, y compris sa mise en page A4.
 La version web affiche le catalogue complet et les liens de preuve des projets documentés. L’impression conserve la sélection `featuredProjects` et ses descriptions courtes sur une page A4.
 
-`../cv-apercu.jpg` (1200 × 630) est la capture réelle du bureau, utilisée dans le guide sur ordinateur et pour Open Graph. `../cv-apercu-mobile.webp` en est un recadrage léger centré sur le moniteur, affiché dans le guide sur les téléphones assez hauts. Le guide garde les accès visibles sur les écrans courts, et aucun aperçu ne charge la 3D.
+`../cv-apercu.jpg` (1200 × 630) reste la capture Open Graph et le repli du guide sur ordinateur ; `../cv-apercu.webp` en est la version servie au guide. `../cv-apercu-mobile.webp` est un recadrage léger centré sur le moniteur, affiché dans le guide sur les téléphones assez hauts. Le guide garde les accès visibles sur les écrans courts, et aucun aperçu ne charge la 3D.
 
 La commande utilise `chromium` ou le binaire donné par `CHROME`. L’option `npm run build:cv -- --no-sandbox` est réservée aux environnements isolés qui n’offrent pas de sandbox Chromium, pour imprimer ces fichiers locaux de confiance.
 
 ## Scène et crédits
 
 La texture photographique du bois provient de [Wood Table 001, Poly Haven](https://polyhaven.com/a/wood_table_001), sous licence CC0. Three.js est distribué sous la licence MIT reproduite dans `THREE-LICENSE.txt`.
-Les titres et le logo de NOËL OS utilisent [VT323, de Peter Hull](https://github.com/phoikoi/VT323), distribué sous [SIL Open Font License 1.1](assets/VT323-OFL.txt). La police est intégrée au CSS pour fonctionner sans connexion, y compris en ouvrant `index.html` directement.
+Les titres et le logo de NOËL OS utilisent [VT323, de Peter Hull](https://github.com/phoikoi/VT323), distribué sous [SIL Open Font License 1.1](assets/VT323-OFL.txt). La police est intégrée au CSS pour fonctionner sans connexion, y compris en ouvrant `index.html` directement ; seule une sélection de glyphes est embarquée.
 
 La pièce complète est modélisée en primitives : plateau et piètement tourné avec tiroir central, chaise de bureau, sol parqueté avec tapis kilim et plinthe, fenêtre à store semi-levé derrière le moniteur, multiprise et câbles d'alimentation, étagère murale à équerres avec serre-livres et plante.
 

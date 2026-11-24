@@ -216,7 +216,15 @@ function projectCatalog(onScreen) {
             <p>${cvEscape(project.description)}</p><small>${cvEscape(project.tags.join(' · '))}</small></article>`;
     }).join('')}</div>`).join('') + cv.otherProjects;
 }
-cv.projects = projectCatalog(true);
+Object.defineProperty(cv, 'projects', {
+    configurable: true,
+    enumerable: true,
+    get() {
+        const html = projectCatalog(true);
+        Object.defineProperty(cv, 'projects', {value: html, configurable: true, enumerable: true});
+        return html;
+    }
+});
 
 function projectRow({id, name, tags}) {
     const key = cvEscape(projectRoute(id));
@@ -241,14 +249,19 @@ function projectFile({id, collection, description, tags, url, proof}) {
         </nav>`;
 }
 
-const dossiers = {
-    parcours: cv.xp + cv.education,
-    projets: projectGroups.map(({title, items}) =>
+const dossierBuilders = {
+    parcours: () => cv.xp + cv.education,
+    projets: () => projectGroups.map(({title, items}) =>
         `${cvSection(title)}<ul class="dossier-projects">${items.map(projectRow).join('')}</ul>`
     ).join('') + cv.otherProjects,
-    competences: cv.skills + cv.certifications,
-    contact: cvContact
+    competences: () => cv.skills + cv.certifications,
+    contact: () => cvContact
 };
+const dossierCache = new Map();
+function dossierHtml(key) {
+    if (!dossierCache.has(key)) dossierCache.set(key, dossierBuilders[key]());
+    return dossierCache.get(key);
+}
 const dossierTitle = document.getElementById('dossier-title');
 const dossierMenu = document.getElementById('dossier-menu');
 const dossierSummary = dossierMenu.querySelector('summary');
@@ -292,7 +305,7 @@ function showRoute(key, moveFocus, trigger) {
             dossierTitle.textContent = project ? project.name : file.name;
             dossierLink.href = project ? projectPage(project.id) : file.textHref;
             dossierContent.innerHTML = project ? projectFile(project)
-                : (key === 'selection' ? selectionFile() : dossiers[key]);
+                : (key === 'selection' ? selectionFile() : dossierHtml(key));
         }
         showScreen('dossier');
         if (newRoute) dossierScroll.scrollTop = 0;
@@ -402,10 +415,15 @@ document.getElementById('resume-mission-title').textContent = missionTitle;
 document.getElementById('resume-mission-tags').textContent = missionTags.join(' · ');
 document.getElementById('resume-summary').textContent = cvData.summary;
 document.getElementById('resume-email').href = `mailto:${cvData.email}`;
-document.getElementById('resume-timeline').innerHTML = dossiers.parcours;
-document.getElementById('resume-projects').innerHTML = projectCatalog(false);
-document.getElementById('resume-skills').innerHTML = cvGroups('Technologies en pratique', cvData.skills) + cv.certifications;
-document.getElementById('resume-contact-details').innerHTML = dossiers.contact;
+let resumeContentReady = false;
+function populateResume() {
+    if (resumeContentReady) return;
+    resumeContentReady = true;
+    document.getElementById('resume-timeline').innerHTML = dossierHtml('parcours');
+    document.getElementById('resume-projects').innerHTML = projectCatalog(false);
+    document.getElementById('resume-skills').innerHTML = cvGroups('Technologies en pratique', cvData.skills) + cv.certifications;
+    document.getElementById('resume-contact-details').innerHTML = dossierHtml('contact');
+}
 
 const shareButton = document.getElementById('share-dossier');
 const shareDialog = document.getElementById('share-dialog');
@@ -457,6 +475,7 @@ const selectionGroups = document.getElementById('selection-groups');
 const selectionStatus = document.getElementById('selection-status');
 const selectionView = document.getElementById('selection-view');
 const selectionPrint = document.getElementById('selection-print');
+const selectionCompare = document.getElementById('selection-compare');
 const selectionShareButton = document.getElementById('selection-share');
 const selectionClear = document.getElementById('selection-clear');
 const selectionSupported = typeof selectionDialog.showModal === 'function';
@@ -499,6 +518,21 @@ function selectionDossierHref() {
     return url.href;
 }
 
+function selectionCompareHref() {
+    const url = new URL('dossier.html', location.href);
+    if (selectionIds.length) url.searchParams.set('selection', selectionIds.join(','));
+    url.hash = 'comparaison';
+    return url.href;
+}
+
+function openSelectionCompare() {
+    if (selectionIds.length < 2) {
+        openSelectionDialog();
+        return;
+    }
+    window.open(selectionCompareHref(), '_blank', 'noopener');
+}
+
 function openSelectionDossier() {
     if (!selectionIds.length) {
         openSelectionDialog();
@@ -519,10 +553,14 @@ function updateSelectionChrome() {
     selectionButton.setAttribute('aria-label', count
         ? `Sélection de projets, ${count} projet${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`
         : 'Sélection de projets');
-    selectionStatus.textContent = [selectionSummary(), selectionNotice].filter(Boolean).join(' ');
+    selectionStatus.textContent = [selectionSummary(),
+        count === 1 ? 'Ajoutez un second projet pour activer la comparaison.' : '',
+        selectionNotice].filter(Boolean).join(' ');
     selectionView.disabled = !count;
     selectionPrint.hidden = !count;
     selectionPrint.href = selectionDossierHref();
+    selectionCompare.hidden = count < 2;
+    selectionCompare.href = selectionCompareHref();
     selectionShareButton.disabled = !count;
     selectionClear.disabled = !count;
 }
@@ -555,6 +593,7 @@ function selectionFile() {
         </div>
         <div class="selection-file-actions">
             <button type="button" data-selection-action="edit">${count ? 'Modifier la sélection' : 'Composer une sélection'}</button>
+            ${count > 1 ? `<a href="${cvEscape(selectionCompareHref())}" target="_blank" rel="noopener" data-selection-action="compare">Comparer les projets</a>` : ''}
             ${count ? `<a href="${cvEscape(selectionDossierHref())}" target="_blank" rel="noopener" data-selection-action="print">Dossier imprimable</a>` : ''}
             ${count ? '<button type="button" data-selection-action="share">Partager ce lien</button>' : ''}
         </div>
@@ -629,10 +668,18 @@ function syncSelectionRoute() {
     if (!selectionDialog.open) screenFrame.dispatchEvent(new Event('cv:read-screen'));
 }
 
+let selectionOptionsReady = false;
+function ensureSelectionOptions() {
+    if (selectionOptionsReady) return;
+    buildSelectionOptions();
+    syncSelectionInputs();
+    selectionOptionsReady = true;
+}
+
 function openSelectionDialog() {
     if (!selectionSupported || selectionDialog.open) return;
     if (guide.open || resume.open || shareDialog.open || searchDialog.open) return;
-    syncSelectionInputs();
+    ensureSelectionOptions();
     updateSelectionChrome();
     selectionDialog.showModal();
     const first = selectionGroups.querySelector('input:checked') || selectionGroups.querySelector('input');
@@ -642,8 +689,6 @@ function openSelectionDialog() {
 
 if (selectionSupported) {
     selectionButton.hidden = false;
-    buildSelectionOptions();
-    syncSelectionInputs();
     updateSelectionChrome();
     selectionButton.addEventListener('click', openSelectionDialog);
     selectionDialog.addEventListener('click', event => {
@@ -682,7 +727,7 @@ if (selectionSupported) {
 dossierContent.addEventListener('click', event => {
     const action = event.target.closest('[data-selection-action]');
     if (!action) return;
-    if (action.dataset.selectionAction === 'print') return;
+    if (action.dataset.selectionAction === 'print' || action.dataset.selectionAction === 'compare') return;
     event.preventDefault();
     if (action.dataset.selectionAction === 'edit') openSelectionDialog();
     else if (action.dataset.selectionAction === 'share') openShare(selectionShareUrl(), 'Partager : Sélection de projets');
@@ -715,6 +760,7 @@ function addSearchItem(id, group, label, detail, keywords, run) {
 
 function openResumeAt(section) {
     if (typeof resume.showModal !== 'function') return;
+    populateResume();
     if (!resume.open) resume.showModal();
     const target = document.getElementById(`resume-${section}`);
     if (!target) return;
@@ -774,6 +820,9 @@ function addSearchContent() {
     addSearchItem('action-dossier-print', 'Action', 'Dossier de projets imprimable',
         'Page A4 avec les coordonnées et uniquement les projets sélectionnés',
         'imprimer pdf dossier recruteur sélection projets coordonnées', () => openSelectionDossier());
+    addSearchItem('action-compare', 'Action', 'Comparer les projets',
+        'Comparaison côte à côte des projets sélectionnés (deux minimum)',
+        'comparer comparaison shortlist sélection projets côte à côte', () => openSelectionCompare());
     addSearchItem('action-guide', 'Action', 'Guide de visite', 'Découvrir le bureau et ses commandes',
         'aide tutoriel visite', () => {
             guide.returnValue = '';
@@ -928,9 +977,17 @@ function activateSearchItem(index) {
     item.run();
 }
 
+let searchContentReady = false;
+function ensureSearchContent() {
+    if (searchContentReady) return;
+    addSearchContent();
+    searchContentReady = true;
+}
+
 function openSearch() {
     if (!searchSupported) return;
     if (guide.open || resume.open || shareDialog.open || selectionDialog.open) return;
+    ensureSearchContent();
     searchInput.value = '';
     renderSearch('');
     if (!searchDialog.open) searchDialog.showModal();
@@ -940,7 +997,6 @@ function openSearch() {
 
 if (searchSupported) {
     searchButton.hidden = false;
-    addSearchContent();
     searchButton.addEventListener('click', openSearch);
     searchClear.addEventListener('click', () => {
         searchInput.value = '';
@@ -1091,6 +1147,7 @@ document.addEventListener('click', event => {
         guideButton.focus({preventScroll:true});
     }
     if (!resume.open) resume.showModal();
+    populateResume();
     const target = document.getElementById(`resume-${trigger.dataset.resume}`);
     target.focus({preventScroll:true});
     resumeContent.scrollTop = target.offsetTop - 16;
