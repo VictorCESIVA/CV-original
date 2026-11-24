@@ -34,7 +34,7 @@ La fusion ajoute quelques dizaines de millisecondes au chargement ; en échange,
 
 La photo du plateau est une texture WebP 768 × 768 (qualité 92) au lieu du JPEG 1024 × 1024. Le motif et le cadrage sont inchangés ; la résolution reste adaptée au cadrage de bureau, où le plateau est vu de loin. Le fichier passe de 216 à 128 ko, le bundle de 958,8 à 844,3 Kio (403,4 à 316,1 ko gzip), et la texture du bois de 5,33 à 3,00 Mo en mémoire GPU.
 
-Mesuré dans Chromium 159 à 1440 × 900, cache vide, réseau bridé à 200 ko/s avec 150 ms de latence et réponses gzip : le bundle se termine en 2,13 s avant, 1,69 s après. Les captures avant/après des zones de bois restent au niveau du bruit de rendu (écart moyen 0,46/255 contre 0,20 entre deux rendus identiques, PSNR 48,9 contre 51,9 dB). Le décodage de l’image passe de 9,2 à 11,1 ms au médian, compensé par le téléchargement ; le temps total jusqu’à la première image dépend surtout de la compilation des shaders et n’est pas un indicateur stable ici.
+Mesuré dans Chromium 159 à 1440 × 900, cache vide, réseau bridé à 200 ko/s avec 150 ms de latence et réponses gzip : le bundle se termine en 2,13 s avant, 1,69 s après. Les captures avant/après des zones de bois restent proches du bruit de rendu (écart moyen 0,46/255 contre 0,20 entre deux rendus identiques, PSNR 48,9 contre 51,9 dB). Le décodage de l’image passe de 9,2 à 11,1 ms au médian, compensé par le téléchargement ; le temps total jusqu’à la première image dépend surtout de la compilation des shaders et n’est pas un indicateur stable ici.
 
 ## Mettre à jour le CV texte et PDF
 
