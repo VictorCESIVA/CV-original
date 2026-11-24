@@ -24,6 +24,12 @@ Ouvrir `../index.html` directement ou le servir tel quel. Sans WebGL, le moniteu
 La vitre est dessinée sur un plan de 640 × 480 pixels CSS, en retrait derrière l’ouverture biseautée du moniteur. La scène en déduit les dimensions de la vitre ; la même matrice de caméra projette l’interface, le clavier et la souris sur leurs surfaces 3D.
 Les reflets et les lignes de balayage sont atténués dans les dossiers et le terminal pour garder le texte lisible.
 
+### Coût de rendu
+
+`static-batch.js` fusionne au chargement les meubles et décors immobiles qui partagent un matériau : un seul maillage et un seul appel de dessin par matériau, au lieu d’un par objet. La scène passe ainsi d’environ 490 à 235 objets visibles, et d’environ 1 370 à 660 appels de dessin quand la carte d’ombres est redessinée, 930 à 460 pour une image interactive (mesuré dans Chromium sur la vue bureau à 1440 × 900).
+Restent séparés les éléments qui bougent ou répondent au pointeur : les touches du clavier, la souris et la coque du moniteur. Les matériaux transparents, les objets masqués et les cibles de survol ne sont jamais fusionnés, donc les reflets, les ombres portées et les infobulles restent identiques.
+La fusion ajoute quelques dizaines de millisecondes au chargement ; en échange, les deux bruits procéduraux du plâtre et du plastique sont remplis pixel par pixel sans allocation intermédiaire, ce qui en récupère une partie.
+
 ## Mettre à jour le CV texte et PDF
 
 Les faits du CV sont dans `../cv-data.js` et les fiches projets dans `../projects.js`. Depuis ce dossier, `npm run build:cv` génère ensemble `../cv.html` et `../CV_Victor_NOEL.pdf` en utilisant `../cv.css`, y compris sa mise en page A4.

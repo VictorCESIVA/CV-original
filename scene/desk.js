@@ -8,6 +8,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import clawdMark from './assets/clawd-mark.png';
 import huggingFace from './assets/hugging-face.svg';
 import woodPhoto from './assets/wood.jpg';
+import { batchStaticMeshes } from './static-batch.js';
 
 function buildDesk(renderer) {
     const world = new T.Scene();
@@ -115,11 +116,12 @@ function buildDesk(renderer) {
     const plaster=mat(0x51635b);
     const paint=canvasTexture(512,512,c=>{
         const image=c.createImageData(512,512);
+        const data=image.data;
         let seed=4169;
-        for(let i=0;i<image.data.length;i+=4) {
+        for(let i=0;i<data.length;i+=4) {
             seed=(Math.imul(1664525,seed)+1013904223)>>>0;
             const v=220+((seed>>>20)%32);
-            image.data.set([v,v,v,255],i);
+            data[i]=data[i+1]=data[i+2]=v;data[i+3]=255;
         }
         c.putImageData(image,0,0);
     });
@@ -321,10 +323,12 @@ function buildDesk(renderer) {
     // Paper speckle and fine mould texture break up broad highlights.
     const stipple=canvasTexture(256,256,ctx=>{
         const pic=ctx.createImageData(256,256);
+        const data=pic.data;
         let seed=1771;
-        for(let i=0;i<pic.data.length;i+=4) {
+        for(let i=0;i<data.length;i+=4) {
             seed=(Math.imul(1664525,seed)+1013904223)>>>0;
-            const v=210+((seed>>>20)%44);pic.data.set([v,v,v,255],i);
+            const v=210+((seed>>>20)%44);
+            data[i]=data[i+1]=data[i+2]=v;data[i+3]=255;
         }
         ctx.putImageData(pic,0,0);
     });
@@ -918,6 +922,15 @@ function buildDesk(renderer) {
         const leaf=egg(.30,.010,.10,i%2?mat(0x3f5f3f,.8):mat(0x51724d,.8),Math.cos(a)*.13,.32+(i%3)*.10,Math.sin(a)*.13,plant);
         leaf.rotation.set(0,-a,.55+(i%3)*.12,'YXZ');
     }
+
+    // Everything above is fitted once. Collapse the static furniture into one
+    // mesh per material instead of hundreds of tiny draw calls; the keyboard
+    // caps, the mouse shell and the monitor shell stay separate because they
+    // move or answer pointer hits.
+    const animated=new Set(capsByButton.values());
+    mouseRig.traverse(object=>{if(object.isMesh)animated.add(object);});
+    animated.add(monitorShell);
+    batchStaticMeshes(world,{keep:animated});
 
     const homeYaw=.035,homePitch=.455;
     let yaw=homeYaw, pitch=homePitch, orbit=null, focus=false, pending=false;
