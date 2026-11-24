@@ -30,6 +30,12 @@ Les reflets et les lignes de balayage sont atténués dans les dossiers et le te
 Restent séparés les éléments qui bougent ou répondent au pointeur : les touches du clavier, la souris et la coque du moniteur. Les matériaux transparents, les objets masqués et les cibles de survol ne sont jamais fusionnés, donc les reflets, les ombres portées et les infobulles restent identiques.
 La fusion ajoute quelques dizaines de millisecondes au chargement ; en échange, les deux bruits procéduraux du plâtre et du plastique sont remplis pixel par pixel sans allocation intermédiaire, ce qui en récupère une partie.
 
+### Poids et décodage de la texture
+
+La photo du plateau est une texture WebP 768 × 768 (qualité 92) au lieu du JPEG 1024 × 1024. Le motif et le cadrage sont inchangés ; la résolution reste adaptée au cadrage de bureau, où le plateau est vu de loin. Le fichier passe de 216 à 128 ko, le bundle de 958,8 à 844,3 Kio (403,4 à 316,1 ko gzip), et la texture du bois de 5,33 à 3,00 Mo en mémoire GPU.
+
+Mesuré dans Chromium 159 à 1440 × 900, cache vide, réseau bridé à 200 ko/s avec 150 ms de latence et réponses gzip : le bundle se termine en 2,13 s avant, 1,69 s après. Les captures avant/après des zones de bois restent au niveau du bruit de rendu (écart moyen 0,46/255 contre 0,20 entre deux rendus identiques, PSNR 48,9 contre 51,9 dB). Le décodage de l’image passe de 9,2 à 11,1 ms au médian, compensé par le téléchargement ; le temps total jusqu’à la première image dépend surtout de la compilation des shaders et n’est pas un indicateur stable ici.
+
 ## Mettre à jour le CV texte et PDF
 
 Les faits du CV sont dans `../cv-data.js` et les fiches projets dans `../projects.js`. Depuis ce dossier, `npm run build:cv` génère ensemble `../cv.html` et `../CV_Victor_NOEL.pdf` en utilisant `../cv.css`, y compris sa mise en page A4.

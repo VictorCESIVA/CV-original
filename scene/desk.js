@@ -7,7 +7,7 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import clawdMark from './assets/clawd-mark.png';
 import huggingFace from './assets/hugging-face.svg';
-import woodPhoto from './assets/wood.jpg';
+import woodPhoto from './assets/wood.webp';
 import { batchStaticMeshes } from './static-batch.js';
 
 function buildDesk(renderer) {
